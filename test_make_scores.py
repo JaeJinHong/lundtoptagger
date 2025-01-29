@@ -45,6 +45,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     config_file = args.config
     config = load_yaml(config_file)
+    config_signal = load_yaml("configs/config_signal.yaml") # TODO: make this an optional argument, but then the same file needs to be used in utils_newdata.py
+    signal = config_signal["signal"]
 
     path_to_test_file = config['data']['path_to_test_file']
     files = glob.glob(path_to_test_file)
@@ -102,16 +104,9 @@ if __name__ == "__main__":
 
             count_files += 1
             dsids_test = tree["dsid"].array(library="np")
-            if dsids_test[0] == 364700 : # don't lose time with jets that not pass pt cut
-                continue
-            if dsids_test[0] == 364701 : # don't lose time with jets that not pass pt cut
-                continue
-            if dsids_test[0] == 364702 : # don't lose time with jets that not pass pt cut
-                continue
-            if dsids_test[0] == 801859 : # don't keep W jets (if you are doing top tagging)
-                print("W file omitted")
-                continue  
-                        
+            if dsids_test[0] in  config_signal[signal]["skip_dsids"]: # don't lose time with jets that don't pass pt cut or wrong signal sample
+               continue
+
             jet_pts_truth = ak.to_numpy(ak.flatten(tree["LRJ_pt"].array(library="ak")) )
             #ptweights = ak.to_numpy(ak.flatten(tree["LRJ_pt"].array(library="ak")) )
             ptweights = np.ones_like( ak.to_numpy(ak.flatten(tree["LRJ_pt"].array(library="ak")) ))
@@ -224,7 +219,13 @@ if __name__ == "__main__":
                                    y= torch.tensor(1, dtype=torch.float).detach() )
 
                 '''
-            dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file_test( dataset, graph_small_example , all_lund_zs, all_lund_kts, all_lund_drs, parent1, parent2, flat_weights, labels ,N_tracks,jet_pts, jet_ms, kT_selection, mcweights,mcweights_out, Good_jets)#, count_files)
+            dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file_test(
+                dataset, graph_small_example, all_lund_zs, all_lund_kts, all_lund_drs,
+                parent1, parent2, flat_weights, labels,
+                N_tracks, jet_pts, jet_ms, kT_selection,
+                mcweights, mcweights_out, Good_jets,
+                config_signal[signal]["signal_jet_truth_label"]
+            )#, count_files)
 
             #Good_jets = labels
             labels = labels == 1

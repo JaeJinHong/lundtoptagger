@@ -36,6 +36,8 @@ def main():
     args = parser.parse_args()
     config_file = args.config
     config = load_yaml(config_file)
+    config_signal = load_yaml("configs/config_signal.yaml") # TODO: make this an optional argument, but then the same file needs to be used in utils_newdata.py
+    signal = config_signal["signal"]
 
     path_to_file = config['data']['path_to_trainfiles']
     files = glob.glob(path_to_file)
@@ -60,17 +62,9 @@ def main():
             file_number += 1
             
             dsids_test = tree["dsid"].array(library="np")
-            if dsids_test[0] == 364700 : # don't lose time with jets that not pass pt cut
+            if dsids_test[0] in config_signal[signal]["skip_dsids"]: # don't lose time with jets that don't pass pt cut or wrong signal sample
                 continue
-            if dsids_test[0] == 364701 : # don't lose time with jets that not pass pt cut
-                continue
-            if dsids_test[0] == 364702 : # don't lose time with jets that not pass pt cut
-                continue
-            if dsids_test[0] == 801859 : # don't keep W jets (if you are doing top tagging)
-                print("W file omitted")
-                continue            
-            #if dsids_test[0] == 801661 : # don't keep top jets (if you are doing W tagging)
-            #    continue 
+
             dsids = ak.to_numpy(ak.flatten(tree["LRJ_truthLabel"].array(library="ak")) )
 
             print("length dataset:", len(dataset), " file number:", file_number)
@@ -100,7 +94,13 @@ def main():
             kT_selection = config['architecture']['kT_cut']
 
             #dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file( dataset , all_lund_zs, all_lund_kts, all_lund_drs, parent1, parent2, flat_weights, labels ,N_tracks, jet_pts, jet_ms, kT_selection)
-            dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file( dataset , all_lund_zs, all_lund_kts, all_lund_drs, parent1, parent2, flat_weights, labels ,N_tracks, jet_pts, jet_ms, kT_selection, primary_Lund_only_one_arr)
+            dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file(
+                dataset, all_lund_zs, all_lund_kts, all_lund_drs,
+                parent1, parent2, flat_weights, labels,
+                N_tracks, jet_pts, jet_ms, kT_selection,
+                primary_Lund_only_one_arr,
+                config_signal[signal]["signal_jet_truth_label"]
+            )
 
             gc.collect()
 

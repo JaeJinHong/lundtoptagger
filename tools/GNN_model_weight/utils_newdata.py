@@ -27,9 +27,11 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 from ..GNN_model_weight.models import mdn_loss, mdn_loss_new
 
-## for top tagging:
-# weights_file = uproot.open("/data/jmsardain/LJPTagger/FullSplittings/SplitForTopTagger/flat_weights.root")
-weights_file = uproot.open("/data/jmsardain/LJPTagger/FullSplittings/SplitForTopTagger/5_Signal_and_BKG_cutTruth350/flat_weights.root")
+
+with open("configs/config_signal.yaml") as f:
+    config = yaml.load(f, Loader=yaml.FullLoader)
+signal = config["signal"]
+weights_file = uproot.open(config[signal]["weights_file"])
 
 flatweights_bg = weights_file["bg_inv"].to_numpy()
 flatweights_sig = weights_file["h_sig_inv"].to_numpy()
@@ -56,8 +58,8 @@ def GetPtWeight( dsid , pt, SF):
 def GetPtWeight_2( dsid , pt, SF):
 
     ## PT histograms of all qcd and top jets in dataset
-    filename1 = "/data/bcifuentes/histograms/qcd.root"
-    filename2 = "/data/bcifuentes/histograms/top.root"
+    filename1 = config[signal]["pt_hist_file_bkg"]
+    filename2 = config[signal]["pt_hist_file_signal"]
     weights_file1 = uproot.open(filename1)
     flatweights_bg = weights_file1["pt"].to_numpy()
     weights_file2 = uproot.open(filename2)
@@ -77,18 +79,18 @@ def GetPtWeight_2( dsid , pt, SF):
     
     ## it's time to calcuate the 1/hist
     for i in range (0,lenght_bkg):
-    	if flatweights_bg[0][i]==0:
-    		Inv_hist_bg.append(0)
-    		continue
-    	else:
-    		Inv_hist_bg.append(np.sum(flatweights_bg[0]) / (lenght_bkg * flatweights_bg[0][i]))
-    		
+        if flatweights_bg[0][i]==0:
+            Inv_hist_bg.append(0)
+            continue
+        else:
+            Inv_hist_bg.append(np.sum(flatweights_bg[0]) / (lenght_bkg * flatweights_bg[0][i]))
+            
     for i in range (0,lenght_sig):
-    	if flatweights_sig[0][i]==0:
-    		Inv_hist_sig.append(0)
-    		continue
-    	else:
-    		Inv_hist_sig.append(np.sum(flatweights_sig[0]) / (lenght_sig * flatweights_sig[0][i]))
+        if flatweights_sig[0][i]==0:
+            Inv_hist_sig.append(0)
+            continue
+        else:
+            Inv_hist_sig.append(np.sum(flatweights_sig[0]) / (lenght_sig * flatweights_sig[0][i]))
         
     for i in range ( 0,len(dsid) ):
         pt_bin = int( ((pt[i]-100)/3000)*lenght_sig )
@@ -127,12 +129,14 @@ def to_categorical(y, num_classes=None, dtype='float32'):
 
 
 #def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms, kT_selection):
-def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms, kT_selection, primary_Lund_only_one_arr):
+def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms, kT_selection, primary_Lund_only_one_arr, signal_jet_truth_label):
 
     test_bool = 1
     buildID_from_graphs = 0
     Primary_Lund_Plane = 0
     extra_node = 0
+
+    # loop over jets
     for i in range(len(z)):  
         '''
         label_np = ak.to_numpy(label[i])
@@ -142,14 +146,20 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, e
         jet_pts_np = jet_pts_np.astype(float)
         jet_ms_np = jet_ms_np.astype(float)
         '''
+        # skip jets with less than 3 splittings
         if len(z[i])<3: 
             continue
         #print(label[i])
-        if (label[i]!=1) and (label[i]!=10) :
+        # skip jets which are not signal (1 for top and 2 for W) or background (10)
+        if (label[i]!=signal_jet_truth_label) and (label[i]!=10):
             continue
+
+        # label signal as 1 and background as 0
         label_out = label[i] # label_np
-        if label[i]== 10:
+        if label[i] == 10:
             label_out = 0
+        if label[i] == signal_jet_truth_label:
+            label_out = 1
 
         if jet_pts[i] > 3200: continue
         if jet_pts[i] < 350: continue # . ./run.txt
@@ -557,7 +567,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, e
 #def create_train_dataset_fulld_new_Ntrk_pt_weight_file_test(graphs, graph_small_example, z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms):
 
 #def create_train_dataset_fulld_new_Ntrk_pt_weight_file_test(graphs, graph_small_example, z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms, kT_selection, primary_Lund_only_one_arr):
-def create_train_dataset_fulld_new_Ntrk_pt_weight_file_test(graphs, graph_small_example, z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms, kT_selection, mcweights, mcweights_out, Good_jets):
+def create_train_dataset_fulld_new_Ntrk_pt_weight_file_test(graphs, graph_small_example, z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms, kT_selection, mcweights, mcweights_out, Good_jets, signal_jet_truth_label):
 #create_train_dataset_fulld_new_Ntrk_pt_weight_file_test( dataset, graph_small_example , all_lund_zs, all_lund_kts, all_lund_drs, parent1, parent2, flat_weights, labels ,N_tracks,jet_pts, jet_ms, kT_selection, mcweights,mcweights_out, Good_jets)
 
     
@@ -566,6 +576,8 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file_test(graphs, graph_small_
     Primary_Lund_Plane = 0
     extra_node = 0
     print("extra_node condition-", extra_node)
+
+    # loop over jets
     for i in range(len(z)):  
         #print("len(z)", len(z))
         label_out = label[i]
@@ -573,6 +585,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file_test(graphs, graph_small_
 
         #print("label_first",label_out)
 
+        # skip jets with less than 3 splittings
         if len(z[i])<3: 
             graphs.append(graph_small_example)
             Good_jets.append(0)
@@ -580,18 +593,23 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file_test(graphs, graph_small_
             label_out = 6
             #print("label_second_1",label_out)
             continue
-        
+
         #print(label[i])
-        if (label[i]!=1) and (label[i]!=10) :
+        # skip jets which are not signal (1 for top and 2 for W) or background (10)
+        if (label[i]!=signal_jet_truth_label) and (label[i]!=10) :
             label_out = 6
             graphs.append(graph_small_example)
             Good_jets.append(0)
             mcweights_out.append(mc_weight_event)
             #print("label_second_2",label_out)
             continue
+
+        # label signal as 1 and background as 0
         label_out = label[i] # label_np
         if label[i]== 10:
             label_out = 0
+        if label[i] == signal_jet_truth_label:
+            label_out = 1
 
         '''
         if jet_pts[i] > 3200: continue
