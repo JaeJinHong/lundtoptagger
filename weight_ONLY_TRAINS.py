@@ -77,9 +77,13 @@ def main():
         path = path_to_ckpt
         model.load_state_dict(torch.load(path))
 
-    #device = torch.device('cpu')
-    device = torch.device('cuda') # Usually gpu 4 worked best, it had the most memory available
-    
+    if torch.cuda.is_available():
+        device_id = 'cuda' if config['gpu'] is None else 'cuda:'+str(config['gpu'])
+    else:
+        device_id = 'cpu'
+    device = torch.device(device_id)
+    print(f'Using device: {device}')
+
     #model = torch.nn.DataParallel(model)
     model.to(device)
     

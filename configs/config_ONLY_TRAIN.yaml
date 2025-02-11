@@ -14,3 +14,8 @@ architecture:
 retrain:
   flag: False
   path_to_ckpt: "/sps/atlas/k/khandoga/TrainGNN/Models/LundNet_ufob_e012_0.12481.pt"
+
+# choose gpu to run on
+gpu: null # can be null or integer
+# if null, code will check if CUDA is available and use torch.device("cuda") if it is, otherwise torch.device("cpu")
+# Usually gpu 4 worked best, it had the most memory available (on UChicago?)

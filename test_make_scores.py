@@ -250,13 +250,9 @@ if __name__ == "__main__":
         if choose_model == "PNANet":
             model = PNANet()
 
-        #model.load_state_dict(torch.load(path_to_combined_ckpt))
-        model.load_state_dict(torch.load(path_to_combined_ckpt, map_location=torch.device('cpu')))
-        
-        #device = torch.device('cuda') # Usually gpu 4 worked best, it had the most memory available
-        device = torch.device('cpu')
-
-        
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') # Usually gpu 4 worked best, it had the most memory available
+        model.load_state_dict(torch.load(path_to_combined_ckpt, map_location=device))
+        print(f'Using device: {device}')
         model.to(device)
 
         #Predict scores
