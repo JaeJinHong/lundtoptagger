@@ -27,7 +27,13 @@ def main():
 
     print("dataset used:", path_to_file)
 
-    dataset = torch.load(path_to_file)
+    dataset = []
+    if isinstance(path_to_file, str):
+        # path_to_file can be a list of file paths or a single path
+        # if it is a single path, convert it to a list
+        path_to_file = [path_to_file]
+    for file_path in path_to_file:
+        dataset += torch.load(file_path)
 
     # check the number of signal and background jets
     labels = [data.y for data in dataset]
