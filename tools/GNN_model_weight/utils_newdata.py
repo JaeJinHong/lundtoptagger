@@ -243,7 +243,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, e
         index_count = []
         selected_nodes = []
         index_count_out = []
-        kT_Cut = kT_selection # 0.0 , 0.4 0.9, 2, 2.8 
+        kT_Cut = kT_selection if kT_selection is not None else -np.inf # 0.0 , 0.4 0.9, 2, 2.8 
         nodes_pass_KT = []
         node_kt_step = 0 ## used to renamed edges properly ()
         node_index = 0

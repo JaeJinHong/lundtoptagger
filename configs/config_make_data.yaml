@@ -14,4 +14,4 @@ out_dir: "/eos/home-t/tmlinare/Lund/Lund_tagging/lundtoptagger_data/"
 out_file_name: "graphs_NewDataset_TEST"
 #"LundNet_R22_TRAIN_01QCD_05Z_Primary_FIX_ExtraNode_kt_.0"
 # LundNet_R22_TRAIN_01QCD_05Z_Primary_ExtraNode_NormalSignalWeights
-kT_cut: 0 # actually a cut in ln(kT)
+kT_cut: 0 # actually a cut in ln(kT), set to null to not apply any cut
