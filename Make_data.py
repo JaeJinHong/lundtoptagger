@@ -76,7 +76,9 @@ def main():
     print(f"Time taken (hh:mm:ss): {delta_t_fileax}")
 
     out_file_name = config["out_file_name"].format(kT_cut=kT_selection)
-    output_path_graphs = os.path.join(config["out_dir"], out_file_name)
+    out_dir = config["out_dir"]
+    os.makedirs(out_dir, exist_ok=True)
+    output_path_graphs = os.path.join(out_dir, out_file_name)
 
     torch.save(dataset, output_path_graphs)
     print("Dataset saved to:", output_path_graphs)

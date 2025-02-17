@@ -1,5 +1,6 @@
 import argparse
 from datetime import datetime
+import os
 
 import torch
 from torch_geometric.utils import degree
@@ -112,17 +113,17 @@ def main():
     train_acc = []
     val_acc = []
 
-    metrics_filename = path_to_save+"losses_"+model_name+datetime.now().strftime("%d%m-%H%M")+".txt"
+    os.makedirs(path_to_save, exist_ok=True)
+    metrics_filename = os.path.join(path_to_save, f"losses_{model_name}{datetime.now().strftime("%d%m-%H%M")}.txt")
 
     for epoch in range(n_epochs):
         train_loss.append(train_clas(train_loader, model, device, optimizer, optimizer2, optimizer3, epoch))
         val_loss.append(my_test(val_loader, model, device))
 
         print('Epoch: {:03d}, Train Loss: {:.5f}, Val Loss: {:.5f}'.format(epoch, train_loss[epoch], val_loss[epoch]))
-        if (save_every_epoch):
-            torch.save(model.state_dict(), path_to_save+model_name+"e{:03d}".format(epoch+1)+"_{:.5f}".format(val_loss[epoch])+".pt")
-        elif epoch == n_epochs-1:
-            torch.save(model.state_dict(), path_to_save+model_name+"e{:03d}".format(epoch+1)+"_{:.5f}".format(val_loss[epoch])+".pt")
+        if save_every_epoch or epoch == n_epochs-1:
+            model_filename = os.path.join(path_to_save, f"{model_name}_e{epoch+1:03d}_{val_loss[epoch]:.5f}.pt")
+            torch.save(model.state_dict(), model_filename)
 
     metrics = pd.DataFrame({"Train_Loss":train_loss,"Val_Loss":val_loss})
     metrics.to_csv(metrics_filename, index = False)
