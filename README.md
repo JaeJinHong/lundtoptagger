@@ -26,14 +26,21 @@ conda activate rootenv
 
 ## Training and testing
 
-For the training, the main changes one should do are in the configuration file: configs/config_class_train_top.yaml .
-In this file you will define the learning rate, batch size, the input files, the model to use, the repo to save your ckpts. 
+For the training, the main changes one should do are in the configuration file: `config_ONLY_TRAIN.yaml`.
+In this file you will define the learning rate, batch size, the input files, the model to use, the location to save your checkpoints.
 
 To run the training:
 
 ```bash
-python weight_class_train.py configs/config_class_train_top.yaml
+python weight_ONLY_TRAINS.py configs/config_ONLY_TRAIN.yaml
 ```
+
+You can override the $k_T$ cut in the configuration file using a command line argument:
+
+```bash
+python weight_ONLY_TRAINS.py configs/config_ONLY_TRAIN.yaml --ln_kT_cut 0
+```
+
 
 For the testing, you should run the final_makescores notebook. The only changes you should do are under the conditions in the for loop. The different variables should point to your test files, the ckpt you want to use and the repo to save your output root files 
 

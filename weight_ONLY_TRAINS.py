@@ -19,13 +19,13 @@ def main():
     parser = argparse.ArgumentParser(description='Train with configurations')
     add_arg = parser.add_argument
     add_arg('config', help="job configuration")
+    add_arg('--ln_kT_cut', type=float, help="minimum value of kT kept for the training graphs")
     args = parser.parse_args()
     config_file = args.config
     config = load_yaml(config_file)
 
+    ln_kT_cut = args['ln_kT_cut'] if args['ln_kT_cut'] is not None else config['data']['ln_kT_cut']
     path_to_file = config['data']['path_to_trainfiles']
-
-    print("dataset used:", path_to_file)
 
     dataset = []
     if isinstance(path_to_file, str):
@@ -33,6 +33,8 @@ def main():
         # if it is a single path, convert it to a list
         path_to_file = [path_to_file]
     for file_path in path_to_file:
+        file_path = file_path.format(ln_kT_cut=ln_kT_cut)
+        print("Loading file", file_path)
         dataset += torch.load(file_path)
 
     # check the number of signal and background jets
