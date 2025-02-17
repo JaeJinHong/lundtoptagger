@@ -1,4 +1,5 @@
 import argparse
+import csv
 from datetime import datetime
 import os
 
@@ -7,7 +8,6 @@ from torch_geometric.utils import degree
 from torch_geometric.data import DataLoader
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
-import pandas as pd
 
 from tools.GNN_model_weight.models import *
 from tools.GNN_model_weight.utils_newdata import *
@@ -125,9 +125,11 @@ def main():
             model_filename = os.path.join(path_to_save, f"{model_name}_e{epoch+1:03d}_{val_loss[epoch]:.5f}.pt")
             torch.save(model.state_dict(), model_filename)
 
-    metrics = pd.DataFrame({"Train_Loss":train_loss,"Val_Loss":val_loss})
-    metrics.to_csv(metrics_filename, index = False)
-    return
+    metrics = zip(train_loss, val_loss)
+    with open(metrics_filename, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Train_Loss", "Val_Loss"])
+        writer.writerows(metrics)
 
 
 if __name__ == "__main__":
