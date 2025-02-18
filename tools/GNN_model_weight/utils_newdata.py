@@ -1,4 +1,5 @@
 import os
+from typing import Union
 
 import yaml
 import uproot
@@ -108,9 +109,37 @@ def to_categorical(y, num_classes=None, dtype='float32'):
     return categorical
 
 
-#def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms, kT_selection):
-def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms, kT_selection, primary_Lund_only_one_arr, signal_jet_truth_label):
+def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
+    graphs: list[Data],
+    z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms,
+    kT_selection: Union[float, None],
+    primary_Lund_only_one_arr: list,
+    signal_jet_truth_label: int,
+    include_pt: bool = False
+) -> list[Data]:
+    """
+    Create a list of graphs for tagging.
 
+    Args:
+        graphs (list[Data]): List to which the generated torch_geometric.data.Data objects will be appended.
+        z (array): 2D array, with an array of z values for each jet.
+        k (array): 2D array, with an array of kT values for each jet.
+        d (array): 2D array, with an array of ΔR values for each jet.
+        edge1 (array): Array of edge1 values.
+        edge2 (array): Array of edge2 values.
+        weight (array): Array of jet weights.
+        label (array): Array of jet truth labels.
+        Ntracks (array): Array of Ntracks values.
+        jet_pts (array): Array of jet pT values.
+        jet_ms (array): Array of jet mass values.
+        kT_selection (float | None): kT selection threshold.
+        primary_Lund_only_one_arr (list): List to keep track of how many jets have only 1 splitting.
+        signal_jet_truth_label (int): Truth label for signal jets.
+        include_pt (bool): Whether to include pT as a graph attribute.
+
+    Returns:
+        list[Data]: List of torch_geometric.data.Data objects.
+    """
     test_bool = 1
     buildID_from_graphs = 0
     Primary_Lund_Plane = 0
@@ -503,17 +532,22 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, e
         #print("edge",edge)
         #print("edge1",edge[0])
         #print("edge2",edge[1])
-        
-        graphs.append(Data(x= vec.detach() ,
-                           #edge_index = torch.tensor(edge, dtype=torch.int64).detach(),
-                           edge_index = edge.detach() ,
-                           #Ntrk=torch.tensor(Ntracks[i], dtype=torch.int).detach(),
-                            Ntrk=torch.tensor(Ntrk, dtype=torch.float).detach(),
-                           weights= torch.tensor(weight[i], dtype=torch.float).detach(),
-                           #graph_size = torch.tensor(graph_size, dtype=torch.float).detach(),
-                           #pt= float(jet_pts[i]) ,#torch.tensor(jet_pts[i] , dtype=torch.float).detach(),
-                           mass= float(jet_ms[i]) ,#torch.tensor(jet_ms[i], dtype=torch.float).detach(),
-                           y= float(label_out) ))#torch.tensor(label_out, dtype=torch.float).detach() ))
+
+        graph = Data(
+            x = vec.detach(),
+            #edge_index = torch.tensor(edge, dtype=torch.int64).detach(),
+            edge_index = edge.detach(),
+            #Ntrk=torch.tensor(Ntracks[i], dtype=torch.int).detach(),
+            Ntrk = torch.tensor(Ntrk, dtype=torch.float).detach(),
+            weights = torch.tensor(weight[i], dtype=torch.float).detach(),
+            #graph_size = torch.tensor(graph_size, dtype=torch.float).detach(),
+            mass =  float(jet_ms[i]), #torch.tensor(jet_ms[i], dtype=torch.float).detach(),
+            y = float(label_out) #torch.tensor(label_out, dtype=torch.float).detach() ))
+        )
+        if include_pt:
+            graph["pt"] = float(jet_pts[i]) #torch.tensor(jet_pts[i] , dtype=torch.float).detach()
+
+        graphs.append(graph)
         '''
         graphs.append(Data(x=torch.tensor(vec, dtype=torch.float).detach(),
                            edge_index = torch.tensor(edge, dtype=torch.int64).detach(),

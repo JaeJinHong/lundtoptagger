@@ -38,6 +38,10 @@ def main():
         print("Loading file", file_path)
         dataset += torch.load(file_path)
 
+    for graph in dataset:
+        if hasattr(graph, 'pt'):
+            delattr(graph, 'pt')
+
     # check the number of signal and background jets
     labels = [data.y for data in dataset]
     num_signal = labels.count(1)

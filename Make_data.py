@@ -66,7 +66,8 @@ def main():
                 parent1, parent2, flat_weights, truth_labels,
                 N_tracks, jet_pts, jet_ms, kT_selection,
                 primary_Lund_only_one_arr,
-                config_signal[signal]["signal_jet_truth_label"]
+                config_signal[signal]["signal_jet_truth_label"],
+                include_pt=config["include_pt"]
             )
 
             gc.collect()
@@ -75,7 +76,10 @@ def main():
     delta_t_fileax = timedelta(seconds=round(time.time() - t_start))
     print(f"Time taken (hh:mm:ss): {delta_t_fileax}")
 
-    out_file_name = config["out_file_name"].format(kT_cut=kT_selection)
+    out_file_name = config["out_file_name"].format(
+        kT_cut = kT_selection,
+        include_pt = "_with_pt" if config["include_pt"] else ""
+    )
     out_dir = config["out_dir"]
     os.makedirs(out_dir, exist_ok=True)
     output_path_graphs = os.path.join(out_dir, out_file_name)

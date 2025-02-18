@@ -11,7 +11,14 @@ n_files: null   # choose a small number of files in case you don't want to do fu
 #path_to_save: "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/"
 # path_to_save: "/data/ravinascos/LundNet/2024_graphs/"
 out_dir: "/eos/home-t/tmlinare/Lund/Lund_tagging/lundtoptagger_data/"
-out_file_name: "graphs_NewDataset_TEST_ln_kT_cut_{kT_cut}"   # if {kT_cut} is present in the file name, it will be replaced by the value of kT_cut (by None if kT_cut is null)
+
+# The output file name can contain some placeholders inside curly brackets. They will be replaced by the corresponding values:
+# {kT_cut} -> value of kT_cut (None if kT_cut is null)
+# {include_pt} -> "_with_pt" if include_pt is True, "" if include_pt is False
+out_file_name: "graphs_NewDataset_TEST_ln_kT_cut_{kT_cut}{include_pt}"
 #"LundNet_R22_TRAIN_01QCD_05Z_Primary_FIX_ExtraNode_kt_.0"
 # LundNet_R22_TRAIN_01QCD_05Z_Primary_ExtraNode_NormalSignalWeights
-kT_cut: 0 # actually a cut in ln(kT), set to null to not apply any cut
+
+# selection and output variables to include
+kT_cut: 0         # actually a cut in ln(kT), set to null to not apply any cut
+include_pt: False # choose whether to include jet pT as an attribute of the graphs - this is not needed for training but can be useful for evaluation
