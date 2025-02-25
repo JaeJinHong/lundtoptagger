@@ -24,6 +24,14 @@ source /data/jmsardain/LJPTagger/JetTagging/miniconda/bin/activate
 conda activate rootenv
 ```
 
+## Data preparation
+
+To create graphs for training from ROOT files and save them to a file, run
+
+```bash
+python Make_data.py configs/config_make_data.yaml
+```
+
 ## Training and testing
 
 For the training, the main changes one should do are in the configuration file: `config_ONLY_TRAIN.yaml`.
