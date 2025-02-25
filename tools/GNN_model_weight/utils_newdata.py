@@ -55,8 +55,73 @@ def GetPtWeight( dsid , pt, SF):
             weight_out.append( (flatweights_sig[0][pt_bin])*1 )
     return np.array(weight_out)
 
-def GetPtWeight_2( dsid , pt, SF):
+def GetPtWeight_all_MC( dsid , pt, SF, Pythia_or_All):
+    ## PT histograms of all qcd and top jets in dataset
+    filename1 = config[signal]["pt_hist_file_bkg"]
+    filename2 = config[signal]["pt_hist_file_signal"]
+    if Pythia_or_All == 2:
+        filename_Phythia = ""
+        filename_Sherpa_L = ""
+        filename_Sherpa_C = ""
+        filename_Herwig_d = ""
+        
+    ### this method only works if each root files doesn't contain more than one MC.
+    if dsid[0] >= 364700 and dsid[0] <= 364712:
+        filename1 = filename_Phythia
+    elif dsid[0] >= 364686 and dsid[0] <= 364694 :
+        filename1 = filename_Sherpa_L
+    elif dsid[0] >= 364677 and dsid[0] <= 364685 :
+        filename1 = filename_Sherpa_C
+    elif dsid[0] >= 364902 and dsid[0] <= 364909 :
+        filename1 = filename_Herwig_d
+    
+    #filename_another = 
+    weights_file1 = uproot.open(filename1)
+    flatweights_bg = weights_file1["pt"].to_numpy()
+    weights_file2 = uproot.open(filename2)
+    flatweights_sig = weights_file2["pt"].to_numpy()
+    
+    lenght_sig = len(flatweights_sig[0])
+    lenght_bkg = len(flatweights_bg[0])
 
+    #print("lenght_sig:", lenght_sig, "  lenght_bkg:", lenght_bkg)
+    
+    sig_bkg_proportion = 5  ## if is taked 5% of signal and 1% of qcd for training then sig_bkg_proportion=5
+    scale_factor = (lenght_bkg/lenght_sig) / sig_bkg_proportion #1
+    #print("scale_factor", scale_factor)
+    
+    weight_out = []
+    Inv_hist_bg = []#flatweights_bg[0]
+    Inv_hist_sig = []#flatweights_sig[0]
+    
+    ## it's time to calcuate the 1/hist
+    for i in range (0,lenght_bkg):
+        if flatweights_bg[0][i]==0:
+            Inv_hist_bg.append(0)
+            continue
+        else:
+            Inv_hist_bg.append(np.sum(flatweights_bg[0]) / (lenght_bkg * flatweights_bg[0][i]))
+            
+    for i in range (0,lenght_sig):
+        if flatweights_sig[0][i]==0:
+            Inv_hist_sig.append(0)
+            continue
+        else:
+            Inv_hist_sig.append(np.sum(flatweights_sig[0]) / (lenght_sig * flatweights_sig[0][i]))
+        
+    for i in range ( 0,len(dsid) ):
+        pt_bin = int( ((pt[i]-100)/3000)*lenght_sig )
+        if pt_bin>=lenght_sig : # ==
+            pt_bin = lenght_sig-1
+        if dsid[i] ==10:#< 370000 :
+            #print("pt[i] ->", pt[i])
+            #print("bin_pt->", pt_bin)
+            weight_out.append( (Inv_hist_bg[pt_bin])*1  )
+        if dsid[i] !=10: ##events with other values than 1 and 10 must be removed in data creation
+            weight_out.append( (Inv_hist_sig[pt_bin]*scale_factor)*1 ) #*10**2 )
+    return np.array(weight_out)
+
+def GetPtWeight_2( dsid , pt, SF):
     ## PT histograms of all qcd and top jets in dataset
     filename1 = config[signal]["pt_hist_file_bkg"]
     filename2 = config[signal]["pt_hist_file_signal"]
@@ -68,15 +133,26 @@ def GetPtWeight_2( dsid , pt, SF):
     lenght_sig = len(flatweights_sig[0])
     lenght_bkg = len(flatweights_bg[0])
     #print("lenght_sig:", lenght_sig, "  lenght_bkg:", lenght_bkg)
+
+    #print("[0]",flatweights_bg[0])
+    #print("[1]",flatweights_bg[1])
+    total_jets_qcd = np.sum(flatweights_bg[0])
+    total_jets_signal = np.sum(flatweights_sig[0])
     
-    sig_bkg_proportion = 5  ## if is taked 5% of signal and 1% of qcd for training then sig_bkg_proportion=5
+    #print("total_jets_qcd", total_jets_qcd)
+    #print("total_jets_signal", total_jets_signal)
+    print("proportion QCD/SIGNAL", total_jets_qcd / total_jets_signal)
+    #ERRORRR
+    QCD_SIGNAL_proportion = total_jets_qcd / total_jets_signal
+    sig_bkg_proportion = 5 #5  ## if is taked 5% of signal and 1% of qcd for training then sig_bkg_proportion=5
     scale_factor = (lenght_bkg/lenght_sig) / sig_bkg_proportion #1
+    scale_factor = scale_factor * QCD_SIGNAL_proportion
     #print("scale_factor", scale_factor)
+    print(scale_factor)
     
     weight_out = []
     Inv_hist_bg = []#flatweights_bg[0]
     Inv_hist_sig = []#flatweights_sig[0]
-    
     ## it's time to calcuate the 1/hist
     for i in range (0,lenght_bkg):
         if flatweights_bg[0][i]==0:
@@ -161,8 +237,17 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, e
         if label[i] == signal_jet_truth_label:
             label_out = 1
 
-        if jet_pts[i] > 3200: continue
-        if jet_pts[i] < 350: continue # . ./run.txt
+        if signal_jet_truth_label == 2 : # W tagging selection for all jets
+            if jet_pts[i] < 200: continue 
+            if jet_pts[i] > 3100: continue # not really necessary, in testing jets with pt>3k are not included
+            if jet_ms[i] < 40: continue
+            if jet_ms[i] > 300: continue # I prefer avoid great masses in order to obtain stability in ANN
+
+        if signal_jet_truth_label == 1 : # Top tagging selection for all jets
+            if jet_pts[i] < 350: continue 
+            if jet_pts[i] > 3100: continue # not really necessary, in testing jets with pt>3k are not included
+            if jet_ms[i] > 40: continue
+
         
         z_out = ak.to_numpy(z[i])
         k_out = ak.to_numpy(k[i])
