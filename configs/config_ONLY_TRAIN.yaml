@@ -2,15 +2,31 @@ data:
   path_to_trainfiles: "/data/ravinascos/LundNet/2024_graphs/graphs_NewDataset_LundNet_R22_No_ln_kT_Cut_LRJ_NewData_Primary"
   path_to_save: "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/"
   model_name: "LundNet_R22_ExtraNode_No_ln_kT_Cut_LRJ_NewData_Primary"
+  adv_model_name: "adversarial_MODEL_"
 
 architecture:
   batch_size: 4500 #2600
   test_size: 0.1
-  n_epochs: 35
   learning_rate: 0.0004
-  choose_model: LundNet ## LundNet, GATNet, GINNet, EdgeGinNet, PNANet
   save_every_epoch: True
+
+  # classifier
+  n_epochs: 35
+  choose_model: LundNet ## LundNet, GATNet, GINNet, EdgeGinNet, PNANet
+
+  # adversarial
+  num_gaussians: 20
+  n_epochs_adv: 20
+
+  # combined
+  do_combined_training: False  # can be overriden by command line argument
+  lambda_parameter: 25
+  loss_parameter: 1
+  loss_weights: [1,1]
+  n_epochs_common: 200
+
 
 retrain:
   flag: False
   path_to_ckpt: "/sps/atlas/k/khandoga/TrainGNN/Models/LundNet_ufob_e012_0.12481.pt"
+# 
