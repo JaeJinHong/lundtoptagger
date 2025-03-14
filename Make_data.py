@@ -83,7 +83,10 @@ def main():
         kT_cut = kT_selection,
         include_pt = "_with_pt" if config["include_pt"] else ""
     )
-    out_dir = config["out_dir"]
+    out_dir = config["out_dir"].format(
+        kT_cut = kT_selection,
+        include_pt = "_with_pt" if config["include_pt"] else ""
+    )
     os.makedirs(out_dir, exist_ok=True)
     output_path_graphs = os.path.join(out_dir, out_file_name)
 
