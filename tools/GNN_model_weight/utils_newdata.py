@@ -112,7 +112,7 @@ def to_categorical(y, num_classes=None, dtype='float32'):
 
 def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
     graphs: list[Data],
-    z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms,
+    z, k, d, edge1, edge2, weight, label, dsids, mcEventWeights, Ntracks, jet_pts, jet_ms,
     kT_selection: Union[float, None],
     primary_Lund_only_one_arr: list,
     signal_jet_truth_label: int,
@@ -543,6 +543,8 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
             weights = torch.tensor(weight[i], dtype=torch.float).detach(),
             #graph_size = torch.tensor(graph_size, dtype=torch.float).detach(),
             mass =  float(jet_ms[i]), #torch.tensor(jet_ms[i], dtype=torch.float).detach(),
+            dsid = int(dsids[i]),
+            mcEventWeight = float(mcEventWeights[i]),
             y = float(label_out) #torch.tensor(label_out, dtype=torch.float).detach() ))
         )
         if include_pt:

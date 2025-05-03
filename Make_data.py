@@ -7,6 +7,7 @@ import gc
 
 import uproot
 import awkward as ak
+import numpy as np
 import torch
 
 from tools.GNN_model_weight.utils_newdata import load_yaml, GetPtWeight_2, create_train_dataset_fulld_new_Ntrk_pt_weight_file
@@ -41,11 +42,19 @@ def main():
         with uproot.open(file) as infile:
             tree = infile[intreename]
 
-            dsid_test = tree["dsid"].array(library="np")[0]      # check the first DSID, they should all be the same
+            dsids = tree["dsid"].array(library="np")
+            dsid_test = dsids[0]                                 # check the first DSID, they should all be the same
             if dsid_test in config_signal[signal]["skip_dsids"]: # don't lose time with jets that don't pass pt cut or wrong signal sample
                 continue
 
-            truth_labels = ak.flatten(tree["LRJ_truthLabel"].array(library="ak"))
+            truth_labels_unflattened = tree["LRJ_truthLabel"].array(library="ak")
+            truth_labels = ak.flatten(truth_labels_unflattened)
+
+            numbers_of_jets_per_event = ak.num(truth_labels_unflattened)
+
+            mcEventWeights = tree["mcEventWeight"].array(library="np")
+            mcEventWeights = np.repeat(mcEventWeights, numbers_of_jets_per_event) # expand out the array so it has same length as flattened array
+            dsids = np.repeat(dsids, numbers_of_jets_per_event)            # TODO: can I do this without numpy? expand out the array so it has same length as flattened array
 
             print(f"length dataset: {len(dataset)}, file number: {file_number}/{n_files}")
             parent1 = ak.flatten(tree["jetLundIDParent1"].array(library="ak"))
@@ -66,7 +75,7 @@ def main():
             print("Creating PyTorch graphs:")
             dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file(
                 dataset, all_lund_zs, all_lund_kts, all_lund_drs,
-                parent1, parent2, flat_weights, truth_labels,
+                parent1, parent2, flat_weights, truth_labels, dsids, mcEventWeights,
                 N_tracks, jet_pts, jet_ms, kT_selection,
                 primary_Lund_only_one_arr,
                 config_signal[signal]["signal_jet_truth_label"],
