@@ -116,6 +116,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
     kT_selection: Union[float, None],
     primary_Lund_only_one_arr: list,
     signal_jet_truth_label: int,
+    pt_range: tuple = (350, 3200),
     include_pt: bool = False
 ) -> list[Data]:
     """
@@ -136,6 +137,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         kT_selection (float | None): kT selection threshold.
         primary_Lund_only_one_arr (list): List to keep track of how many jets have only 1 splitting.
         signal_jet_truth_label (int): Truth label for signal jets.
+        pt_range (tuple): Minimum and maximum jet pT values for selected jets, in GeV.
         include_pt (bool): Whether to include pT as a graph attribute.
 
     Returns:
@@ -171,8 +173,8 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         if label[i] == signal_jet_truth_label:
             label_out = 1
 
-        if jet_pts[i] > 3200: continue
-        if jet_pts[i] < 350: continue # . ./run.txt
+        if not (pt_range[0] < jet_pts[i] < pt_range[1]):
+            continue
         
         z_out = ak.to_numpy(z[i])
         k_out = ak.to_numpy(k[i])
