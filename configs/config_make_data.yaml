@@ -1,12 +1,12 @@
 #path_to_trainfiles: "/data/ravinascos/Lund_Plane_2024_graphs/TRAIN_DUMMY_01QCD_05Z/*.root" #TRAIN_DUMMY_fewEvents # TRAIN_DUMMY_01QCD_05Z
 # path_to_trainfiles: '/data/ravinascos/Lund_Plane_2024_graphs/TRAIN_DUMMY_02QCD_1Z/*.root'
 # path_to_trainfiles: '/eos/home-t/tmlinare/Lund/jetetmiss/JETMDataMC/jpierre/run/submitDir-2024-12-17-1734-0b3d flat mass W local (first success)/data-ANALYSIS/*.root'
-# path_to_trainfiles: '/eos/home-t/tmlinare/Lund/jetetmiss/JETMDataMC/jpierre/run/submitDir-2025-01-07-0643-4c75 files 1-2/data-ANALYSIS/mc20_13TeV.802017.Py8EG_A14NNPDF23LO_WprimeWZ_flatpT_wideWmass.deriv.DAOD_JETM2.e8482_s3797_r13145_p5548_files_1-2.root'
+path_to_trainfiles: '/eos/home-t/tmlinare/Lund/jetetmiss/JETMDataMC/jpierre/run/submitDir-2025-01-07-0643-4c75 files 1-2/data-ANALYSIS/mc20_13TeV.802017.Py8EG_A14NNPDF23LO_WprimeWZ_flatpT_wideWmass.deriv.DAOD_JETM2.e8482_s3797_r13145_p5548_files_1-2.root'
 # path_to_trainfiles: '/eos/user/r/ravinasc/R_22_Samples/05_QCD/*.root'
 # path_to_trainfiles: '/eos/home-t/tmlinare/Lund/Lund_tagging/lundtoptagger_data/QCD_sample/QCD_2percent4.root'
 # path_to_trainfiles: '/eos/home-t/tmlinare/Lund/jetetmiss/JETMDataMC/jpierre/run/submitDir-2025-01-17-1314-99e4 W files 1-2 (not flat mass)/data-ANALYSIS/mc20_13TeV.801859.Py8EG_A14NNPDF23LO_WprimeWZ_flatpT.deriv.DAOD_JETM2.e8482_s3681_r13145_p5548_files_1-2.root'
 # path_to_trainfiles: '/eos/home-t/tmlinare/Lund/jetetmiss/JETMDataMC/jpierre/run/submitDir-2025-01-17-1507-b394 W files 3-4 (not flat mass)/data-ANALYSIS/mc20_13TeV.801859.Py8EG_A14NNPDF23LO_WprimeWZ_flatpT.deriv.DAOD_JETM2.e8482_s3681_r13145_p5548_files_3-4.root'
-path_to_trainfiles: '/eos/home-t/tmlinare/Lund/Lund_tagging/lundtoptagger_data/QCD_sample/QCD_2percent4_test.root'
+# path_to_trainfiles: '/eos/home-t/tmlinare/Lund/Lund_tagging/lundtoptagger_data/QCD_sample/QCD_2percent4_test.root'
 n_files: null   # choose a small number of files in case you don't want to do full training; set to null to use all files
 #path_to_save: "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/"
 # path_to_save: "/data/ravinascos/LundNet/2024_graphs/"
@@ -14,10 +14,12 @@ n_files: null   # choose a small number of files in case you don't want to do fu
 # The output directory and file name can contain some placeholders inside curly brackets. They will be replaced by the corresponding values:
 # {kT_cut} -> value of kT_cut (None if kT_cut is null)
 # {include_pt} -> "_with_pt" if include_pt is True, "" if include_pt is False
+# {test_frac} -> f"_{test_frac*100}percent" if test_frac is not null, "" if test_frac is null
 out_dir: "/eos/home-t/tmlinare/Lund/Lund_tagging/lundtoptagger_data/graphs/"
-out_file_name: "graphs_NewDataset_TEST_ln_kT_cut_{kT_cut}{include_pt}"
+out_file_name: "graphs_Wwidemass_1-2{test_frac}_ln_kT_cut_{kT_cut}{include_pt}_200_with_dsids_mcweights_new_pt_weights_2025-03-07"
 #"LundNet_R22_TRAIN_01QCD_05Z_Primary_FIX_ExtraNode_kt_.0"
 # LundNet_R22_TRAIN_01QCD_05Z_Primary_ExtraNode_NormalSignalWeights
+test_frac: null   # fraction of events jets to save into a separate file for testing, can be null to not save a test file
 
 # selection and output variables to include
 kT_cut: 0         # actually a cut in ln(kT), set to null to not apply any cut

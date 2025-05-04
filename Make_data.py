@@ -88,15 +88,38 @@ def main():
     delta_t_fileax = timedelta(seconds=round(time.time() - t_start))
     print(f"Time taken (hh:mm:ss): {delta_t_fileax}")
 
-    out_file_name = config["out_file_name"].format(
-        kT_cut = kT_selection,
-        include_pt = "_with_pt" if config["include_pt"] else ""
-    )
+    out_file_name = config["out_file_name"]
     out_dir = config["out_dir"].format(
         kT_cut = kT_selection,
         include_pt = "_with_pt" if config["include_pt"] else ""
     )
     os.makedirs(out_dir, exist_ok=True)
+
+    test_frac = config["test_frac"]
+    if test_frac is not None:
+        print("Splitting dataset into train and test sets")
+        test_num = int(len(dataset) * test_frac)
+        indices = np.arange(len(dataset))
+        np.random.shuffle(indices)
+        dataset = [dataset[i] for i in indices]
+        dataset_test = dataset[:test_num]
+        dataset = dataset[test_num:]
+
+        print(f"_{test_frac*100}percent")
+        out_file_name_test = out_file_name.format(
+            kT_cut = kT_selection,
+            include_pt = "_with_pt" if config["include_pt"] else "",
+            test_frac = f"_{int(test_frac*100)}percent"
+        )
+        output_path_graphs_test = os.path.join(out_dir, out_file_name_test)
+        torch.save(dataset_test, output_path_graphs_test)
+        print("Test dataset saved to:", output_path_graphs_test)
+
+    out_file_name = out_file_name.format(
+        kT_cut = kT_selection,
+        include_pt = "_with_pt" if config["include_pt"] else "",
+        test_frac = f"_{int(1-test_frac*100)}percent" if test_frac is not None else ""
+    )
     output_path_graphs = os.path.join(out_dir, out_file_name)
 
     torch.save(dataset, output_path_graphs)
