@@ -3,6 +3,7 @@ import csv
 from datetime import datetime
 import os
 
+import numpy as np
 import torch
 from torch_geometric.utils import degree
 from torch_geometric.data import DataLoader
@@ -43,11 +44,23 @@ def main():
             delattr(graph, 'pt')
 
     # check the number of signal and background jets
-    labels = [data.y for data in dataset]
-    num_signal = labels.count(1)
-    num_background = labels.count(0)
+    labels = np.array([jet_graph.y for jet_graph in dataset])
+    num_signal = (labels==1).sum()
+    num_background = (labels==0).sum()
     print("Signal count:", num_signal)
     print("Background count:", num_background)
+
+    weights = np.array([jet_graph.weights for jet_graph in dataset])
+    weights_signal_total = weights[labels==1].sum()
+    weights_background_total = weights[labels==0].sum()
+    print("Signal total weight:", weights_signal_total)
+    print("Background total weight:", weights_background_total)
+    scale_factor = weights_signal_total / weights_background_total
+    print("Scale factor:", scale_factor)
+
+    for jet_graph in dataset:
+        if jet_graph.y == 0:
+            jet_graph.weights *= scale_factor
 
     ## define architecture
     batch_size = config['architecture']['batch_size']
