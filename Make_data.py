@@ -79,7 +79,8 @@ def main():
                 N_tracks, jet_pts, jet_ms, kT_selection,
                 primary_Lund_only_one_arr,
                 config_signal[signal]["signal_jet_truth_label"],
-                pt_range=config["pt_range"],
+                pt_range=config_signal[signal]["pt_range"],
+                mass_range=config_signal[signal]["mass_range"],
                 include_pt=config["include_pt"]
             )
 

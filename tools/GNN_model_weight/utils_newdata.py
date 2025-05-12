@@ -173,6 +173,8 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
     primary_Lund_only_one_arr: list,
     signal_jet_truth_label: int,
     pt_range: tuple = (350, 3200),
+    mass_range: tuple = (0, float('inf')),
+    min_splits: int = 3,
     include_pt: bool = False
 ) -> list[Data]:
     """
@@ -194,6 +196,8 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         primary_Lund_only_one_arr (list): List to keep track of how many jets have only 1 splitting.
         signal_jet_truth_label (int): Truth label for signal jets.
         pt_range (tuple): Minimum and maximum jet pT values for selected jets, in GeV.
+        mass_range (tuple): Minimum and maximum jet mass values for selected jets, in GeV.
+        min_splits (int): Minimum number of splittings, or emissions, for a jet to be selected.
         include_pt (bool): Whether to include pT as a graph attribute.
 
     Returns:
@@ -214,10 +218,15 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         jet_pts_np = jet_pts_np.astype(float)
         jet_ms_np = jet_ms_np.astype(float)
         '''
-        # skip jets with less than 3 splittings
-        if len(z[i])<3: 
+
+        # skip jets with mass or pT outside the specified ranges
+        # or with less than the specified number of splittings
+        if not (pt_range[0] < jet_pts[i] < pt_range[1]):
             continue
-        #print(label[i])
+        if not (mass_range[0] < jet_ms[i] < mass_range[1]):
+            continue
+        if len(z[i]) < min_splits: 
+            continue
         # skip jets which are not signal (1 for top and 2 for W) or background (10)
         if (label[i]!=signal_jet_truth_label) and (label[i]!=10):
             continue
@@ -229,16 +238,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         if label[i] == signal_jet_truth_label:
             label_out = 1
 
-        if not (pt_range[0] < jet_pts[i] < pt_range[1]):
-            continue
-        if signal_jet_truth_label == 2 : # W tagging selection for all jets
-            if jet_ms[i] < 40: continue
-            if jet_ms[i] > 300: continue # I prefer avoid great masses in order to obtain stability in ANN
-
-        if signal_jet_truth_label == 1 : # Top tagging selection for all jets
-            if jet_ms[i] > 40: continue
-
-        
+        # convert LJP variables to appropriate format
         z_out = ak.to_numpy(z[i])
         k_out = ak.to_numpy(k[i])
         d_out = ak.to_numpy(d[i])
