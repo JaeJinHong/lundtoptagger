@@ -1,32 +1,15 @@
-import awkward
-import os.path as osp
 import os
-import glob
-import torch
-import awkward as ak
-import time
+from typing import Union
+
 import yaml
 import uproot
-import uproot3
+import awkward as ak
 import numpy as np
+from tqdm import trange
+import torch
 import torch.nn.functional as F
 import torch.nn as nn
-#from torch_geometric.datasets import MNISTSuperpixels
-from torch_geometric.data import DataListLoader, DataLoader
-import torch_geometric.transforms as T
-from torch_geometric.nn import SplineConv, global_mean_pool, DataParallel, EdgeConv, GATConv, GINConv, PNAConv
 from torch_geometric.data import Data
-import scipy.sparse as ss
-from datetime import datetime, timedelta
-from torch_geometric.utils import degree
-from scipy.stats import entropy
-import math
-import networkx as nx
-from sklearn.utils import shuffle
-from sklearn.model_selection import train_test_split
-import pandas as pd
-from ..GNN_model_weight.models import mdn_loss, mdn_loss_new
-
 
 with open("configs/config_signal.yaml") as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
@@ -55,7 +38,7 @@ def GetPtWeight( dsid , pt, SF):
             weight_out.append( (flatweights_sig[0][pt_bin])*1 )
     return np.array(weight_out)
 
-def GetPtWeight_all_MC( dsid , dsid_input, pt, SF, Pythia_or_All=False ):
+def GetPtWeight_all_MC(truth_labels, dsid_input, pts, SF, Pythia_or_All=False ):
     ## PT histograms of all qcd and top jets in dataset
     filename1 = config[signal]["pt_hist_file_bkg"]
     filename2 = config[signal]["pt_hist_file_signal"]
@@ -69,30 +52,30 @@ def GetPtWeight_all_MC( dsid , dsid_input, pt, SF, Pythia_or_All=False ):
     filename_Herwig_d = common_path+"qcdHD.root"
     #"/data/ravinascos/LundNet/histosR_22_Jean/plotting/ALL_hist/qcdHD.root"#common_path+""
     if Pythia_or_All:
-        print("dsid",dsid_input[0])
+        print("dsid",dsid_input)
         ### this method only works if each root files doesn't contain more than one MC.
-        if dsid_input[0] >= 364700 and dsid_input[0] <= 364712:
+        if dsid_input >= 364700 and dsid_input <= 364712:
             filename1 = filename_Phythia
             weights_file1 = uproot.open(filename1)
             flatweights_bg = weights_file1["pt"].to_numpy()
             print("Sample: Pythia")
-        elif dsid_input[0] >= 364686 and dsid_input[0] <= 364694 :
+        elif dsid_input >= 364686 and dsid_input <= 364694 :
             filename1 = filename_Sherpa_L
             weights_file1 = uproot.open(filename1)
             flatweights_bg = weights_file1["pt"].to_numpy()
             print("Sample: Sherpa_L")
-        elif dsid_input[0] >= 364677 and dsid_input[0] <= 364685 :
+        elif dsid_input >= 364677 and dsid_input <= 364685 :
             filename1 = filename_Sherpa_C
             weights_file1 = uproot.open(filename1)
             flatweights_bg = weights_file1["pt"].to_numpy()
             print("Sample: Sherpa_C")
-        elif dsid_input[0] >= 364902 and dsid_input[0] <= 364909 :
+        elif dsid_input >= 364902 and dsid_input <= 364909 :
             filename1 = filename_Herwig_d
             weights_file1 = uproot.open(filename1)
             flatweights_bg = weights_file1["pt"].to_numpy()
             print("Sample: Herwig_d")
         #'''
-        elif dsid_input[0] == 801661:
+        elif dsid_input == 801661:
             filename1 = filename_Phythia
             weights_file1 = uproot.open(filename1)
             flatweights_bg = weights_file1["pt"].to_numpy()
@@ -147,16 +130,16 @@ def GetPtWeight_all_MC( dsid , dsid_input, pt, SF, Pythia_or_All=False ):
             continue
         else:
             Inv_hist_sig.append(np.sum(flatweights_sig[0]) / (lenght_sig * flatweights_sig[0][i]))
-        
-    for i in range ( 0,len(dsid) ):
-        pt_bin = int( ((pt[i]-100)/3000)*lenght_sig )
+
+    for i in trange(len(truth_labels)):
+        pt_bin = int( ((pts[i]-100)/3000)*lenght_sig )
         if pt_bin>=lenght_sig : # ==
             pt_bin = lenght_sig-1
-        if dsid[i] ==10:#< 370000 :
-            #print("pt[i] ->", pt[i])
+        if truth_labels[i]==10: # background could also be identified by DSIS, which would be < 370000
+            #print("pts[i] ->", pt[i])
             #print("bin_pt->", pt_bin)
             weight_out.append( (Inv_hist_bg[pt_bin])*1  )
-        if dsid[i] !=10: ##events with other values than 1 and 10 must be removed in data creation
+        if truth_labels[i]!=10: # this could also contain some non-signal jets which must be removed when creating the training dataset
             weight_out.append( (Inv_hist_sig[pt_bin]*scale_factor)*1 ) #*10**2 )
     return np.array(weight_out)
 
@@ -183,16 +166,46 @@ def to_categorical(y, num_classes=None, dtype='float32'):
     return categorical
 
 
-#def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms, kT_selection):
-def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms, kT_selection, primary_Lund_only_one_arr, signal_jet_truth_label):
+def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
+    graphs: list[Data],
+    z, k, d, edge1, edge2, weight, label, dsids, mcEventWeights, Ntracks, jet_pts, jet_ms,
+    kT_selection: Union[float, None],
+    primary_Lund_only_one_arr: list,
+    signal_jet_truth_label: int,
+    pt_range: tuple = (350, 3200),
+    include_pt: bool = False
+) -> list[Data]:
+    """
+    Create a list of graphs for tagging.
 
+    Args:
+        graphs (list[Data]): List to which the generated torch_geometric.data.Data objects will be appended.
+        z (array): 2D array, with an array of z values for each jet.
+        k (array): 2D array, with an array of kT values for each jet.
+        d (array): 2D array, with an array of ΔR values for each jet.
+        edge1 (array): Array of edge1 values.
+        edge2 (array): Array of edge2 values.
+        weight (array): Array of jet weights.
+        label (array): Array of jet truth labels.
+        Ntracks (array): Array of Ntracks values.
+        jet_pts (array): Array of jet pT values.
+        jet_ms (array): Array of jet mass values.
+        kT_selection (float | None): kT selection threshold.
+        primary_Lund_only_one_arr (list): List to keep track of how many jets have only 1 splitting.
+        signal_jet_truth_label (int): Truth label for signal jets.
+        pt_range (tuple): Minimum and maximum jet pT values for selected jets, in GeV.
+        include_pt (bool): Whether to include pT as a graph attribute.
+
+    Returns:
+        list[Data]: List of torch_geometric.data.Data objects.
+    """
     test_bool = 1
     buildID_from_graphs = 0
     Primary_Lund_Plane = 0
     extra_node = 0
 
     # loop over jets
-    for i in range(len(z)):  
+    for i in trange(len(z)):  
         '''
         label_np = ak.to_numpy(label[i])
         jet_pts_np = ak.to_numpy(jet_pts[i])
@@ -216,15 +229,13 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, e
         if label[i] == signal_jet_truth_label:
             label_out = 1
 
+        if not (pt_range[0] < jet_pts[i] < pt_range[1]):
+            continue
         if signal_jet_truth_label == 2 : # W tagging selection for all jets
-            if jet_pts[i] < 200: continue 
-            if jet_pts[i] > 3100: continue # not really necessary, in testing jets with pt>3k are not included
             if jet_ms[i] < 40: continue
             if jet_ms[i] > 300: continue # I prefer avoid great masses in order to obtain stability in ANN
 
         if signal_jet_truth_label == 1 : # Top tagging selection for all jets
-            if jet_pts[i] < 350: continue 
-            if jet_pts[i] > 3100: continue # not really necessary, in testing jets with pt>3k are not included
             if jet_ms[i] > 40: continue
 
         
@@ -327,7 +338,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, e
         index_count = []
         selected_nodes = []
         index_count_out = []
-        kT_Cut = kT_selection # 0.0 , 0.4 0.9, 2, 2.8 
+        kT_Cut = kT_selection if kT_selection is not None else -np.inf # 0.0 , 0.4 0.9, 2, 2.8 
         nodes_pass_KT = []
         node_kt_step = 0 ## used to renamed edges properly ()
         node_index = 0
@@ -525,7 +536,6 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, e
         z_out = z_out.astype(float)
         k_out = k_out.astype(float)
         d_out = d_out.astype(float)
-        Ntrk = Ntrk.astype(float)
 
         #edge = torch.tensor(np.array([edge1[i], edge2[i]]) , dtype=torch.long)
         edge_ID1 = np.concatenate((index_count_out, selected_nodes))
@@ -588,17 +598,24 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, e
         #print("edge",edge)
         #print("edge1",edge[0])
         #print("edge2",edge[1])
-        
-        graphs.append(Data(x= vec.detach() ,
-                           #edge_index = torch.tensor(edge, dtype=torch.int64).detach(),
-                           edge_index = edge.detach() ,
-                           #Ntrk=torch.tensor(Ntracks[i], dtype=torch.int).detach(),
-                            Ntrk=torch.tensor(Ntrk, dtype=torch.float).detach(),
-                           weights= torch.tensor(weight[i], dtype=torch.float).detach(),
-                           #graph_size = torch.tensor(graph_size, dtype=torch.float).detach(),
-                           pt= float(jet_pts[i]) ,#torch.tensor(jet_pts[i] , dtype=torch.float).detach(),
-                           mass= float(jet_ms[i]) ,#torch.tensor(jet_ms[i], dtype=torch.float).detach(),
-                           y= float(label_out) ))#torch.tensor(label_out, dtype=torch.float).detach() ))
+
+        graph = Data(
+            x = vec.detach(),
+            #edge_index = torch.tensor(edge, dtype=torch.int64).detach(),
+            edge_index = edge.detach(),
+            #Ntrk=torch.tensor(Ntracks[i], dtype=torch.int).detach(),
+            Ntrk = torch.tensor(Ntrk, dtype=torch.float).detach(),
+            weights = torch.tensor(weight[i], dtype=torch.float).detach(),
+            #graph_size = torch.tensor(graph_size, dtype=torch.float).detach(),
+            mass =  float(jet_ms[i]), #torch.tensor(jet_ms[i], dtype=torch.float).detach(),
+            dsid = int(dsids[i]),
+            mcEventWeight = float(mcEventWeights[i]),
+            y = float(label_out) #torch.tensor(label_out, dtype=torch.float).detach() ))
+        )
+        if include_pt:
+            graph["pt"] = float(jet_pts[i]) #torch.tensor(jet_pts[i] , dtype=torch.float).detach()
+
+        graphs.append(graph)
         '''
         graphs.append(Data(x=torch.tensor(vec, dtype=torch.float).detach(),
                            edge_index = torch.tensor(edge, dtype=torch.int64).detach(),

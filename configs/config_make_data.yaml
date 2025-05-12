@@ -1,13 +1,19 @@
-data:
-  #path_to_trainfiles: "/data/ravinascos/Lund_Plane_2024_graphs/TRAIN_DUMMY_01QCD_05Z/*.root" #TRAIN_DUMMY_fewEvents # TRAIN_DUMMY_01QCD_05Z
-  path_to_trainfiles: '/data/ravinascos/Lund_Plane_2024_graphs/TRAIN_DUMMY_02QCD_1Z/*.root'
-  #path_to_save: "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/"
-  path_to_save: "/data/ravinascos/LundNet/2024_graphs/"
-  model_name: "TEST_"
-  #"LundNet_R22_TRAIN_01QCD_05Z_Primary_FIX_ExtraNode_kt_.0"
-# LundNet_R22_TRAIN_01QCD_05Z_Primary_ExtraNode_NormalSignalWeights
+#path_to_trainfiles: "/data/ravinascos/Lund_Plane_2024_graphs/TRAIN_DUMMY_01QCD_05Z/*.root" #TRAIN_DUMMY_fewEvents # TRAIN_DUMMY_01QCD_05Z
+path_to_trainfiles: '/data/ravinascos/Lund_Plane_2024_graphs/TRAIN_DUMMY_02QCD_1Z/*.root'
+# path_to_trainfiles: '/eos/user/r/ravinasc/R_22_Samples/05_QCD/*.root'
+n_files: null   # choose a small number of files in case you don't want to do full training; set to null to use all files
 
-architecture:
-  test_size: 0.2
-  kT_cut: 0 ## indeed this is a cut in ln(kT)
-  choose_model: LundNet ## LundNet, GATNet, GINNet, EdgeGinNet, PNANet
+# The output directory and file name can contain some placeholders inside curly brackets. They will be replaced by the corresponding values:
+# {kT_cut} -> value of kT_cut (None if kT_cut is null)
+# {include_pt} -> "_with_pt" if include_pt is True, "" if include_pt is False
+# {test_frac} -> f"_{test_frac*100}percent" if test_frac is not null, "" if test_frac is null
+# out_dir: "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/"
+out_dir: "/data/ravinascos/LundNet/2024_graphs/"
+out_file_name: "graphs_QCD{test_frac}_ln_kT_cut_{kT_cut}{include_pt}"
+#"LundNet_R22_TRAIN_01QCD_05Z_Primary_FIX_ExtraNode_kt_.0"
+# LundNet_R22_TRAIN_01QCD_05Z_Primary_ExtraNode_NormalSignalWeights
+test_frac: null   # fraction of events jets to save into a separate file for testing, can be null to not save a test file
+
+# selection and output variables to include
+kT_cut: 0         # actually a cut in ln(kT), set to null to not apply any cut
+include_pt: False # choose whether to include jet pT as an attribute of the graphs - this is not needed for training but can be useful for evaluation

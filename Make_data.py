@@ -1,120 +1,130 @@
 import argparse
-import awkward
-import os.path as osp
 import os
 import glob
-import torch
-import awkward as ak
 import time
-import uproot
-import uproot3
-import numpy as np
-import torch.nn.functional as F
-import torch.nn as nn
-import yaml
-import scipy.sparse as ss
-from datetime import datetime, timedelta
-from torch_geometric.utils import degree
-from torch_geometric.data import DataListLoader, DataLoader
-
-from sklearn.utils import shuffle
-from sklearn.model_selection import train_test_split
-import pandas as pd
-
-from tools.GNN_model_weight.models import *
-from tools.GNN_model_weight.utils_newdata import *
-
+from datetime import timedelta
 import gc
+
+import uproot
+import awkward as ak
+import numpy as np
+import torch
+
+from tools.GNN_model_weight.utils_newdata import load_yaml, GetPtWeight_all_MC, create_train_dataset_fulld_new_Ntrk_pt_weight_file
+
 print("Libraries loaded!")
 
-
 def main():
-    
-    parser = argparse.ArgumentParser(description='Train with configurations')
+    parser = argparse.ArgumentParser(description="Prepare data for classifier input")
     add_arg = parser.add_argument
-    add_arg('config', help="job configuration")
+    add_arg("config", help="job configuration file")
     args = parser.parse_args()
     config_file = args.config
     config = load_yaml(config_file)
     config_signal = load_yaml("configs/config_signal.yaml") # TODO: make this an optional argument, but then the same file needs to be used in utils_newdata.py
     signal = config_signal["signal"]
 
-    path_to_file = config['data']['path_to_trainfiles']
-    files = glob.glob(path_to_file)
+    path_to_files = config["path_to_trainfiles"]
+    files = glob.glob(path_to_files)[:config["n_files"]]
 
-    jet_type = "Akt10UFOJet" #UFO jets
-    save_trained_model = True
     intreename = "AnalysisTree"
 
-    print("Training tagger on files", len(files))
+    n_files = len(files)
+    print(f"Processing {n_files} files")
     t_start = time.time()
 
-    file_number = 0
-    
     dataset = []
     primary_Lund_only_one_arr = []
-    
-    for file in files:
-        
-        print("Loading file",file)
+
+    for file_number, file in enumerate(files, start=1):
+        print("\nLoading file", file)
+
         with uproot.open(file) as infile:
             tree = infile[intreename]
-            file_number += 1
-            
-            dsids_test = tree["dsid"].array(library="np")
-            if dsids_test[0] in config_signal[signal]["skip_dsids"]: # don't lose time with jets that don't pass pt cut or wrong signal sample
+
+            dsids = tree["dsid"].array(library="np")
+            dsid_test = dsids[0]                                 # check the first DSID, they should all be the same
+            if dsid_test in config_signal[signal]["skip_dsids"]: # don't lose time with jets that don't pass pt cut or wrong signal sample
                 continue
 
-            dsids = ak.to_numpy(ak.flatten(tree["LRJ_truthLabel"].array(library="ak")) )
+            truth_labels_unflattened = tree["LRJ_truthLabel"].array(library="ak")
+            truth_labels = ak.flatten(truth_labels_unflattened)
 
-            print("length dataset:", len(dataset), " file number:", file_number)
-            parent1 = ak.flatten(tree["jetLundIDParent1"].array(library="ak")) 
-            parent2 = ak.flatten(tree["jetLundIDParent2"].array(library="ak")) 
-            #print(parent1[0])
-            #print(parent2[0])
-            jet_ms = ak.to_numpy(ak.flatten(tree["LRJ_mass"].array(library="ak")))
-            all_lund_zs = ak.flatten(tree["jetLundZ"].array(library="ak")) 
-            all_lund_kts = ak.flatten(tree["jetLundKt"].array(library="ak")) 
-            all_lund_drs = ak.flatten(tree["jetLundDeltaR"].array(library="ak")) 
-            N_tracks = ak.to_numpy(ak.flatten(tree["LRJ_Nconst_Charged"].array(library="ak")) )
-            #N_tracks = ak.to_numpy(ak.flatten(tree["LRJ_Ntrk500"].array(library="ak")) )
-            #N_tracks = ak.to_numpy(ak.flatten(tree["LRJ_Nconst"].array(library="ak")) )
-            #print(N_tracks)
-            jet_pts = ak.to_numpy(ak.flatten(tree["LRJ_pt"].array(library="ak")) )
+            numbers_of_jets_per_event = ak.num(truth_labels_unflattened)
 
-            #parent1 = ak.to_numpy(parent1)
-            #parent2 = ak.to_numpy(parent2)
-            #all_lund_zs = ak.to_numpy(all_lund_zs)
-            #all_lund_kts = ak.to_numpy(all_lund_kts)
-            #all_lund_drs = ak.to_numpy(all_lund_drs)
-            
-            labels = dsids
+            mcEventWeights = tree["mcEventWeight"].array(library="np")
+            mcEventWeights = np.repeat(mcEventWeights, numbers_of_jets_per_event) # expand out the array so it has same length as flattened array
+            dsids = np.repeat(dsids, numbers_of_jets_per_event)            # TODO: can I do this without numpy? expand out the array so it has same length as flattened array
 
-            #flat_weights = GetPtWeight_2( dsids, jet_pts, 5)
-            flat_weights = GetPtWeight_all_MC( labels, dsids_test,  jet_pts, 5, Pythia_or_All=True)
-            kT_selection = config['architecture']['kT_cut']
+            print(f"length dataset: {len(dataset)}, file number: {file_number}/{n_files}")
+            parent1 = ak.flatten(tree["jetLundIDParent1"].array(library="ak"))
+            parent2 = ak.flatten(tree["jetLundIDParent2"].array(library="ak"))
+            jet_ms = ak.flatten(tree["LRJ_mass"].array(library="ak"))
+            jet_pts = ak.flatten(tree["LRJ_pt"].array(library="ak"))
+            all_lund_zs = ak.flatten(tree["jetLundZ"].array(library="ak"))
+            all_lund_kts = ak.flatten(tree["jetLundKt"].array(library="ak"))
+            all_lund_drs = ak.flatten(tree["jetLundDeltaR"].array(library="ak"))
+            N_tracks = ak.flatten(tree["LRJ_Nconst_Charged"].array(library="ak"))
+            # N_tracks = ak.flatten(tree["LRJ_Ntrk500"].array(library="ak"))
+            # N_tracks = ak.flatten(tree["LRJ_Nconst"].array(library="ak"))
 
-            #dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file( dataset , all_lund_zs, all_lund_kts, all_lund_drs, parent1, parent2, flat_weights, labels ,N_tracks, jet_pts, jet_ms, kT_selection)
+            print("Calculating weights:")
+            flat_weights = GetPtWeight_all_MC(truth_labels, dsid_test, jet_pts, 5, Pythia_or_All=True)
+            kT_selection = config["kT_cut"]
+
+            print("Creating PyTorch graphs:")
             dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file(
                 dataset, all_lund_zs, all_lund_kts, all_lund_drs,
-                parent1, parent2, flat_weights, labels,
+                parent1, parent2, flat_weights, truth_labels, dsids, mcEventWeights,
                 N_tracks, jet_pts, jet_ms, kT_selection,
                 primary_Lund_only_one_arr,
-                config_signal[signal]["signal_jet_truth_label"]
+                config_signal[signal]["signal_jet_truth_label"],
+                pt_range=config["pt_range"],
+                include_pt=config["include_pt"]
             )
 
             gc.collect()
 
-    print("Dataset created!", " len():",len(dataset))
-    delta_t_fileax = time.time() - t_start
-    print("Created dataset in {:.4f} seconds.".format(delta_t_fileax))
+    print("\nDataset created! len():", len(dataset))
+    delta_t_fileax = timedelta(seconds=round(time.time() - t_start))
+    print(f"Time taken (hh:mm:ss): {delta_t_fileax}")
 
-    path_to_save = config['data']['path_to_save']
-    output_path_graphs = path_to_save + "/graphs_NewDataset_"
+    out_file_name = config["out_file_name"]
+    out_dir = config["out_dir"].format(
+        kT_cut = kT_selection,
+        include_pt = "_with_pt" if config["include_pt"] else ""
+    )
+    os.makedirs(out_dir, exist_ok=True)
 
-    torch.save(dataset, output_path_graphs + config['data']['model_name'])
+    test_frac = config["test_frac"]
+    if test_frac is not None:
+        print("Splitting dataset into train and test sets")
+        test_num = int(len(dataset) * test_frac)
+        indices = np.arange(len(dataset))
+        np.random.shuffle(indices)
+        dataset = [dataset[i] for i in indices]
+        dataset_test = dataset[:test_num]
+        dataset = dataset[test_num:]
 
-    return
+        print(f"_{test_frac*100}percent")
+        out_file_name_test = out_file_name.format(
+            kT_cut = kT_selection,
+            include_pt = "_with_pt" if config["include_pt"] else "",
+            test_frac = f"_{int(test_frac*100)}percent"
+        )
+        output_path_graphs_test = os.path.join(out_dir, out_file_name_test)
+        torch.save(dataset_test, output_path_graphs_test)
+        print("Test dataset saved to:", output_path_graphs_test)
+
+    out_file_name = out_file_name.format(
+        kT_cut = kT_selection,
+        include_pt = "_with_pt" if config["include_pt"] else "",
+        test_frac = f"_{int(1-test_frac*100)}percent" if test_frac is not None else ""
+    )
+    output_path_graphs = os.path.join(out_dir, out_file_name)
+
+    torch.save(dataset, output_path_graphs)
+    print("Dataset saved to:", output_path_graphs)
 
 
 if __name__ == "__main__":

@@ -1,32 +1,18 @@
 import argparse
-import awkward
-import os.path as osp
 import os
 import glob
+
 import torch
 import awkward as ak
 import time
 import uproot
 import uproot3
 import numpy as np
-import torch.nn.functional as F
-import torch.nn as nn
-import yaml
-import scipy.sparse as ss
-from datetime import datetime, timedelta
-from torch_geometric.utils import degree
-from torch_geometric.data import DataListLoader, DataLoader
-
-from sklearn.utils import shuffle
-from sklearn.model_selection import train_test_split
-import pandas as pd
+from datetime import timedelta
+from torch_geometric.data import DataLoader
 
 from tools.GNN_model_weight.models import *
 from tools.GNN_model_weight.utils_newdata import *
-
-import gc
-print("Libraries loaded!")
-
 
 print("Libraries loaded!")
 
@@ -264,15 +250,10 @@ if __name__ == "__main__":
         if choose_model == "PNANet":
             model = PNANet()
 
-        #model.load_state_dict(torch.load(path_to_combined_ckpt))
-        model.load_state_dict(torch.load(path_to_combined_ckpt, map_location=torch.device('cpu')))
-        
-        #device = torch.device('cuda') # Usually gpu 4 worked best, it had the most memory available
-        device = torch.device('cpu')
-
-        
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') # Usually gpu 4 worked best, it had the most memory available
+        model.load_state_dict(torch.load(path_to_combined_ckpt, map_location=device))
+        print(f'Using device: {device}')
         model.to(device)
-        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
         #Predict scores
         y_pred = get_scores(test_loader, model, device)
