@@ -81,7 +81,9 @@ def main():
                 config_signal[signal]["signal_jet_truth_label"],
                 pt_range=config_signal[signal]["pt_range"],
                 mass_range=config_signal[signal]["mass_range"],
-                include_pt=config["include_pt"]
+                include_pt=config["include_pt"],
+                include_dsid=config["include_dsid"],
+                include_mcEventWeight=config["include_mcEventWeight"]
             )
 
             gc.collect()
@@ -93,7 +95,9 @@ def main():
     out_file_name = config["out_file_name"]
     out_dir = config["out_dir"].format(
         kT_cut = kT_selection,
-        include_pt = "_with_pt" if config["include_pt"] else ""
+        include_pt = "_with_pt" if config["include_pt"] else "",
+        include_dsid = "_with_dsid" if config["include_dsid"] else "",
+        include_mcEventWeight = "_with_mcEventWeight" if config["include_mcEventWeight"] else ""
     )
     os.makedirs(out_dir, exist_ok=True)
 
@@ -120,7 +124,9 @@ def main():
     out_file_name = out_file_name.format(
         kT_cut = kT_selection,
         include_pt = "_with_pt" if config["include_pt"] else "",
-        test_frac = f"_{int(1-test_frac*100)}percent" if test_frac is not None else ""
+        test_frac = f"_{int(1-test_frac*100)}percent" if test_frac is not None else "",
+        include_dsid = "_with_dsid" if config["include_dsid"] else "",
+        include_mcEventWeight = "_with_mcEventWeight" if config["include_mcEventWeight"] else "",
     )
     output_path_graphs = os.path.join(out_dir, out_file_name)
 

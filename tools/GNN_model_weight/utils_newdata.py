@@ -175,7 +175,9 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
     pt_range: tuple = (350, 3200),
     mass_range: tuple = (0, float('inf')),
     min_splits: int = 3,
-    include_pt: bool = False
+    include_pt: bool = False,
+    include_dsid: bool = False,
+    include_mcEventWeight: bool = False
 ) -> list[Data]:
     """
     Create a list of graphs for tagging.
@@ -199,6 +201,8 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         mass_range (tuple): Minimum and maximum jet mass values for selected jets, in GeV.
         min_splits (int): Minimum number of splittings, or emissions, for a jet to be selected.
         include_pt (bool): Whether to include pT as a graph attribute.
+        include_dsid (bool): Whether to include DSID as a graph attribute.
+        include_mcEventWeight (bool): Whether to include mcEventWeight as a graph attribute.
 
     Returns:
         list[Data]: List of torch_geometric.data.Data objects.
@@ -608,12 +612,14 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
             weights = torch.tensor(weight[i], dtype=torch.float).detach(),
             #graph_size = torch.tensor(graph_size, dtype=torch.float).detach(),
             mass =  float(jet_ms[i]), #torch.tensor(jet_ms[i], dtype=torch.float).detach(),
-            dsid = int(dsids[i]),
-            mcEventWeight = float(mcEventWeights[i]),
             y = float(label_out) #torch.tensor(label_out, dtype=torch.float).detach() ))
         )
         if include_pt:
             graph["pt"] = float(jet_pts[i]) #torch.tensor(jet_pts[i] , dtype=torch.float).detach()
+        if include_dsid:
+            graph["dsid"] = int(dsids[i])
+        if include_mcEventWeight:
+            graph["mcEventWeight"] = float(mcEventWeights[i])
 
         graphs.append(graph)
         '''
