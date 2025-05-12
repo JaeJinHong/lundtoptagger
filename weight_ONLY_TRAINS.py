@@ -22,11 +22,22 @@ def main():
     add_arg = parser.add_argument
     add_arg('config', help="job configuration")
     add_arg('--ln_kT_cut', type=float, help="minimum value of kT kept for the training graphs")
+    add_arg(
+        '--do_combined_training',
+        type=lambda x: str(x).lower(),
+        choices=["true", "false", "yes", "no", "1", "0"],
+        help="value can be true/false, yes/no, 0/1, case insensitive"
+    )
     args = parser.parse_args()
+
     config_file = args.config
     config = load_yaml(config_file)
-
     ln_kT_cut = args.ln_kT_cut if args.ln_kT_cut is not None else config['data']['ln_kT_cut']
+    do_combined_training = (
+        True if args.do_combined_training in ["true", "yes", "1"] else
+        False if args.do_combined_training in ["false", "no", "0"] else
+        config['architecture']['do_combined_training']
+    )
     path_to_file = config['data']['path_to_trainfiles']
 
     dataset = []
@@ -120,7 +131,6 @@ def main():
     optimizer2 = torch.optim.Adam(model.parameters(), lr=4*learning_rate)
     optimizer3 = torch.optim.Adam(model.parameters(), lr=10*learning_rate)
 
-    do_combined_training = config['architecture']['do_combined_training']
     if do_combined_training:
         adv = Adversary_new(config['architecture']['lambda_parameter'], config['architecture']['num_gaussians'])
         adv.to(device)

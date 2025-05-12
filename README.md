@@ -44,9 +44,15 @@ python weight_ONLY_TRAINS.py configs/config_ONLY_TRAIN.yaml
 ```
 
 You can override the $k_T$ cut in the configuration file using a command line argument:
+There are two optional arguments which can be used to override the values in the config file:
+
+- `--ln_kT_cut`: float
+- `--do_combined_training`: value can be true/false, yes/no, 0/1, case insensitive
+
+For example:
 
 ```bash
-python weight_ONLY_TRAINS.py configs/config_ONLY_TRAIN.yaml --ln_kT_cut 0
+python weight_ONLY_TRAINS.py configs/config_ONLY_TRAIN.yaml --ln_kT_cut 0 --do_combined_training true
 ```
 
 
