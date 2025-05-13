@@ -11,35 +11,13 @@ import torch.nn.functional as F
 import torch.nn as nn
 from torch_geometric.data import Data
 
-with open("configs/config_signal.yaml") as f:
-    config = yaml.load(f, Loader=yaml.FullLoader)
-signal = config["signal"]
-weights_file = uproot.open(config[signal]["weights_file"])
 
-flatweights_bg = weights_file["bg_inv"].to_numpy()
-flatweights_sig = weights_file["h_sig_inv"].to_numpy()
-
-def GetPtWeight( dsid , pt, SF):
-
-    lenght_sig = len(flatweights_bg[0])
-    lenght_bkg = len(flatweights_bg[0])
-    scale_factor = 1
-    weight_out = []
-
-    for i in range ( 0,len(dsid) ):
-        pt_bin = int( ((pt[i]-200)/3000)*lenght_sig )
-        if pt_bin==lenght_sig :
-            pt_bin = lenght_sig-1
-        if dsid[i] < 370000 :
-            #weight_out.append( (flatweights_bg[0][pt_bin]*scale_factor)*10**4 ) ## used for W tagging
-            weight_out.append( (flatweights_bg[0][pt_bin])*1 )
-        if dsid[i] > 370000 :
-            #weight_out.append( (flatweights_sig[0][pt_bin])*10**4 ) ## used for W tagging
-            weight_out.append( (flatweights_sig[0][pt_bin])*1 )
-    return np.array(weight_out)
-
-def GetPtWeight_all_MC(truth_labels, dsid_input, pts, SF, Pythia_or_All=False ):
+def GetPtWeight(truth_labels, dsid_input, pts, SF, Pythia_or_All=False, signal_config_file="configs/config_signal.yaml"):
     ## PT histograms of all qcd and top jets in dataset
+    with open(signal_config_file) as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+    signal = config["signal"]
+
     filename1 = config[signal]["pt_hist_file_bkg"]
     filename2 = config[signal]["pt_hist_file_signal"]
     #weights_file1 = uproot.open(filename1)

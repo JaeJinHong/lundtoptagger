@@ -10,7 +10,7 @@ import awkward as ak
 import numpy as np
 import torch
 
-from tools.GNN_model_weight.utils_newdata import load_yaml, GetPtWeight_all_MC, create_train_dataset_fulld_new_Ntrk_pt_weight_file
+from tools.GNN_model_weight.utils_newdata import load_yaml, GetPtWeight, create_train_dataset_fulld_new_Ntrk_pt_weight_file
 
 print("Libraries loaded!")
 
@@ -69,7 +69,7 @@ def main():
             # N_tracks = ak.flatten(tree["LRJ_Nconst"].array(library="ak"))
 
             print("Calculating weights:")
-            flat_weights = GetPtWeight_all_MC(truth_labels, dsid_test, jet_pts, 5, Pythia_or_All=True)
+            flat_weights = GetPtWeight(truth_labels, dsid_test, jet_pts, 5, Pythia_or_All=True)
             kT_selection = config["kT_cut"]
 
             print("Creating PyTorch graphs:")
