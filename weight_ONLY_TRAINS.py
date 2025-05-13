@@ -69,10 +69,6 @@ def main():
     scale_factor = weights_signal_total / weights_background_total
     print("Scale factor:", scale_factor)
 
-    for jet_graph in dataset:
-        if jet_graph.y == 0:
-            jet_graph.weights *= scale_factor
-
     ## define architecture
     batch_size = config['architecture']['batch_size']
     test_size = config['architecture']['test_size']

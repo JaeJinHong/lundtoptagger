@@ -89,9 +89,13 @@ if __name__ == "__main__":
             tree = infile[intreename]
 
             count_files += 1
-            dsids_test = tree["dsid"].array(library="np")
-            if dsids_test[0] in  config_signal[signal]["skip_dsids"]: # don't lose time with jets that don't pass pt cut or wrong signal sample
+            dsids = tree["dsid"].array(library="np")
+            dsid_test = dsids[0]                                 # check the first DSID, they should all be the same
+            if dsid_test in config_signal[signal]["skip_dsids"]: # don't lose time with jets that don't pass pt cut or wrong signal sample
                continue
+
+            truth_labels_unflattened = tree["LRJ_truthLabel"].array(library="ak")
+            truth_labels = ak.flatten(truth_labels_unflattened)
 
             jet_pts_truth = ak.to_numpy(ak.flatten(tree["LRJ_pt"].array(library="ak")) )
             #ptweights = ak.to_numpy(ak.flatten(tree["LRJ_pt"].array(library="ak")) )
@@ -102,7 +106,7 @@ if __name__ == "__main__":
             #labels = labels == 1
             #labels = 1*labels
             
-            dsids = dsids_test[0]*np.ones_like(ak.to_numpy(ak.flatten(tree["LRJ_pt"].array(library="ak")) ))
+            dsids = dsid_test*np.ones_like(ak.to_numpy(ak.flatten(tree["LRJ_pt"].array(library="ak")) ))
             LRJ_pt_ref = tree["LRJ_pt"].array(library="np") 
             mcweights = tree["mcEventWeight"].array(library="np")  #mcEventWeight
             mcweights = flatten_small_branch(LRJ_pt_ref, mcweights)
@@ -150,8 +154,8 @@ if __name__ == "__main__":
             ##dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file_test( dataset , all_lund_zs, all_lund_kts, all_lund_drs, parent1, parent2, labels ,N_tracks,jet_pts, jet_ms  )
 
             #flat_weights = GetPtWeight_2( labels, jet_pts, filename=config['data']['weights_file'], SF=config['data']['scale_factor'])
-            
-            flat_weights = GetPtWeight_2( dsids, jet_pts, 5)
+
+            flat_weights = GetPtWeight(truth_labels, dsid_test, jet_pts, 5, Pythia_or_All=True)
             #dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file( dataset , all_lund_zs, all_lund_kts, all_lund_drs, parent1, parent2, flat_weights, labels ,N_tracks,jet_pts, jet_ms  )
             
 
