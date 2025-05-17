@@ -1,31 +1,13 @@
-import awkward
-import os.path as osp
-import os
-import glob
-import torch
-import awkward as ak
-import time
-import uproot
-import uproot3
+import math
+
 import numpy as np
+import torch
 import torch.nn.functional as F
 import torch.nn as nn
 from torch.utils.data import Dataset
-#from torch_geometric.datasets import MNISTSuperpixels
-from torch_geometric.data import DataListLoader, DataLoader
-import torch_geometric.transforms as T
-from torch_geometric.nn import SplineConv, global_mean_pool, DataParallel, EdgeConv, GATConv, GINConv, PNAConv
-from torch_geometric.data import Data
+from torch_geometric.nn import global_mean_pool, EdgeConv, GATConv, GINConv, PNAConv
 from torch.autograd import Function
-from torch.autograd import Variable
 from torch.distributions import Categorical
-import scipy.sparse as ss
-from datetime import datetime, timedelta
-from torch_geometric.utils import degree
-import math
-from sklearn.utils import shuffle
-from sklearn.model_selection import train_test_split
-import pandas as pd
 
 class Net(torch.nn.Module):
     def __init__(self):
