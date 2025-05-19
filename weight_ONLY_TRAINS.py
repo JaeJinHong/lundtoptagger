@@ -50,10 +50,6 @@ def main():
         print("Loading file", file_path)
         dataset += torch.load(file_path)
 
-    for graph in dataset:
-        if hasattr(graph, 'pt'):
-            delattr(graph, 'pt')
-
     # check the number of signal and background jets
     labels = np.array([jet_graph.y for jet_graph in dataset])
     num_signal = (labels==1).sum()
@@ -68,6 +64,10 @@ def main():
     print("Background total weight:", weights_background_total)
     scale_factor = weights_signal_total / weights_background_total
     print("Scale factor:", scale_factor)
+
+    for jet_graph in dataset:
+        if jet_graph.y == 0:
+            jet_graph.weights *= scale_factor
 
     ## define architecture
     batch_size = config['architecture']['batch_size']
@@ -165,7 +165,7 @@ def main():
         writer.writerows(metrics)
 
     if do_combined_training:
-        adv_model_name = config['architecture']['adv_model_name']
+        adv_model_name = config['data']['adv_model_name']
         loss_parameter = config['architecture']['loss_parameter']
         loss_weights = config['architecture']['loss_weights']
         train_loss_clsf = []

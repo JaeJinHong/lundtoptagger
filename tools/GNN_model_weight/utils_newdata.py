@@ -1,5 +1,6 @@
 import os
 from typing import Union
+import math
 
 import yaml
 import uproot
@@ -10,6 +11,9 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 from torch_geometric.data import Data
+from scipy.stats import entropy
+
+from ..GNN_model_weight.models import mdn_loss, mdn_loss_new
 
 
 def GetPtWeight(truth_labels, dsid_input, pts, SF, Pythia_or_All=False, signal_config_file="configs/config_signal.yaml"):
