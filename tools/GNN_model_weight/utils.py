@@ -53,6 +53,54 @@ def GetPtWeight( dsid , pt, SF):
             weight_out.append( (flatweights_sig[0][pt_bin])*1 )
     return np.array(weight_out)
 
+def GetPtWeight_2( dsid , pt, SF):
+
+    ## PT histograms of all qcd and top jets in dataset
+    filename1 = "/data/bcifuentes/histograms/qcd.root"
+    filename2 = "/data/bcifuentes/histograms/top.root"
+    weights_file1 = uproot.open(filename1)
+    flatweights_bg = weights_file1["pt"].to_numpy()
+    weights_file2 = uproot.open(filename2)
+    flatweights_sig = weights_file2["pt"].to_numpy()
+    
+    lenght_sig = len(flatweights_sig[0])
+    lenght_bkg = len(flatweights_bg[0])
+    #print("lenght_sig:", lenght_sig, "  lenght_bkg:", lenght_bkg)
+    
+    sig_bkg_proportion = 10  ## if is taked 5% of signal and 1% of qcd for training then sig_bkg_proportion=5
+    scale_factor = (lenght_bkg/lenght_sig) / 5 #1
+    weight_out = []
+    Inv_hist_bg = []#flatweights_bg[0]
+    Inv_hist_sig = []#flatweights_sig[0]
+    
+    ## it's time to calcuate the 1/hist
+    for i in range (0,lenght_bkg):
+    	if flatweights_bg[0][i]==0:
+    		Inv_hist_bg.append(0)
+    		continue
+    	else:
+    		Inv_hist_bg.append(np.sum(flatweights_bg[0]) / (lenght_bkg * flatweights_bg[0][i]))
+    		
+    for i in range (0,lenght_sig):
+    	if flatweights_sig[0][i]==0:
+    		Inv_hist_sig.append(0)
+    		continue
+    	else:
+    		Inv_hist_sig.append(np.sum(flatweights_sig[0]) / (lenght_sig * flatweights_sig[0][i]))
+        
+    for i in range ( 0,len(dsid) ):
+        pt_bin = int( ((pt[i]-100)/3000)*lenght_sig )
+        if pt_bin>=lenght_sig : # ==
+            pt_bin = lenght_sig-1
+        if dsid[i] ==10:#< 370000 :
+            #print("pt[i] ->", pt[i])
+            #print("bin_pt->", pt_bin)
+            weight_out.append( (Inv_hist_bg[pt_bin])*1  )
+        if dsid[i] !=10: ##events with other values than 1 and 10 must be removed in data creation
+            weight_out.append( (Inv_hist_sig[pt_bin]*scale_factor)*1 ) #*10**2 )
+    return np.array(weight_out)
+
+
 
 def load_yaml(file_name):
     assert(os.path.exists(file_name))
@@ -76,110 +124,123 @@ def to_categorical(y, num_classes=None, dtype='float32'):
     return categorical
 
 
-
 def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms):
+
     for i in range(len(z)):
-        # if i>2: continue
+        if len(z[i])<5: 
+            continue
+        #print(label[i])
+        if (label[i]!=1) and (label[i]!=10) :
+            continue
+        label_out = label[i]
+        if label[i]== 10:
+            label_out = 0
 
-        #k[i][k[i] == 0] = 1e-10
-        #d[i][d[i] == 0] = 1e-10
+        if jet_pts[i] > 3200: continue
+        if jet_pts[i] < 350: continue 
+        
+        z_out = ak.to_numpy(z[i])
+        k_out = ak.to_numpy(k[i])
+        d_out = ak.to_numpy(d[i])
 
-        z[i] += 1e-7
-        k[i] += 1e-7
-        d[i] += 1e-7
-
-        z[i] = np.log(1/z[i])
-        k[i] = np.log(k[i])
-        d[i] = np.log(1/d[i])
-
-        # values used for W tagging
-        # mean_z, std_z = 2.523076295852661, 5.264721870422363
-        # mean_dr, std_dr = 11.381295204162598, 13.63073444366455
-        # mean_kt, std_kt = -10.042571067810059, 15.398056030273438
-        # mean_ntrks, std_ntrks = 33.35614197897151, 12.064001858459823
-
-        # values used for top tagging
-        mean_z, std_z = 2.1212295107646684, 2.0132512522977346
-        mean_dr, std_dr = 6.872297191581289, 6.109722726160649
-        mean_kt, std_kt = -5.367505330860997, 7.172331060648966
-        mean_ntrks, std_ntrks = 35.80012907092822, 11.740907468153635
-
-        z[i] = (z[i] - mean_z) / std_z
-        k[i] = (k[i] - mean_kt) / std_kt
-        d[i] = (d[i] - mean_dr) / std_dr
+        z_out += 1e-4 
+        k_out += 1e-4 
+        d_out += 1e-4 
+        z_out = np.log(1/z_out)
+        k_out = np.log(k_out)
+        d_out = np.log(1/d_out)
+        # 1e-4 # Rafael 15% data
+        
+        mean_z, std_z = 2.0778886185997316, 1.4714192378460587
+        mean_dr, std_dr = 3.8924797952050296, 2.279933125432541
+        mean_kt, std_kt = -2.3919176643005926, 2.97112274201009
+        mean_ntrks, std_ntrks = 39.81133623360089, 10.99193693271175
+        
+        z_out = (z_out - mean_z) / std_z
+        k_out = (k_out - mean_kt) / std_kt
+        d_out = (d_out - mean_dr) / std_dr
+        #Ntracks = (Ntracks - mean_ntrks) / std_ntrks
         Ntrk = (Ntracks[i] - mean_ntrks) / std_ntrks
-
+        
         if (len(edge1[i])== 0) or (len(edge2[i])== 0) or (len(k[i])== 0) or (len(z[i])== 0) or (len(d[i])== 0):
             continue
         else:
             edge = torch.tensor(np.array([edge1[i], edge2[i]]) , dtype=torch.long)
 
+        
         vec = []
-        vec.append(np.array([d[i], z[i], k[i]]).T)
+        vec.append(np.array([d_out, z_out, k_out]).T)
         vec = np.array(vec)
         vec = np.squeeze(vec)
         graphs.append(Data(x=torch.tensor(vec, dtype=torch.float).detach(),
-                           edge_index = torch.tensor(edge).detach(),
+                           edge_index = torch.tensor(edge, dtype=torch.int64).detach(),
+                           #Ntrk=torch.tensor(Ntracks[i], dtype=torch.int).detach(),
                            Ntrk=torch.tensor(Ntrk, dtype=torch.float).detach(),
                            weights =torch.tensor(weight[i], dtype=torch.float).detach(),
                            pt=torch.tensor(jet_pts[i], dtype=torch.float).detach(),
                            mass=torch.tensor(jet_ms[i], dtype=torch.float).detach(),
-                           y=torch.tensor(label[i], dtype=torch.float).detach() ))
+                           y=torch.tensor(label_out, dtype=torch.float).detach() ))
     return graphs
 
 
 
-def create_train_dataset_fulld_new_Ntrk_pt_weight_file_test(graphs, z, k, d, edge1, edge2, label, Ntracks, jet_pts, jet_ms):
+def create_train_dataset_fulld_new_Ntrk_pt_weight_file_test(graphs, z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms):
 
+    data_under3 = 0
     for i in range(len(z)):
-        # if i > 10: continue
-#         z[i] = np.nan_to_num(z[i], nan=1e-10, posinf=1e-10, neginf=-1e-10)
-#         k[i] = np.nan_to_num(k[i], nan=1e-10, posinf=1e-10, neginf=-1e-10)
-#         d[i] = np.nan_to_num(d[i], nan=1e-10, posinf=1e-10, neginf=-1e-10)
+        if len(z[i])<5: 
+            continue
 
+        if (label[i]!=1) and (label[i]!=10) :
+            continue
+        label_out = label[i]
+        if label[i]== 10:
+            label_out = 0
 
-        z[i] += 1e-7 # 1e-5
-        k[i] += 1e-7 # 1e-5
-        d[i] += 1e-7 # 1e-5
+        if jet_pts[i] > 3200: continue
+        if jet_pts[i] < 350: continue 
 
-        z[i] = np.log(1/z[i])
-        k[i] = np.log(k[i])
-        d[i] = np.log(1/d[i])
+        z_out = ak.to_numpy(z[i])
+        k_out = ak.to_numpy(k[i])
+        d_out = ak.to_numpy(d[i])
 
-
-        # values used for W tagging
-        # mean_z, std_z = 2.523076295852661, 5.264721870422363
-        # mean_dr, std_dr = 11.381295204162598, 13.63073444366455
-        # mean_kt, std_kt = -10.042571067810059, 15.398056030273438
-        # mean_ntrks, std_ntrks = 33.35614197897151, 12.064001858459823
-
-        # values used for top tagging
-        mean_z, std_z = 2.1212295107646684, 2.0132512522977346
-        mean_dr, std_dr = 6.872297191581289, 6.109722726160649
-        mean_kt, std_kt = -5.367505330860997, 7.172331060648966
-        mean_ntrks, std_ntrks = 35.80012907092822, 11.740907468153635
-
-        z[i] = (z[i] - mean_z) / std_z
-        k[i] = (k[i] - mean_kt) / std_kt
-        d[i] = (d[i] - mean_dr) / std_dr
+        z_out += 1e-4 
+        k_out += 1e-4 
+        d_out += 1e-4 
+        z_out = np.log(1/z_out)
+        k_out = np.log(k_out)
+        d_out = np.log(1/d_out)
+        
+        mean_z, std_z = 2.0778886185997316, 1.4714192378460587
+        mean_dr, std_dr = 3.8924797952050296, 2.279933125432541
+        mean_kt, std_kt = -2.3919176643005926, 2.97112274201009
+        mean_ntrks, std_ntrks = 39.81133623360089, 10.99193693271175
+        
+        z_out = (z_out - mean_z) / std_z
+        k_out = (k_out - mean_kt) / std_kt
+        d_out = (d_out - mean_dr) / std_dr
         Ntrk = (Ntracks[i] - mean_ntrks) / std_ntrks
-
-
-        if (len(edge1[i])== 0) or (len(edge2[i])== 0):
+        
+        if (len(edge1[i])== 0) or (len(edge2[i])== 0) or (len(k[i])== 0) or (len(z[i])== 0) or (len(d[i])== 0):
             continue
         else:
             edge = torch.tensor(np.array([edge1[i], edge2[i]]) , dtype=torch.long)
+
+        
         vec = []
-        vec.append(np.array([d[i], z[i], k[i]]).T)
+        vec.append(np.array([d_out, z_out, k_out]).T)
         vec = np.array(vec)
         vec = np.squeeze(vec)
 
         graphs.append(Data(x=torch.tensor(vec, dtype=torch.float).detach(),
-                           edge_index = torch.tensor(edge).detach(),
+                           #edge_index = torch.tensor(edge).detach(),
+                           edge_index = torch.tensor(edge, dtype=torch.int64).detach(),
+                           #Ntrk=torch.tensor(Ntracks[i], dtype=torch.int).detach(),
                            Ntrk=torch.tensor(Ntrk, dtype=torch.float).detach(),
                            pt=torch.tensor(jet_pts[i], dtype=torch.float).detach(),
                            mass=torch.tensor(jet_ms[i], dtype=torch.float).detach(),
                            y=torch.tensor(label[i], dtype=torch.float).detach() ))
+        
     return graphs
 
 

@@ -19,6 +19,10 @@ from torch_geometric.data import Data
 from torch.autograd import Function
 from torch.autograd import Variable
 from torch.distributions import Categorical
+#from torchsummary import summary
+#from tensorflow.keras.utils import to_categorical, plot_model
+#from sklearn.neighbors import NearestNeighbors
+#from sklearn.neighbors import kneighbors_graph
 import scipy.sparse as ss
 from datetime import datetime, timedelta
 from torch_geometric.utils import degree
@@ -53,68 +57,45 @@ class Net(torch.nn.Module):
         #print(x.shape)
         return F.sigmoid(x)
 
-# class LundNet(torch.nn.Module):
-#     def __init__(self):
-#         super(LundNet, self).__init__()
-#         self.conv1 = EdgeConv(nn.Sequential(nn.Linear(6, 32), nn.ReLU(),
-#                                             nn.Linear(32, 32), nn.ReLU()),aggr='add')
-#         self.conv2 = EdgeConv(nn.Sequential(nn.Linear(64, 32), nn.ReLU(),
-#                                             nn.Linear(32, 32), nn.ReLU()),aggr='add')
-#         self.conv3 = EdgeConv(nn.Sequential(nn.Linear(64,64),  nn.ReLU(),
-#                                             nn.Linear(64, 64),  nn.ReLU()),aggr='add')
-#         self.conv4 = EdgeConv(nn.Sequential(nn.Linear(128, 64),  nn.ReLU(),
-#                                             nn.Linear(64, 64),  nn.ReLU()),aggr='add')
-#         self.conv5 = EdgeConv(nn.Sequential(nn.Linear(128, 128),  nn.ReLU(),
-#                                             nn.Linear(128, 128),  nn.ReLU()),aggr='add')
-#         self.conv6 = EdgeConv(nn.Sequential(nn.Linear(256, 128),  nn.ReLU(),
-#                                             nn.Linear(128, 128),  nn.ReLU()),aggr='add')
-
-#         self.seq1 = nn.Sequential(nn.Linear(448, 384),
-#                                 nn.BatchNorm1d(num_features=384),
-#                                 nn.ReLU())
-#         # self.seq2 = nn.Sequential(nn.Linear(384, 256),
-#         #                           nn.ReLU())
-#         self.seq2 = nn.Sequential(nn.Linear(385, 256),
-#                                   nn.ReLU())
-#         self.lin = nn.Linear(256, 1)
-
-#     def forward(self, data):
-#         x, edge_index, batch = data.x, data.edge_index, data.batch
-#         Ntrk = data.Ntrk
-#         Ntrk = torch.unsqueeze(Ntrk, 1)
-#         x1 = self.conv1(x, edge_index)
-#         x2 = self.conv2(x1, edge_index)
-#         x3 = self.conv3(x2, edge_index)
-#         x4 = self.conv4(x3, edge_index)
-#         x5 = self.conv5(x4, edge_index)
-#         x6 = self.conv6(x5, edge_index)
-#         x = torch.cat((x1, x2, x3, x4, x5, x6), dim=1)
-#         x = self.seq1(x)
-#         x = global_mean_pool(x, batch)
-#         x = torch.cat( (x, Ntrk) ,dim=1)
-#         x = self.seq2(x)
-#         x = F.dropout(x, p=0.1)
-#         x = self.lin(x)
-#         #print(x.shape)
-#         return F.sigmoid(x)
-
-
-
 class LundNet(torch.nn.Module):
     def __init__(self):
         super(LundNet, self).__init__()
-        self.conv1 = EdgeConv(nn.Sequential(nn.Linear(6, 32), nn.BatchNorm1d(num_features=32), nn.ReLU(),
-                                            nn.Linear(32, 32), nn.BatchNorm1d(num_features=32), nn.ReLU()),aggr='add')
-        self.conv2 = EdgeConv(nn.Sequential(nn.Linear(64, 32), nn.BatchNorm1d(num_features=32), nn.ReLU(),
-                                            nn.Linear(32, 32), nn.BatchNorm1d(num_features=32), nn.ReLU()),aggr='add')
-        self.conv3 = EdgeConv(nn.Sequential(nn.Linear(64,64), nn.BatchNorm1d(num_features=64), nn.ReLU(),
-                                            nn.Linear(64, 64), nn.BatchNorm1d(num_features=64), nn.ReLU()),aggr='add')
-        self.conv4 = EdgeConv(nn.Sequential(nn.Linear(128, 64), nn.BatchNorm1d(num_features=64), nn.ReLU(),
-                                            nn.Linear(64, 64), nn.BatchNorm1d(num_features=64), nn.ReLU()),aggr='add')
-        self.conv5 = EdgeConv(nn.Sequential(nn.Linear(128, 128), nn.BatchNorm1d(num_features=128), nn.ReLU(),
-                                            nn.Linear(128, 128), nn.BatchNorm1d(num_features=128), nn.ReLU()),aggr='add')
-        self.conv6 = EdgeConv(nn.Sequential(nn.Linear(256, 128), nn.BatchNorm1d(num_features=128), nn.ReLU(),
-                                            nn.Linear(128, 128), nn.BatchNorm1d(num_features=128), nn.ReLU()),aggr='add')
+        self.conv1 = EdgeConv(nn.Sequential(nn.Linear(6, 32),
+                                            nn.BatchNorm1d(num_features=32),
+                                            nn.ReLU(),
+                                            nn.Linear(32, 32),
+                                            nn.BatchNorm1d(num_features=32),
+                                            nn.ReLU()),aggr='add')
+        self.conv2 = EdgeConv(nn.Sequential(nn.Linear(64, 32),
+                                            nn.BatchNorm1d(num_features=32),
+                                            nn.ReLU(),
+                                            nn.Linear(32, 32),
+                                            nn.BatchNorm1d(num_features=32),
+                                            nn.ReLU()),aggr='add')
+        self.conv3 = EdgeConv(nn.Sequential(nn.Linear(64,64),
+                                            nn.BatchNorm1d(num_features=64),
+                                            nn.ReLU(),
+                                            nn.Linear(64, 64),
+                                            nn.BatchNorm1d(num_features=64),
+                                            nn.ReLU()),aggr='add')
+        self.conv4 = EdgeConv(nn.Sequential(nn.Linear(128, 64),
+                                            nn.BatchNorm1d(num_features=64),
+                                            nn.ReLU(),
+                                            nn.Linear(64, 64),
+                                            nn.BatchNorm1d(num_features=64),
+                                            nn.ReLU()),aggr='add')
+        self.conv5 = EdgeConv(nn.Sequential(nn.Linear(128, 128),
+                                            nn.BatchNorm1d(num_features=128),
+                                            nn.ReLU(),
+                                            nn.Linear(128, 128),
+                                            nn.BatchNorm1d(num_features=128),
+                                            nn.ReLU()),aggr='add')
+        self.conv6 = EdgeConv(nn.Sequential(nn.Linear(256, 128),
+                                            nn.BatchNorm1d(num_features=128),
+                                            nn.ReLU(),
+                                            nn.Linear(128, 128),
+                                            nn.BatchNorm1d(num_features=128),
+                                            nn.ReLU()),aggr='add')
 
         self.seq1 = nn.Sequential(nn.Linear(448, 384),
                                 nn.BatchNorm1d(num_features=384),
@@ -127,8 +108,13 @@ class LundNet(torch.nn.Module):
 
     def forward(self, data):
         x, edge_index, batch = data.x, data.edge_index, data.batch
+        '''
+        Nconstituents = data.Nconstituents
+        Nconstituents = torch.unsqueeze(Nconstituents, 1)
+        '''
         Ntrk = data.Ntrk
         Ntrk = torch.unsqueeze(Ntrk, 1)
+        
         x1 = self.conv1(x, edge_index)
         x2 = self.conv2(x1, edge_index)
         x3 = self.conv3(x2, edge_index)
@@ -138,6 +124,7 @@ class LundNet(torch.nn.Module):
         x = torch.cat((x1, x2, x3, x4, x5, x6), dim=1)
         x = self.seq1(x)
         x = global_mean_pool(x, batch)
+        #x = torch.cat( (x, Nconstituents) ,dim=1)
         x = torch.cat( (x, Ntrk) ,dim=1)
         x = self.seq2(x)
         x = F.dropout(x, p=0.1)
@@ -145,47 +132,60 @@ class LundNet(torch.nn.Module):
         #print(x.shape)
         return F.sigmoid(x)
 
-
-
-class LundNet_plus_GNX2(torch.nn.Module):
+#dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file_PLUS( dataset , all_lund_zs, all_lund_kts, all_lund_drs, parent1, parent2, flat_weights, labels ,N_tracks, jet_pts , jet_ms, Tau21, C2, D2, Angularity, FoxWolfram20, KtDR, PlanarFlow, Split12, ZCut12)
+class LundNet_Ntrk_Plus(torch.nn.Module):
     def __init__(self):
-        super(LundNet_plus_GNX2, self).__init__()
-        self.conv1 = EdgeConv(nn.Sequential(nn.Linear(6, 32), nn.BatchNorm1d(num_features=32), nn.ReLU(),
-                                            nn.Linear(32, 32), nn.BatchNorm1d(num_features=32), nn.ReLU()),aggr='add')
-        self.conv2 = EdgeConv(nn.Sequential(nn.Linear(64, 32), nn.BatchNorm1d(num_features=32), nn.ReLU(),
-                                            nn.Linear(32, 32), nn.BatchNorm1d(num_features=32), nn.ReLU()),aggr='add')
-        self.conv3 = EdgeConv(nn.Sequential(nn.Linear(64,64), nn.BatchNorm1d(num_features=64), nn.ReLU(),
-                                            nn.Linear(64, 64), nn.BatchNorm1d(num_features=64), nn.ReLU()),aggr='add')
-        self.conv4 = EdgeConv(nn.Sequential(nn.Linear(128, 64), nn.BatchNorm1d(num_features=64), nn.ReLU(),
-                                            nn.Linear(64, 64), nn.BatchNorm1d(num_features=64), nn.ReLU()),aggr='add')
-        self.conv5 = EdgeConv(nn.Sequential(nn.Linear(128, 128), nn.BatchNorm1d(num_features=128), nn.ReLU(),
-                                            nn.Linear(128, 128), nn.BatchNorm1d(num_features=128), nn.ReLU()),aggr='add')
-        self.conv6 = EdgeConv(nn.Sequential(nn.Linear(256, 128), nn.BatchNorm1d(num_features=128), nn.ReLU(),
-                                            nn.Linear(128, 128), nn.BatchNorm1d(num_features=128), nn.ReLU()),aggr='add')
+        super(LundNet_Ntrk_Plus, self).__init__()
+        self.conv1 = EdgeConv(nn.Sequential(nn.Linear(6, 32),
+                                            nn.BatchNorm1d(num_features=32),
+                                            nn.ReLU(),
+                                            nn.Linear(32, 32),
+                                            nn.BatchNorm1d(num_features=32),
+                                            nn.ReLU()),aggr='add')
+        self.conv2 = EdgeConv(nn.Sequential(nn.Linear(64, 32),
+                                            nn.BatchNorm1d(num_features=32),
+                                            nn.ReLU(),
+                                            nn.Linear(32, 32),
+                                            nn.BatchNorm1d(num_features=32),
+                                            nn.ReLU()),aggr='add')
+        self.conv3 = EdgeConv(nn.Sequential(nn.Linear(64,64),
+                                            nn.BatchNorm1d(num_features=64),
+                                            nn.ReLU(),
+                                            nn.Linear(64, 64),
+                                            nn.BatchNorm1d(num_features=64),
+                                            nn.ReLU()),aggr='add')
+        self.conv4 = EdgeConv(nn.Sequential(nn.Linear(128, 64),
+                                            nn.BatchNorm1d(num_features=64),
+                                            nn.ReLU(),
+                                            nn.Linear(64, 64),
+                                            nn.BatchNorm1d(num_features=64),
+                                            nn.ReLU()),aggr='add')
+        self.conv5 = EdgeConv(nn.Sequential(nn.Linear(128, 128),
+                                            nn.BatchNorm1d(num_features=128),
+                                            nn.ReLU(),
+                                            nn.Linear(128, 128),
+                                            nn.BatchNorm1d(num_features=128),
+                                            nn.ReLU()),aggr='add')
+        self.conv6 = EdgeConv(nn.Sequential(nn.Linear(256, 128),
+                                            nn.BatchNorm1d(num_features=128),
+                                            nn.ReLU(),
+                                            nn.Linear(128, 128),
+                                            nn.BatchNorm1d(num_features=128),
+                                            nn.ReLU()),aggr='add')
 
         self.seq1 = nn.Sequential(nn.Linear(448, 384),
                                 nn.BatchNorm1d(num_features=384),
                                 nn.ReLU())
-        # self.seq2 = nn.Sequential(nn.Linear(384, 256),
-        #                           nn.ReLU())
-        self.seq2 = nn.Sequential(nn.Linear(389, 256),
+        self.seq2 = nn.Sequential(nn.Linear(394, 256),
                                   nn.ReLU())
-        self.lin = nn.Linear(256, 1)
+        self.seq3 = nn.Sequential(nn.Linear(256, 30),                                                                                     
+                                  nn.ReLU())                                                                                                                                
+        self.lin = nn.Linear(30, 1)                                                                                                              
+        #self.lin = nn.Linear(256, 1)
+
 
     def forward(self, data):
         x, edge_index, batch = data.x, data.edge_index, data.batch
-        Ntrk = data.Ntrk
-        Ntrk = torch.unsqueeze(Ntrk, 1)
-        
-        GN2X_pqcd = data.GN2X_pqcd
-        GN2X_pqcd = torch.unsqueeze(GN2X_pqcd, 1)
-        GN2X_phbb = data.GN2X_phbb
-        GN2X_phbb = torch.unsqueeze(GN2X_phbb, 1)
-        GN2X_ptop = data.GN2X_ptop
-        GN2X_ptop = torch.unsqueeze(GN2X_ptop, 1)
-        GN2X_phcc = data.GN2X_phcc
-        GN2X_phcc = torch.unsqueeze(GN2X_phcc, 1)
-        
         x1 = self.conv1(x, edge_index)
         x2 = self.conv2(x1, edge_index)
         x3 = self.conv3(x2, edge_index)
@@ -195,18 +195,30 @@ class LundNet_plus_GNX2(torch.nn.Module):
         x = torch.cat((x1, x2, x3, x4, x5, x6), dim=1)
         x = self.seq1(x)
         x = global_mean_pool(x, batch)
-        #x = torch.cat( (x, Ntrk) ,dim=1)
-        x = torch.cat( (x, Ntrk, GN2X_pqcd, GN2X_phbb, GN2X_ptop, GN2X_phcc) ,dim=1)
+        N_tracksin = torch.unsqueeze(data.Nconstituents, 1)
+        Tau21_in = torch.unsqueeze(data.Tau21, 1)
+        C2_in = torch.unsqueeze(data.C2, 1)
+        D2_in = torch.unsqueeze(data.D2, 1)
+        Angularity_in = torch.unsqueeze(data.Angularity, 1)
+        FoxWolfram20_in = torch.unsqueeze(data.FoxWolfram20, 1)
+        KtDR_in = torch.unsqueeze(data.KtDR, 1)
+        PlanarFlow_in = torch.unsqueeze(data.PlanarFlow, 1)
+        Split12_in = torch.unsqueeze(data.Split12, 1)
+        ZCut12_in = torch.unsqueeze(data.ZCut12, 1)
+        
+        x = torch.cat( (x, N_tracksin, Tau21_in, C2_in, D2_in, Angularity_in, FoxWolfram20_in, KtDR_in, PlanarFlow_in, Split12_in, ZCut12_in  ), dim=1)
         x = self.seq2(x)
         x = F.dropout(x, p=0.1)
+        x = self.seq3(x)                                     
+        x = F.dropout(x, p=0.1)
         x = self.lin(x)
-        #print(x.shape)
         return F.sigmoid(x)
+
 
 
 class LundNet_old(torch.nn.Module):
     def __init__(self):
-        super(LundNet_old, self).__init__()
+        super(LundNet, self).__init__()
         self.conv1 = EdgeConv(nn.Sequential(nn.Linear(6, 32),
                                             nn.BatchNorm1d(num_features=32),
                                             nn.ReLU(),
@@ -288,10 +300,10 @@ class LundNet_old(torch.nn.Module):
         return F.sigmoid(x)
 
 class GATNet(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, in_channels):
         in_channels = 3
         super(GATNet, self).__init__()
-        self.conv1 = GATConv(4, 16, heads=8, dropout=0.1)
+        self.conv1 = GATConv(in_channels, 16, heads=8, dropout=0.1)
         self.conv2 = GATConv(16 * 8, 16, heads=8, dropout=0.1)
         self.conv3 = GATConv(16 * 8, 32, heads=8, dropout=0.1)
         self.conv4 = GATConv(32 * 8, 32, heads=16, dropout=0.1)
@@ -304,7 +316,7 @@ class GATNet(torch.nn.Module):
                                   nn.ReLU())
         #self.lin1 = torch.nn.Linear(128, 128)
         #self.lin2 = torch.nn.Linear(448, 64)
-        self.lin = torch.nn.Linear(256, 1)
+        self.lin = nn.Linear(256, 1)
     def forward(self, data):
         x, edge_index, batch = data.x, data.edge_index, data.batch
         x1 = self.conv1(x, edge_index)
@@ -675,45 +687,46 @@ def gaussian_probability_new(sigma, mu, target):
 
 
 def pi_redefinition(device, pi, sigma, mu):
-    # redefine pi in order to obtain normalized distributions inside [0,1] interval
-    # mu = Mean
-    # sigma = width
+    # redefine pi in order to obtain normalized distributions inside [0,1] interval 
+    # mu = Mean         
+    # sigma = width          
     t_ones = torch.ones( mu.size() )
     t_zeros = torch.zeros( mu.size() )
     t_ones = t_ones.to(device)
     t_zeros = t_zeros.to(device)
-
+    
     z0 = (t_zeros - mu) / sigma
     z1 = (t_ones - mu) / sigma
-    out_interval = 0.5 * (1. + torch.erf(z1 / np.sqrt(2.)))  - 0.5 * (1. + torch.erf(z0 / np.sqrt(2.)))  # area inside [0,1]
+    out_interval = 0.5 * (1. + torch.erf(z1 / np.sqrt(2.)))  - 0.5 * (1. + torch.erf(z0 / np.sqrt(2.)))  # area inside [0,1] 
     #print("pi size->",pi.size(),"   out_interval size->",out_interval.size() )
     pi_2 = pi / out_interval.view(pi.size())
     #print("pi_2[0]",pi_2[0])
     '''
-    for i in range (0,len(pi_2) ): # sum all gaussians must be =1
+    for i in range (0,len(pi_2) ): # sum all gaussians must be =1 
         #pi_2[i] = pi_2[i]/torch.sum(pi_2[i])
         pi_2[i] /= torch.sum(pi_2[i])
     '''
-
+    
     #print("pi size after:",pi_2.size() )
-    #print("pi_2_size:",pi_2.size,"pi_2",pi_2[:2],"pi2_01_Sum:", torch.sum(pi_2[0]),torch.sum(pi_2[1]) )
+    #print(pi_2.size,"  ",pi_2[:2])
     return pi_2
-
+    
 def mdn_loss_new(device, pi, sigma, mu, target, weight):
     #print("pi---------------------------------------")
     #print(pi[:2])
-
+    
     pi_2 = pi_redefinition(device, pi, sigma, mu)
     #pi_2 = pi
-
+    
     ##redefine mu inside interval [-0.3,1.3] ~~ mu*1.6 - 0.3
     mu_shift = 0.3 * torch.ones( mu.size() )
     mu_shift = mu_shift.to(device)
-    mu_2 = 1.6 * mu - mu_shift
+    mu_2 = 1.6 * mu - mu_shift 
 
-    '''
-    print("---------------------------------------")
-    print("mass",target[:2])
+    
+    #print("---------------------------------------")
+    #print("mass",target[:2])
+    #'''
     print("---------------------------------------")
     print("mu size->", mu.size(), "   pi size->",pi.size() ,"   sigma size->", sigma.size()  )
     print("mu_2---------------------------------------")
@@ -723,7 +736,7 @@ def mdn_loss_new(device, pi, sigma, mu, target, weight):
     print("sigma---------------------------------------")
     print(sigma[:2])
     print("---------------------------------------")
-    '''
+    #'''
     prob = pi_2 * gaussian_probability_new(sigma, mu_2, target)
     nll = -weight*torch.log(torch.sum(prob, dim=1))
     #nll = weight*torch.log(torch.sum(prob, dim=1))
@@ -739,7 +752,7 @@ class Adversary_new(nn.Module):
     MDN_new(64, 1, num_gaussians)
 )
         self.revgrad = GradientReversal(lambda_parameter)
-        #print("lambda = {}".format(lambda_parameter))
+        #print("lambda = {}".format(lambda_parameter)) 
     def forward(self, x):
         x = self.revgrad(x) # important hyperparameter, the scale,   # tells by how much the classifier is punished
         x = self.gauss(x)
