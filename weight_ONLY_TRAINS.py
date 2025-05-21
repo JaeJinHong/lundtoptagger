@@ -6,7 +6,7 @@ import os
 import numpy as np
 import torch
 from torch_geometric.utils import degree
-from torch_geometric.data import DataLoader
+from torch_geometric.loader import DataLoader
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 
@@ -48,7 +48,7 @@ def main():
     for file_path in path_to_file:
         file_path = file_path.format(ln_kT_cut=ln_kT_cut)
         print("Loading file", file_path)
-        dataset += torch.load(file_path)
+        dataset += torch.load(file_path, weights_only=False) # weights_only=False added so that it works with PyTorch 2.6; it used to be the default
 
     # check the number of signal and background jets
     labels = np.array([jet_graph.y for jet_graph in dataset])
