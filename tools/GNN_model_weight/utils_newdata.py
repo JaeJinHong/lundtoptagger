@@ -132,6 +132,61 @@ def load_yaml(file_name):
         return yaml.load(f, Loader=yaml.FullLoader)
 
 
+def assign_flat_weights(mass, pt, n_mass_bins=50, n_pt_bins=50, iterations=2):
+    """
+    Assign weights to events so that the marginal mass and pT distributions become flat.
+    
+    The procedure works by iteratively normalizing the total weight in each bin to equal 
+    the average total weight of all (nonempty) bins.
+    
+    Parameters:
+      mass         : array-like, mass values for each event.
+      pt           : array-like, transverse momentum (pT) values for each event.
+      n_mass_bins  : int, the number of bins to use for mass reweighting.
+      n_pt_bins    : int, the number of bins to use for pT reweighting.
+      iterations   : int, number of iterations of reweighting.
+      
+    Returns:
+      weights      : NumPy array of weights for each event.
+    """
+    mass = np.asarray(mass)
+    pt = np.asarray(pt)
+    weights = np.ones_like(mass, dtype=float)
+    
+    # Iteratively flatten the mass and pT marginals
+    for _ in range(iterations):
+        # --- Flatten the mass distribution ---
+        # Define bin edges for mass:
+        mass_bins = np.linspace(mass.min(), mass.max(), n_mass_bins + 1)
+        # Find the bin index for each event
+        mass_indices = np.digitize(mass, mass_bins) - 1  # subtract 1 because digitize is 1-indexed
+        # Calculate the sum of weights in each mass bin
+        mass_bin_sums = np.array([weights[mass_indices == i].sum() for i in range(n_mass_bins)])
+        # We want all non-empty bins to have the same total weight.
+        nonzero = mass_bin_sums > 0
+        target_mass = mass_bin_sums[nonzero].mean() if nonzero.any() else 1.0
+        
+        # Rescale the weights in each mass bin
+        for i in range(n_mass_bins):
+            if mass_bin_sums[i] > 0:
+                idx = (mass_indices == i)
+                weights[idx] *= (target_mass / mass_bin_sums[i])
+        
+        # --- Flatten the pT distribution ---
+        pt_bins = np.linspace(pt.min(), pt.max(), n_pt_bins + 1)
+        pt_indices = np.digitize(pt, pt_bins) - 1
+        pt_bin_sums = np.array([weights[pt_indices == i].sum() for i in range(n_pt_bins)])
+        nonzero = pt_bin_sums > 0
+        target_pt = pt_bin_sums[nonzero].mean() if nonzero.any() else 1.0
+        
+        for i in range(n_pt_bins):
+            if pt_bin_sums[i] > 0:
+                idx = (pt_indices == i)
+                weights[idx] *= (target_pt / pt_bin_sums[i])
+                
+    return weights
+
+
 def to_categorical(y, num_classes=None, dtype='float32'):
     y = np.array(y, dtype='int')
     input_shape = y.shape

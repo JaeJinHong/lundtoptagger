@@ -9,9 +9,11 @@ from torch_geometric.utils import degree
 from torch_geometric.loader import DataLoader
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
 
 from tools.GNN_model_weight.models import *
 from tools.GNN_model_weight.utils_newdata import *
+from plotting.utils_plots_matplotlib import hist_with_errors
 
 print("Libraries loaded!")
 
@@ -38,8 +40,9 @@ def main():
         False if args.do_combined_training in ["false", "no", "0"] else
         config['architecture']['do_combined_training']
     )
+    
+    # load the dataset
     path_to_file = config['data']['path_to_trainfiles']
-
     dataset = []
     if isinstance(path_to_file, str):
         # path_to_file can be a list of file paths or a single path
@@ -54,26 +57,93 @@ def main():
     labels = np.array([jet_graph.y for jet_graph in dataset])
     num_signal = (labels==1).sum()
     num_background = (labels==0).sum()
+    print("")
     print("Signal count:", num_signal)
     print("Background count:", num_background)
 
-    weights = np.array([jet_graph.weights for jet_graph in dataset])
-    weights_signal_total = weights[labels==1].sum()
-    weights_background_total = weights[labels==0].sum()
+    # optionally flatten the mass and pt distributions and save plots of the distributions
+    masses = np.array([jet_graph.mass for jet_graph in dataset])
+    pts = np.array([jet_graph.pt for jet_graph in dataset])
+
+    if config["flatten_mass"]:
+        reweighting_args = dict(
+            iterations  = config['num_iters'],
+            n_mass_bins = config['n_mass_bins'],
+            n_pt_bins   = config['n_pt_bins']
+        )
+        weights_bkg = assign_flat_weights(masses[labels==0], pts[labels==0], **reweighting_args)
+        weights_sig = assign_flat_weights(masses[labels==1], pts[labels==1], **reweighting_args)
+    else:
+        weights_bkg = np.array([jet_graph.weights for jet_graph in dataset if jet_graph.y == 0], dtype=np.float64)
+        weights_sig = np.array([jet_graph.weights for jet_graph in dataset if jet_graph.y == 1], dtype=np.float64)
+
+    path_to_save = config['data']['path_to_save'].format(ln_kT_cut=ln_kT_cut)
+    os.makedirs(path_to_save, exist_ok=True)
+    print("\nResults will be saved to", path_to_save)
+
+    for var_array, var_name, var_bins in zip([masses, pts], ['Mass', 'pT'], ['n_mass_bins', 'n_pt_bins']):
+        hist_args = dict(
+            bins = config[var_bins],
+            density = True,
+            fmt = "."
+        )
+        hist_with_errors(var_array[labels==0], label='Background', weights=weights_bkg, **hist_args, capsize=2)
+        hist_with_errors(var_array[labels==1], label='Signal',     weights=weights_sig, **hist_args)
+        plt.xlabel(f"LRJ {var_name} [GeV]")
+        plt.ylabel('density')
+        if not config["flatten_mass"]:
+            plt.ylim(bottom=0)
+        plt.legend()
+        plt.savefig(os.path.join(path_to_save, f"{var_name}_distribution.png"))
+        plt.close()
+    
+    for truth_label, label_name, weights_array in zip([0, 1], ['background', 'signal'], [weights_bkg, weights_sig]):
+        bin_counts_2d_hist = np.histogram2d(
+            masses[labels==truth_label], pts[labels==truth_label],
+            bins=(config['n_mass_bins'], config['n_pt_bins']),
+            weights=weights_array,
+            density=True
+        )[0]
+        min_bin_count = bin_counts_2d_hist[bin_counts_2d_hist > 0].min()
+        print(f"Minimum bin count for {label_name}:", min_bin_count)
+
+        plt.hist2d(
+            masses[labels==truth_label], pts[labels==truth_label],
+            bins=(config['n_mass_bins'], config['n_pt_bins']),
+            weights=weights_array,
+            cmin=min_bin_count,
+            density=True
+        )
+        plt.colorbar(label='density')
+        plt.xlabel('LRJ Mass [GeV]')
+        plt.ylabel('LRJ pT [GeV]')
+        plt.savefig(os.path.join(path_to_save, f"Mass_pT_distribution_{label_name}.png"))
+        plt.close()
+
+    print("Mass and pT plots saved")
+
+    # rescale the weights so that the total weight of signal jets is equal to the total weight of background jets
+    weights_signal_total = weights_sig.sum()
+    weights_background_total = weights_bkg.sum()
+    print("")
     print("Signal total weight:", weights_signal_total)
     print("Background total weight:", weights_background_total)
     scale_factor = weights_signal_total / weights_background_total
     print("Scale factor:", scale_factor)
 
-    for jet_graph in dataset:
-        if jet_graph.y == 0:
-            jet_graph.weights *= scale_factor
+    dataset_sig = [jet_graph for jet_graph in dataset if jet_graph.y == 1]
+    dataset_bkg = [jet_graph for jet_graph in dataset if jet_graph.y == 0]
+
+    for jet_graph, weight in zip(dataset_sig, weights_sig):
+        jet_graph.weights = weight
+    for jet_graph, weight in zip(dataset_bkg, weights_bkg):
+        jet_graph.weights = weight*scale_factor
 
     ## define architecture
     batch_size = config['architecture']['batch_size']
     test_size = config['architecture']['test_size']
 
-    dataset= shuffle(dataset,random_state=42)
+    dataset= shuffle(dataset_sig+dataset_bkg, random_state=42)
     train_ds, validation_ds = train_test_split(dataset, test_size = test_size, random_state = 144)
     #train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=3)
     #val_loader = DataLoader(validation_ds, batch_size=batch_size, shuffle=False, num_workers=3)
@@ -117,7 +187,7 @@ def main():
     else:
         device_id = 'cpu'
     device = torch.device(device_id)
-    print(f'Using device: {device}')
+    print(f'\nUsing device: {device}')
 
     #model = torch.nn.DataParallel(model)
     model.to(device)
@@ -139,13 +209,11 @@ def main():
     val_bgrej = []
 
     model_name = config['data']['model_name'].format(ln_kT_cut=ln_kT_cut)
-    path_to_save = config['data']['path_to_save'].format(ln_kT_cut=ln_kT_cut)
     train_loss = []
     val_loss = []
     train_acc = []
     val_acc = []
 
-    os.makedirs(path_to_save, exist_ok=True)
     timestamp = datetime.now().strftime("%d%m-%H%M")
     metrics_filename = os.path.join(path_to_save, f"losses_{model_name}{timestamp}.txt")
 
