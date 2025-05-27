@@ -9,7 +9,7 @@ The included setup script can set up the environment on several different system
 
 - a system with Red Hat Enterprise Linux 9, an NVIDIA driver which supports CUDA >= 11.8, and access to CVMFS, such as `lxplus-gpu`
 - a system with CentOS 7 and access to CVMFS (currently set up without CUDA)
-- UCL's `gpu02` server
+- UCL's `gpu02` server and Hypatia GPU partition
 
 The script will automatically figure out which of these systems it is running on and set up the environment accordingly; just do
 
@@ -43,7 +43,6 @@ To run the training:
 python weight_ONLY_TRAINS.py configs/config_ONLY_TRAIN.yaml
 ```
 
-You can override the $k_T$ cut in the configuration file using a command line argument:
 There are two optional arguments which can be used to override the values in the config file:
 
 - `--ln_kT_cut`: float

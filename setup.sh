@@ -7,29 +7,24 @@ if hostnamectl | grep -q "Red Hat Enterprise Linux 9"; then
         source /cvmfs/sft.cern.ch/lcg/views/LCG_104cuda/x86_64-el9-gcc11-opt/setup.sh
     fi
 
+# setup for UCL Hypatia GPU partition
+elif [[ $(hostname) == compute-gpu-0-*.local ]]; then
+    source /share/apps/anaconda/3-2022.05/etc/profile.d/conda.sh
+    conda activate /share/rcifdata/tmlinare/conda/envs/pytorch_py39_cu126
+
+# setup for UCL HEP GPU server
+elif [ $(hostname) == "gpu02" ]; then
+    # set up conda
+    eval "$('/mnt/storage/tmlinare/installs/miniforge3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+    . "/mnt/storage/tmlinare/installs/miniforge3/etc/profile.d/mamba.sh"
+    # activate conda environment
+    conda activate /mnt/storage/tmlinare/conda/envs/pytorch_py39_cu102
+
 # setup for CentOS 7 machines with CVMFS access, no GPU
 elif hostnamectl | grep -q "CentOS Linux 7"; then
     echo "sourcing /cvmfs/sft.cern.ch/lcg/views/LCG_104/x86_64-centos7-gcc12-opt/setup.sh"
     source /cvmfs/sft.cern.ch/lcg/views/LCG_104/x86_64-centos7-gcc12-opt/setup.sh
 
-# setup for UCL GPU server
-elif [ $(hostname) == "gpu02" ]; then
-    # set up conda
-    __conda_setup="$('/mnt/storage/tmlinare/installs/miniforge3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
-    if [ $? -eq 0 ]; then
-        eval "$__conda_setup"
-    else
-        if [ -f "/mnt/storage/tmlinare/installs/miniforge3/etc/profile.d/conda.sh" ]; then
-            . "/mnt/storage/tmlinare/installs/miniforge3/etc/profile.d/conda.sh"
-        else
-            export PATH="/mnt/storage/tmlinare/installs/miniforge3/bin:$PATH"
-        fi
-    fi
-    unset __conda_setup
-    if [ -f "/mnt/storage/tmlinare/installs/miniforge3/etc/profile.d/mamba.sh" ]; then
-        . "/mnt/storage/tmlinare/installs/miniforge3/etc/profile.d/mamba.sh"
-    fi
-
-    # activate conda environment
-    conda activate /mnt/storage/tmlinare/conda/envs/pytorch_py39_cu102
+else
+    echo "No setup configured for your system."
 fi
