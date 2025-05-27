@@ -53,6 +53,16 @@ def main():
         print("Loading file", file_path)
         dataset += torch.load(file_path, weights_only=False) # weights_only=False added so that it works with PyTorch 2.6; it used to be the default
 
+    # apply jet mass and pT cuts
+    if config['cut_pt_mass']:
+        config_signal = load_yaml(config['config_signal_path'])[config['signal']]
+        pt_range = config_signal['pt_range']
+        mass_range = config_signal['mass_range']
+        print("Filtering jets with pT in range", pt_range, "and mass in range", mass_range)
+        dataset = [jet_graph for jet_graph in dataset
+                   if  pt_range[0]   < jet_graph.pt   < pt_range[1]
+                   and mass_range[0] < jet_graph.mass < mass_range[1]]
+
     # check the number of signal and background jets
     labels = np.array([jet_graph.y for jet_graph in dataset])
     num_signal = (labels==1).sum()
