@@ -155,10 +155,8 @@ def main():
 
     dataset= shuffle(dataset_sig+dataset_bkg, random_state=42)
     train_ds, validation_ds = train_test_split(dataset, test_size = test_size, random_state = 144)
-    #train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=3)
-    #val_loader = DataLoader(validation_ds, batch_size=batch_size, shuffle=False, num_workers=3)
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(validation_ds, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=config['num_workers'])
+    val_loader = DataLoader(validation_ds, batch_size=batch_size, shuffle=False, num_workers=config['num_workers'])
 
 
     print ("train dataset size:", len(train_ds))
