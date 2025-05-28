@@ -132,58 +132,50 @@ def load_yaml(file_name):
         return yaml.load(f, Loader=yaml.FullLoader)
 
 
-def assign_flat_weights(mass, pt, n_mass_bins=50, n_pt_bins=50, iterations=2):
+def assign_flat_weights(*arrays, n_bins=50, iterations=2):
     """
-    Assign weights to events so that the marginal mass and pT distributions become flat.
-    
+    Assign weights to array entries so that the marginal distributions of the input arrays become flat.
+
     The procedure works by iteratively normalizing the total weight in each bin to equal 
     the average total weight of all (nonempty) bins.
-    
+
     Parameters:
-      mass         : array-like, mass values for each event.
-      pt           : array-like, transverse momentum (pT) values for each event.
-      n_mass_bins  : int, the number of bins to use for mass reweighting.
-      n_pt_bins    : int, the number of bins to use for pT reweighting.
+      *arrays      : one or more array-like inputs to reweight (e.g., mass, pT). They should have the same lengths.
+      n_bins       : int or list of ints, the number of bins to use for reweighting each array.
+                     If a single int is provided, it is used for all arrays.
       iterations   : int, number of iterations of reweighting.
-      
+
     Returns:
-      weights      : NumPy array of weights for each event.
+      weights      : NumPy array of weights for each entry.
     """
-    mass = np.asarray(mass)
-    pt = np.asarray(pt)
-    weights = np.ones_like(mass, dtype=float)
-    
-    # Iteratively flatten the mass and pT marginals
+    arrays = [np.asarray(arr) for arr in arrays]
+    weights = np.ones_like(arrays[0], dtype=float)
+
+    # Ensure n_bins is a list with the same length as arrays
+    if isinstance(n_bins, int):
+        n_bins = [n_bins] * len(arrays)
+    elif len(n_bins) != len(arrays):
+        raise ValueError("n_bins must be an int or a list with the same length as the number of input arrays.")
+
+    # Iteratively flatten the distributions
     for _ in range(iterations):
-        # --- Flatten the mass distribution ---
-        # Define bin edges for mass:
-        mass_bins = np.linspace(mass.min(), mass.max(), n_mass_bins + 1)
-        # Find the bin index for each event
-        mass_indices = np.digitize(mass, mass_bins) - 1  # subtract 1 because digitize is 1-indexed
-        # Calculate the sum of weights in each mass bin
-        mass_bin_sums = np.array([weights[mass_indices == i].sum() for i in range(n_mass_bins)])
-        # We want all non-empty bins to have the same total weight.
-        nonzero = mass_bin_sums > 0
-        target_mass = mass_bin_sums[nonzero].mean() if nonzero.any() else 1.0
-        
-        # Rescale the weights in each mass bin
-        for i in range(n_mass_bins):
-            if mass_bin_sums[i] > 0:
-                idx = (mass_indices == i)
-                weights[idx] *= (target_mass / mass_bin_sums[i])
-        
-        # --- Flatten the pT distribution ---
-        pt_bins = np.linspace(pt.min(), pt.max(), n_pt_bins + 1)
-        pt_indices = np.digitize(pt, pt_bins) - 1
-        pt_bin_sums = np.array([weights[pt_indices == i].sum() for i in range(n_pt_bins)])
-        nonzero = pt_bin_sums > 0
-        target_pt = pt_bin_sums[nonzero].mean() if nonzero.any() else 1.0
-        
-        for i in range(n_pt_bins):
-            if pt_bin_sums[i] > 0:
-                idx = (pt_indices == i)
-                weights[idx] *= (target_pt / pt_bin_sums[i])
-                
+        for arr, bins in zip(arrays, n_bins):
+            # Define bin edges for the current array
+            bin_edges = np.linspace(arr.min(), arr.max(), bins + 1)
+            # Find the bin index for each event
+            bin_indices = np.digitize(arr, bin_edges) - 1  # subtract 1 because digitize is 1-indexed
+            # Calculate the sum of weights in each bin
+            bin_sums = np.array([weights[bin_indices == i].sum() for i in range(bins)])
+            # We want all non-empty bins to have the same total weight
+            nonzero = bin_sums > 0
+            target = bin_sums[nonzero].mean() if nonzero.any() else 1.0
+            
+            # Rescale the weights in each bin
+            for i in range(bins):
+                if bin_sums[i] > 0:
+                    idx = (bin_indices == i)
+                    weights[idx] *= (target / bin_sums[i])
+
     return weights
 
 

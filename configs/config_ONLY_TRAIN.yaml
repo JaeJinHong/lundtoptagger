@@ -23,12 +23,15 @@ cut_pt_mass: True
 config_signal_path: "./configs/config_signal.yaml"  # path to the config file with the signal configuration
 signal: top                                         # top, W, or W_flat
 
+flatten_pt: True
+# if applying cuts which were not used for the pT spectrum that was used for reweighting in Make_data.py,
+# then flatten_pt should be set to True, so that the pT spectrum is flattened again
 flatten_mass: False  # should only be used with a wide-mass sample, which has a significant number of jets across the entire mass range used for training
 num_iters: 4         # number of iterations for the iterative reweighting procedure
 # number of mass and pT bins for the iterative reweighting procedure
 # (the reweighting is done so that the total weight in each bin is the same)
-n_mass_bins: 50
-n_pt_bins:   100
+n_bins_pt:   100
+n_bins_mass: 50
 
 
 # Architecture and training

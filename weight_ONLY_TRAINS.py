@@ -75,14 +75,23 @@ def main():
     masses = np.array([jet_graph.mass for jet_graph in dataset])
     pts = np.array([jet_graph.pt for jet_graph in dataset])
 
-    if config["flatten_mass"]:
-        reweighting_args = dict(
-            iterations  = config['num_iters'],
-            n_mass_bins = config['n_mass_bins'],
-            n_pt_bins   = config['n_pt_bins']
-        )
-        weights_bkg = assign_flat_weights(masses[labels==0], pts[labels==0], **reweighting_args)
-        weights_sig = assign_flat_weights(masses[labels==1], pts[labels==1], **reweighting_args)
+    flatten_mass = config['flatten_mass']
+    flatten_pt = config['flatten_pt']
+    if flatten_mass or flatten_pt:
+        iterations  = config['num_iters']
+        arrays_to_flatten_bkg = []
+        arrays_to_flatten_sig = []
+        n_bins = []
+        if flatten_mass:
+            arrays_to_flatten_bkg.append(masses[labels==0])
+            arrays_to_flatten_sig.append(masses[labels==1])
+            n_bins.append(config['n_bins_mass'])
+        if flatten_pt:
+            arrays_to_flatten_bkg.append(pts[labels==0])
+            arrays_to_flatten_sig.append(pts[labels==1])
+            n_bins.append(config['n_bins_pt'])
+        weights_bkg = assign_flat_weights(*arrays_to_flatten_bkg, n_bins=n_bins, iterations=iterations)
+        weights_sig = assign_flat_weights(*arrays_to_flatten_sig, n_bins=n_bins, iterations=iterations)
     else:
         weights_bkg = np.array([jet_graph.weights for jet_graph in dataset if jet_graph.y == 0], dtype=np.float64)
         weights_sig = np.array([jet_graph.weights for jet_graph in dataset if jet_graph.y == 1], dtype=np.float64)
@@ -91,7 +100,7 @@ def main():
     os.makedirs(path_to_save, exist_ok=True)
     print("\nResults will be saved to", path_to_save)
 
-    for var_array, var_name, var_bins in zip([masses, pts], ['Mass', 'pT'], ['n_mass_bins', 'n_pt_bins']):
+    for var_array, var_name, var_bins in zip([masses, pts], ['Mass', 'pT'], ['n_bins_mass', 'n_bins_pt']):
         hist_args = dict(
             bins = config[var_bins],
             density = True,
@@ -101,29 +110,24 @@ def main():
         hist_with_errors(var_array[labels==1], label='Signal',     weights=weights_sig, **hist_args)
         plt.xlabel(f"LRJ {var_name} [GeV]")
         plt.ylabel('density')
-        if not config["flatten_mass"]:
+        if var_name=="Mass" and not flatten_mass or var_name=="pT" and not flatten_pt:
             plt.ylim(bottom=0)
         plt.legend()
         plt.savefig(os.path.join(path_to_save, f"{var_name}_distribution.png"))
         plt.close()
     
     for truth_label, label_name, weights_array in zip([0, 1], ['background', 'signal'], [weights_bkg, weights_sig]):
-        bin_counts_2d_hist = np.histogram2d(
-            masses[labels==truth_label], pts[labels==truth_label],
-            bins=(config['n_mass_bins'], config['n_pt_bins']),
+        hist_arrays = [masses[labels==truth_label], pts[labels==truth_label]]
+        hist_args = dict(
+            bins=(config['n_bins_mass'], config['n_bins_pt']),
             weights=weights_array,
             density=True
-        )[0]
+        )
+        bin_counts_2d_hist = np.histogram2d(*hist_arrays, **hist_args)[0]
         min_bin_count = bin_counts_2d_hist[bin_counts_2d_hist > 0].min()
         print(f"Minimum bin count for {label_name}:", min_bin_count)
 
-        plt.hist2d(
-            masses[labels==truth_label], pts[labels==truth_label],
-            bins=(config['n_mass_bins'], config['n_pt_bins']),
-            weights=weights_array,
-            cmin=min_bin_count,
-            density=True
-        )
+        plt.hist2d(*hist_arrays, **hist_args, cmin=min_bin_count)
         plt.colorbar(label='density')
         plt.xlabel('LRJ Mass [GeV]')
         plt.ylabel('LRJ pT [GeV]')
