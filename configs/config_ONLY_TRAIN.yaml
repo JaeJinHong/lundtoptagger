@@ -32,7 +32,7 @@ num_iters: 4         # number of iterations for the iterative reweighting proced
 # (the reweighting is done so that the total weight in each bin is the same)
 n_bins_pt:   100
 n_bins_mass: 50
-
+# bins are only used for 1D reweighting, so the number of bins does not matter for the 2D reweighting
 
 # Architecture and training
 # =========================

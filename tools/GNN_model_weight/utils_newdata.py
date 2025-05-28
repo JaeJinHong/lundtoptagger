@@ -11,7 +11,7 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 from torch_geometric.data import Data
-from scipy.stats import entropy
+from scipy.stats import entropy, gaussian_kde
 
 from ..GNN_model_weight.models import mdn_loss, mdn_loss_new
 
@@ -178,6 +178,37 @@ def assign_flat_weights(*arrays, n_bins=50, iterations=2):
 
     return weights
 
+def assign_2d_flat_weights_kde(mass, pt, bw_method='scott', eps=1e-9):
+    """
+    Assign weights to events such that the 2D (mass, pT) distribution becomes flat.
+    
+    This function estimates the joint density using a kernel density estimator (KDE)
+    and assigns weights inversely proportional to the local density.
+    
+    Parameters:
+      mass       : array-like, mass values for each event.
+      pt         : array-like, pT values for each event.
+      bw_method  : str or scalar, the method or factor used to calculate the KDE bandwidth.
+                   ('scott' or 'silverman' are common choices, or you can provide a scalar)
+      eps        : float, a small number used to prevent division by zero.
+    
+    Returns:
+      weights    : NumPy array of weights for each event.
+    """
+    # Combine mass and pT into a 2xN array for the KDE
+    data = np.vstack([mass, pt])
+    
+    # Instantiate and evaluate KDE on the data points
+    kde = gaussian_kde(data, bw_method=bw_method)
+    density = kde.evaluate(data)
+    
+    # Compute weights as the inverse density. The eps prevents division by zero.
+    weights = 1.0 / np.maximum(density, eps)
+    
+    # Normalize weights so that the average weight is 1 (optional, but useful for stability)
+    weights /= np.mean(weights)
+    
+    return weights
 
 def to_categorical(y, num_classes=None, dtype='float32'):
     y = np.array(y, dtype='int')

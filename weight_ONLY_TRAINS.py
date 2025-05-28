@@ -77,7 +77,10 @@ def main():
 
     flatten_mass = config['flatten_mass']
     flatten_pt = config['flatten_pt']
-    if flatten_mass or flatten_pt:
+    if flatten_mass and flatten_pt:
+        weights_bkg = assign_2d_flat_weights_kde(masses[labels==0], pts[labels==0], bw_method='scott')
+        weights_sig = assign_2d_flat_weights_kde(masses[labels==1], pts[labels==1], bw_method='scott')
+    elif flatten_mass or flatten_pt:
         iterations  = config['num_iters']
         arrays_to_flatten_bkg = []
         arrays_to_flatten_sig = []
