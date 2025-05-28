@@ -6,7 +6,7 @@ data:
   path_to_save: "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/"
   # model_name: "LundNet_R22_ExtraNode_No_ln_kT_Cut_LRJ_NewData_Primary"
   model_name: "LundNet_R22_ExtraNode_ln_kT_Cut_{ln_kT_cut}_LRJ_NewData_Primary"
-  adv_model_name: "adversarial_MODEL_"
+  adv_model_name: "adversarial"
   ln_kT_cut: null # null, -0.5, 0.0, 0.5, 1.0, 2.0, 2.8
   # if {ln_kT_cut} is present in path_to_trainfiles, path_to_save or model_name, it will be replaced by the value of ln_kT_cut (by None if ln_kT_cut is null)
   # so it is only used to select a dataset with a specific ln_kT cut already applied, the training script does not apply the ln_kT cut itself
