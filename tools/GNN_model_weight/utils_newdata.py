@@ -154,6 +154,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
     kT_selection: Union[float, None],
     primary_Lund_only_one_arr: list,
     signal_jet_truth_label: int,
+    signal_dsid: int,
     pt_range: tuple = (350, 3200),
     mass_range: tuple = (0, float('inf')),
     min_splits: int = 3,
@@ -179,6 +180,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         kT_selection (float | None): kT selection threshold.
         primary_Lund_only_one_arr (list): List to keep track of how many jets have only 1 splitting.
         signal_jet_truth_label (int): Truth label for signal jets.
+        signal_dsid (int): DSID for the signal jets.
         pt_range (tuple): Minimum and maximum jet pT values for selected jets, in GeV.
         mass_range (tuple): Minimum and maximum jet mass values for selected jets, in GeV.
         min_splits (int): Minimum number of splittings, or emissions, for a jet to be selected.
@@ -214,7 +216,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         if len(z[i]) < min_splits: 
             continue
         # skip jets which are not signal (1 for top and 2 for W) or background (10)
-        if (label[i]!=signal_jet_truth_label) and (label[i]!=10):
+        if (dsids[i]==signal_dsid and label[i]!=signal_jet_truth_label) or (dsids[i]!=signal_dsid and label[i]!=10):
             continue
 
         # label signal as 1 and background as 0
