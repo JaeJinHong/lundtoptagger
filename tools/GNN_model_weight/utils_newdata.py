@@ -150,17 +150,16 @@ def to_categorical(y, num_classes=None, dtype='float32'):
 
 def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
     graphs: list[Data],
-    z, k, d, edge1, edge2, weight, label, dsids, mcEventWeights, Ntracks, jet_pts, jet_ms,
+    z, k, d, edge1, edge2, weight, label, dsids, Ntracks, jet_pts, jet_ms,
     kT_selection: Union[float, None],
     primary_Lund_only_one_arr: list,
+    passed_selection: list[bool],
     signal_jet_truth_label: int,
     signal_dsid: int,
     pt_range: tuple = (350, 3200),
     mass_range: tuple = (0, float('inf')),
     min_splits: int = 3,
     include_pt: bool = False,
-    include_dsid: bool = False,
-    include_mcEventWeight: bool = False
 ) -> list[Data]:
     """
     Create a list of graphs for tagging.
@@ -173,20 +172,20 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         edge1 (array): Array of edge1 values.
         edge2 (array): Array of edge2 values.
         weight (array): Array of jet weights.
-        label (array): Array of jet truth labels.
+        label (array): Array of jet truth labels (1 for top, 2 for W, 10 for QCD).
+        dsids (array): Array of DSIDs for the jets.
         Ntracks (array): Array of Ntracks values.
         jet_pts (array): Array of jet pT values.
         jet_ms (array): Array of jet mass values.
         kT_selection (float | None): kT selection threshold.
         primary_Lund_only_one_arr (list): List to keep track of how many jets have only 1 splitting.
+        passed_selection (list): List to keep track of jets that passed the selection criteria.
         signal_jet_truth_label (int): Truth label for signal jets.
         signal_dsid (int): DSID for the signal jets.
         pt_range (tuple): Minimum and maximum jet pT values for selected jets, in GeV.
         mass_range (tuple): Minimum and maximum jet mass values for selected jets, in GeV.
         min_splits (int): Minimum number of splittings, or emissions, for a jet to be selected.
         include_pt (bool): Whether to include pT as a graph attribute.
-        include_dsid (bool): Whether to include DSID as a graph attribute.
-        include_mcEventWeight (bool): Whether to include mcEventWeight as a graph attribute.
 
     Returns:
         list[Data]: List of torch_geometric.data.Data objects.
@@ -209,15 +208,16 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
 
         # skip jets with mass or pT outside the specified ranges
         # or with less than the specified number of splittings
-        if not (pt_range[0] < jet_pts[i] < pt_range[1]):
+        if (not (pt_range[0] < jet_pts[i] < pt_range[1])
+            or not (mass_range[0] < jet_ms[i] < mass_range[1])
+            or len(z[i]) < min_splits
+            # skip jets which are not signal (1 for top and 2 for W) or background (10)
+            or dsids[i]==signal_dsid and label[i]!=signal_jet_truth_label) or (dsids[i]!=signal_dsid and label[i]!=10
+        ):
+            passed_selection.append(False)
             continue
-        if not (mass_range[0] < jet_ms[i] < mass_range[1]):
-            continue
-        if len(z[i]) < min_splits: 
-            continue
-        # skip jets which are not signal (1 for top and 2 for W) or background (10)
-        if (dsids[i]==signal_dsid and label[i]!=signal_jet_truth_label) or (dsids[i]!=signal_dsid and label[i]!=10):
-            continue
+        else:
+            passed_selection.append(True)  # changed to False later for some conditions
 
         # label signal as 1 and background as 0
         label_out = label[i] # label_np
@@ -462,6 +462,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         #print("len(nodes_pass_KT)",len(nodes_pass_KT))
         '''
         if len(k_out[k_out > kT_Cut]) < 1:
+            passed_selection[i] = False
             continue
         
         #print("index_count_out  :",index_count_out)
@@ -579,6 +580,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         if len(edge_ID1)<1:
             primary_Lund_only_one_arr.append(1)
             #print("k_out",k_out , "  edge_ID1:", edge_ID1)
+            passed_selection[i] = False
             continue
             #print("x",vec)
             #print("edge",edge)
@@ -600,10 +602,6 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         )
         if include_pt:
             graph["pt"] = float(jet_pts[i]) #torch.tensor(jet_pts[i] , dtype=torch.float).detach()
-        if include_dsid:
-            graph["dsid"] = int(dsids[i])
-        if include_mcEventWeight:
-            graph["mcEventWeight"] = float(mcEventWeights[i])
 
         graphs.append(graph)
         '''
