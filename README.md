@@ -64,6 +64,7 @@ The parameters include values for the selection cuts (mass, $p_T$, minimum numbe
 and paths to files with histograms of the $p_T$ distributions of the jets, which are used to calculate the $p_T$ weights
 so that they are proportional to 1/(bin count).
 These histograms are included in the repository; they are located in the `histos` folder.
+They can be created with the `make_histos.py` script, which also applies cuts from `config_signal.yaml`.
 
 ## Training and testing
 
