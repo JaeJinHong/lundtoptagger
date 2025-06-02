@@ -117,7 +117,7 @@ def GetPtWeight(truth_labels, dsid_input, pts, SF, Pythia_or_All=False, signal_c
         pt_bin = int( ((pts[i]-100)/3000)*lenght_sig )
         if pt_bin>=lenght_sig : # ==
             pt_bin = lenght_sig-1
-        if truth_labels[i]==10: # background could also be identified by DSIS, which would be < 370000
+        if truth_labels[i]==10: # background could also be identified by DSID, which would be < 370000
             #print("pts[i] ->", pt[i])
             #print("bin_pt->", pt_bin)
             weight_out.append( (Inv_hist_bg[pt_bin])*1  )

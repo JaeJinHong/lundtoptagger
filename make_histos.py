@@ -1,4 +1,5 @@
 import argparse
+import os
 import glob
 import time
 from datetime import timedelta
@@ -6,7 +7,6 @@ from datetime import timedelta
 import uproot
 import awkward as ak
 from ROOT import TH1F, TFile
-import os
 
 from tools.GNN_model_weight.utils_newdata import load_yaml
 
@@ -76,7 +76,7 @@ def main():
         for label in truth_labels:
             hist_truth_label.Fill(label)
 
-    # Save histogram to a ROOT file
+    # Save histograms to a ROOT file
     os.makedirs(os.path.dirname(outfile_path), exist_ok=True)
     output_file = TFile(outfile_path, "RECREATE")
     hist_pt.Write()
