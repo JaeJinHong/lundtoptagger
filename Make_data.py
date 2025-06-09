@@ -51,29 +51,35 @@ def main():
         with uproot.open(file) as infile:
             tree = infile[intreename]
 
-            dsids = tree["dsid"].array(library="np")
+            dsids = tree["dsid"].array(entry_stop=entry_stop, library="np")
             dsid_test = dsids[0]                                 # check the first DSID, they should all be the same
             if dsid_test in config_signal[signal]["skip_dsids"]: # don't lose time with jets that don't pass pt cut or wrong signal sample
                 continue
 
-            truth_labels_unflattened = tree["LRJ_truthLabel"].array(library="ak")
+            # Determine how many entries to load based on fraction
+            total_events = tree.num_entries
+            entries_to_load = int(total_events * config["event_fraction"])
+            entry_stop = min(entries_to_load, total_events)
+
+            # Load the data
+            truth_labels_unflattened = tree["LRJ_truthLabel"].array(entry_stop=entry_stop, library="ak")
             truth_labels = ak.flatten(truth_labels_unflattened)
 
             numbers_of_jets_per_event = ak.num(truth_labels_unflattened)
 
-            mcEventWeights = tree["mcEventWeight"].array(library="np")
+            mcEventWeights = tree["mcEventWeight"].array(entry_stop=entry_stop, library="np")
             mcEventWeights = np.repeat(mcEventWeights, numbers_of_jets_per_event) # expand out the array so it has same length as flattened array
             dsids = np.repeat(dsids, numbers_of_jets_per_event)            # TODO: can I do this without numpy? expand out the array so it has same length as flattened array
 
             print(f"length dataset: {len(dataset)}, file number: {file_number}/{n_files}")
-            parent1 = ak.flatten(tree["jetLundIDParent1"].array(library="ak"))
-            parent2 = ak.flatten(tree["jetLundIDParent2"].array(library="ak"))
-            jet_ms = ak.flatten(tree["LRJ_mass"].array(library="ak"))
-            jet_pts = ak.flatten(tree["LRJ_pt"].array(library="ak"))
-            all_lund_zs = ak.flatten(tree["jetLundZ"].array(library="ak"))
-            all_lund_kts = ak.flatten(tree["jetLundKt"].array(library="ak"))
-            all_lund_drs = ak.flatten(tree["jetLundDeltaR"].array(library="ak"))
-            N_tracks = ak.flatten(tree["LRJ_Nconst_Charged"].array(library="ak"))
+            parent1 = ak.flatten(tree["jetLundIDParent1"].array(entry_stop=entry_stop, library="ak"))
+            parent2 = ak.flatten(tree["jetLundIDParent2"].array(entry_stop=entry_stop, library="ak"))
+            jet_ms = ak.flatten(tree["LRJ_mass"].array(entry_stop=entry_stop, library="ak"))
+            jet_pts = ak.flatten(tree["LRJ_pt"].array(entry_stop=entry_stop, library="ak"))
+            all_lund_zs = ak.flatten(tree["jetLundZ"].array(entry_stop=entry_stop, library="ak"))
+            all_lund_kts = ak.flatten(tree["jetLundKt"].array(entry_stop=entry_stop, library="ak"))
+            all_lund_drs = ak.flatten(tree["jetLundDeltaR"].array(entry_stop=entry_stop, library="ak"))
+            N_tracks = ak.flatten(tree["LRJ_Nconst_Charged"].array(entry_stop=entry_stop, library="ak"))
             # N_tracks = ak.flatten(tree["LRJ_Ntrk500"].array(library="ak"))
             # N_tracks = ak.flatten(tree["LRJ_Nconst"].array(library="ak"))
 
