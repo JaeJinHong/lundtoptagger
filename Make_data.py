@@ -51,7 +51,7 @@ def main():
         with uproot.open(file) as infile:
             tree = infile[intreename]
 
-            dsids = tree["dsid"].array(entry_stop=entry_stop, library="np")
+            dsids = tree["dsid"].array(library="np")
             dsid_test = dsids[0]                                 # check the first DSID, they should all be the same
             if dsid_test in config_signal[signal]["skip_dsids"]: # don't lose time with jets that don't pass pt cut or wrong signal sample
                 continue
@@ -69,7 +69,7 @@ def main():
 
             mcEventWeights = tree["mcEventWeight"].array(entry_stop=entry_stop, library="np")
             mcEventWeights = np.repeat(mcEventWeights, numbers_of_jets_per_event) # expand out the array so it has same length as flattened array
-            dsids = np.repeat(dsids, numbers_of_jets_per_event)            # TODO: can I do this without numpy? expand out the array so it has same length as flattened array
+            dsids = np.repeat(dsids[:entry_stop], numbers_of_jets_per_event)            # TODO: can I do this without numpy? expand out the array so it has same length as flattened array
 
             print(f"length dataset: {len(dataset)}, file number: {file_number}/{n_files}")
             parent1 = ak.flatten(tree["jetLundIDParent1"].array(entry_stop=entry_stop, library="ak"))
