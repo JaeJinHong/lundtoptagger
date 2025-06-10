@@ -11,7 +11,7 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 from torch_geometric.data import Data
-from scipy.stats import entropy
+from scipy.stats import entropy, gaussian_kde
 
 from ..GNN_model_weight.models import mdn_loss, mdn_loss_new
 
@@ -109,6 +109,84 @@ def load_yaml(file_name):
     with open(file_name) as f:
         return yaml.load(f, Loader=yaml.FullLoader)
 
+
+def assign_flat_weights(*arrays, n_bins=50, iterations=2):
+    """
+    Assign weights to array entries so that the marginal distributions of the input arrays become flat.
+
+    The procedure works by iteratively normalizing the total weight in each bin to equal 
+    the average total weight of all (nonempty) bins.
+
+    Parameters:
+      *arrays      : one or more array-like inputs to reweight (e.g., mass, pT). They should have the same lengths.
+      n_bins       : int or list of ints, the number of bins to use for reweighting each array.
+                     If a single int is provided, it is used for all arrays.
+      iterations   : int, number of iterations of reweighting.
+
+    Returns:
+      weights      : NumPy array of weights for each entry.
+    """
+    arrays = [np.asarray(arr) for arr in arrays]
+    weights = np.ones_like(arrays[0], dtype=float)
+
+    # Ensure n_bins is a list with the same length as arrays
+    if isinstance(n_bins, int):
+        n_bins = [n_bins] * len(arrays)
+    elif len(n_bins) != len(arrays):
+        raise ValueError("n_bins must be an int or a list with the same length as the number of input arrays.")
+
+    # Iteratively flatten the distributions
+    for _ in range(iterations):
+        for arr, bins in zip(arrays, n_bins):
+            # Define bin edges for the current array
+            bin_edges = np.linspace(arr.min(), arr.max(), bins + 1)
+            # Find the bin index for each event
+            bin_indices = np.digitize(arr, bin_edges) - 1  # subtract 1 because digitize is 1-indexed
+            # Calculate the sum of weights in each bin
+            bin_sums = np.array([weights[bin_indices == i].sum() for i in range(bins)])
+            # We want all non-empty bins to have the same total weight
+            nonzero = bin_sums > 0
+            target = bin_sums[nonzero].mean() if nonzero.any() else 1.0
+            
+            # Rescale the weights in each bin
+            for i in range(bins):
+                if bin_sums[i] > 0:
+                    idx = (bin_indices == i)
+                    weights[idx] *= (target / bin_sums[i])
+
+    return weights
+
+def assign_2d_flat_weights_kde(mass, pt, bw_method='scott', eps=1e-9):
+    """
+    Assign weights to events such that the 2D (mass, pT) distribution becomes flat.
+    
+    This function estimates the joint density using a kernel density estimator (KDE)
+    and assigns weights inversely proportional to the local density.
+    
+    Parameters:
+      mass       : array-like, mass values for each event.
+      pt         : array-like, pT values for each event.
+      bw_method  : str or scalar, the method or factor used to calculate the KDE bandwidth.
+                   ('scott' or 'silverman' are common choices, or you can provide a scalar)
+      eps        : float, a small number used to prevent division by zero.
+    
+    Returns:
+      weights    : NumPy array of weights for each event.
+    """
+    # Combine mass and pT into a 2xN array for the KDE
+    data = np.vstack([mass, pt])
+    
+    # Instantiate and evaluate KDE on the data points
+    kde = gaussian_kde(data, bw_method=bw_method)
+    density = kde.evaluate(data)
+    
+    # Compute weights as the inverse density. The eps prevents division by zero.
+    weights = 1.0 / np.maximum(density, eps)
+    
+    # Normalize weights so that the average weight is 1 (optional, but useful for stability)
+    weights /= np.mean(weights)
+    
+    return weights
 
 def to_categorical(y, num_classes=None, dtype='float32'):
     y = np.array(y, dtype='int')
