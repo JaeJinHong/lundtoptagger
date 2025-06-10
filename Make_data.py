@@ -82,6 +82,10 @@ def main():
             N_tracks = ak.flatten(tree["LRJ_Nconst_Charged"].array(entry_stop=entry_stop, library="ak"))
             # N_tracks = ak.flatten(tree["LRJ_Ntrk500"].array(library="ak"))
             # N_tracks = ak.flatten(tree["LRJ_Nconst"].array(library="ak"))
+            GN2X_pqcd = ak.to_numpy(ak.flatten(tree["GN2Xv01_pqcd"].array(entry_stop=entry_stop, library="ak")))
+            GN2X_phbb = ak.to_numpy(ak.flatten(tree["GN2Xv01_phbb"].array(entry_stop=entry_stop, library="ak")))
+            GN2X_ptop = ak.to_numpy(ak.flatten(tree["GN2Xv01_ptop"].array(entry_stop=entry_stop, library="ak")))
+            GN2X_phcc = ak.to_numpy(ak.flatten(tree["GN2Xv01_phcc"].array(entry_stop=entry_stop, library="ak")))
 
             print("\nCalculating weights:")
             flat_weights = GetPtWeight(jet_pts, truth_labels, dsid_test, 5)
@@ -94,6 +98,7 @@ def main():
                 dataset, all_lund_zs, all_lund_kts, all_lund_drs,
                 parent1, parent2, flat_weights, truth_labels, dsids,
                 N_tracks, jet_pts, jet_ms, kT_selection,
+                GN2X_pqcd, GN2X_phbb, GN2X_ptop, GN2X_phcc,
                 primary_Lund_only_one_arr,
                 passed_selection,
                 config_signal[signal]["signal_jet_truth_label"],
@@ -109,6 +114,7 @@ def main():
             out_tree_dict["fjet_pt"] = ak.concatenate([out_tree_dict["fjet_pt"], jet_pts[passed_selection]])
             out_tree_dict["fjet_weight_pt"] = ak.concatenate([out_tree_dict["fjet_weight_pt"], flat_weights[passed_selection]])
             out_tree_dict["labels"] = ak.concatenate([out_tree_dict["labels"], truth_labels[passed_selection]])
+            # TODO: add GN2X scores to the output ROOT file
 
             gc.collect()
 

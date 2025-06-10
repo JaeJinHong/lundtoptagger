@@ -208,6 +208,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
     graphs: list[Data],
     z, k, d, edge1, edge2, weight, label, dsids, Ntracks, jet_pts, jet_ms,
     kT_selection: Union[float, None],
+    GN2X_pqcd, GN2X_phbb, GN2X_ptop, GN2X_phcc,
     primary_Lund_only_one_arr: list,
     passed_selection: list[bool],
     signal_jet_truth_label: int,
@@ -654,7 +655,9 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
             weights = torch.tensor(weight[i], dtype=torch.float).detach(),
             #graph_size = torch.tensor(graph_size, dtype=torch.float).detach(),
             mass =  float(jet_ms[i]), #torch.tensor(jet_ms[i], dtype=torch.float).detach(),
-            y = float(label_out) #torch.tensor(label_out, dtype=torch.float).detach() ))
+            y = float(label_out), #torch.tensor(label_out, dtype=torch.float).detach() ))
+            GN2X_pqcd= float(GN2X_pqcd[i]), GN2X_phbb= float(GN2X_phbb[i]),
+            GN2X_ptop= float(GN2X_ptop[i]), GN2X_phcc= float(GN2X_phcc[i])
         )
         if include_pt:
             graph["pt"] = float(jet_pts[i]) #torch.tensor(jet_pts[i] , dtype=torch.float).detach()
