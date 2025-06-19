@@ -29,15 +29,12 @@ hadd -f tree.root user.*root
 In a clean and new terminal, go to the plotting repo and source the setup file. 
 It will get the version of the libraries you want to use from /cvmfs/. 
 Go to plotting.py and check that you are using the root file you just created with hadd after the testing of the model. 
-Plot! 
+
+This plotting code is a bit old, it uses root_numpy librarie (which is not supported by newer versions of root), so it is necessary to use centos7. The ideal would be to replace all root_numpy functions for native root functions or other libraries.
+
 ```
+setupATLAS -c centos7
 source setup.sh
-python -b plotting.py 
+python plotting.py 
 ```
 
-## To do list: 
-- [ ] Cut on ln(kt): prepare multiple graphs with different values of ln(kT) cuts 
-- [ ] Make a bkg rej vs ln(kT) plot
-- [ ] Make the LundJetPlane plot with the prediction to see where the modeling uncertainties impact the most
-- [ ] Apply a shift of 5% to mean pT of the constituent, and test on that sample
-- [ ] Apply a shift of 5% to resolution pT of the constituent, and test on that sample
