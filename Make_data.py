@@ -82,10 +82,14 @@ def main():
             N_tracks = ak.flatten(tree["LRJ_Nconst_Charged"].array(entry_stop=entry_stop, library="ak"))
             # N_tracks = ak.flatten(tree["LRJ_Ntrk500"].array(library="ak"))
             # N_tracks = ak.flatten(tree["LRJ_Nconst"].array(library="ak"))
-            GN2X_pqcd = ak.to_numpy(ak.flatten(tree["GN2Xv01_pqcd"].array(entry_stop=entry_stop, library="ak")))
-            GN2X_phbb = ak.to_numpy(ak.flatten(tree["GN2Xv01_phbb"].array(entry_stop=entry_stop, library="ak")))
-            GN2X_ptop = ak.to_numpy(ak.flatten(tree["GN2Xv01_ptop"].array(entry_stop=entry_stop, library="ak")))
-            GN2X_phcc = ak.to_numpy(ak.flatten(tree["GN2Xv01_phcc"].array(entry_stop=entry_stop, library="ak")))
+
+            GN2X_score_branch_names = ["GN2Xv01_pqcd", "GN2Xv01_phbb", "GN2Xv01_ptop", "GN2Xv01_phcc"]
+            GN2X_score_attribute_names = ["GN2X_pqcd", "GN2X_phbb", "GN2X_ptop", "GN2X_phcc"]
+            GN2X_scores = {
+                attribute_name: ak.flatten(tree[branch_name].array(entry_stop=entry_stop, library="ak"))
+                for attribute_name, branch_name in zip(GN2X_score_attribute_names, GN2X_score_branch_names)
+                if branch_name in tree
+            }
 
             print("\nCalculating weights:")
             flat_weights = GetPtWeight(jet_pts, truth_labels, dsid_test, 5)
@@ -97,8 +101,8 @@ def main():
             dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file(
                 dataset, all_lund_zs, all_lund_kts, all_lund_drs,
                 parent1, parent2, flat_weights, truth_labels, dsids,
-                N_tracks, jet_pts, jet_ms, kT_selection,
-                GN2X_pqcd, GN2X_phbb, GN2X_ptop, GN2X_phcc,
+                N_tracks, jet_pts, jet_ms, GN2X_scores,
+                kT_selection,
                 primary_Lund_only_one_arr,
                 passed_selection,
                 config_signal[signal]["signal_jet_truth_label"],
