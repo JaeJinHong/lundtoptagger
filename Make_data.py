@@ -118,7 +118,12 @@ def main():
             out_tree_dict["fjet_pt"] = ak.concatenate([out_tree_dict["fjet_pt"], jet_pts[passed_selection]])
             out_tree_dict["fjet_weight_pt"] = ak.concatenate([out_tree_dict["fjet_weight_pt"], flat_weights[passed_selection]])
             out_tree_dict["labels"] = ak.concatenate([out_tree_dict["labels"], truth_labels[passed_selection]])
-            # TODO: add GN2X scores to the output ROOT file
+
+            for GN2X_score in GN2X_scores:
+                if GN2X_score in out_tree_dict:
+                    out_tree_dict[GN2X_score] = ak.concatenate([out_tree_dict[GN2X_score], GN2X_scores[GN2X_score][passed_selection]])
+                else:
+                    out_tree_dict[GN2X_score] = GN2X_scores[GN2X_score][passed_selection]
 
             gc.collect()
 
