@@ -42,12 +42,12 @@ Two files are created:
 a file containing a list of graphs (`torch_geometric.data.Data` objects) that can be used for training and testing the tagging model,
 and a ROOT file containing some properties of the jets passing selection:
 
-- DSID of the dataset from the which the jet was taken
-- mass
-- $p_T$
+- DSID (MC channel number) of the dataset from the which the jet was taken
 - MC event weight
+- mass, $p_T$, $\eta$, $\phi$, and number of charged constituents of the jets
 - weight which makes the $p_T$ distribution flat
-- truth label - 0 for background, 1 for signal
+- large-R jet truth labels (1 for top, 2 for W, 10 for QCD)
+- signal/background label (1 for signal, 0 for background)
 - GN2X scores (if available)
 
 Some of these are already stored as attributes of the graphs, and they could all be, but the graphs can take a long time to load,

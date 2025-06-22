@@ -4,6 +4,7 @@ import glob
 import time
 from datetime import timedelta
 import gc
+from operator import itemgetter
 
 import uproot
 import awkward as ak
@@ -33,20 +34,39 @@ def main():
     print(f"Processing {n_files} files")
     t_start = time.time()
 
+    # Jet properties that will be loaded and saved in the output ROOT file
+    # which will accompany the graphs file;
+    # these properties have one numerical value per jet
+    # If a property is not present in the input file, it will be skipped without an error
+    jet_property_names = {      # keys are output branch names, values are input branch names
+        "fjet_m":              "LRJ_mass",
+        "fjet_pt":             "LRJ_pt",
+        "fjet_eta":            "LRJ_eta",
+        "fjet_phi":            "LRJ_phi",
+        "fjet_truth_label":    "LRJ_truthLabel",
+        "fjet_Nconst_Charged": "LRJ_Nconst_Charged", # LRJ_Ntrk500, LRJ_Nconst?
+        "GN2X_pqcd":           "GN2Xv01_pqcd",
+        "GN2X_phbb":           "GN2Xv01_phbb",
+        "GN2X_ptop":           "GN2Xv01_ptop",
+        "GN2X_phcc":           "GN2Xv01_phcc",
+    }
+    # TODO: change this to just use the same names in the output file (requires modifying plotting code as well)
+    
+    # Additional variables which require some manipulation before they can be saved
+    # because they need to be calculated or they have one value per event rather than per jet
+    additional_output_vars = [
+        "labels",                    # 1 for signal 0 for background
+        "fjet_weight_pt",            # weight which makes pT distribution flat
+        "EventInfo_mcEventWeight",
+        "EventInfo_mcChannelNumber", # dsid
+    ]
+    out_tree_dict = {branch_name: ak.Array([]) for branch_name in [*jet_property_names.keys(), *additional_output_vars]}
+
+    # Calculate flat-pT weights, apply jet selection and kT cuts, and construct the graphs
     dataset = []
     primary_Lund_only_one_arr = []
-
-    out_tree_dict = {
-        "dsids": ak.Array([]),
-        "EventInfo_mcEventWeight": ak.Array([]),
-        "fjet_m": ak.Array([]),
-        "fjet_pt": ak.Array([]),
-        "fjet_weight_pt": ak.Array([]),
-        "labels": ak.Array([])
-    }
-
     for file_number, file in enumerate(files, start=1):
-        print("\nLoading file", file)
+        print(f"\nLoading file: {file_number}/{n_files}\n", file)
 
         with uproot.open(file) as infile:
             tree = infile[intreename]
@@ -54,76 +74,63 @@ def main():
             dsids = tree["dsid"].array(library="np")
             dsid_test = dsids[0]                                 # check the first DSID, they should all be the same
             if dsid_test in config_signal[signal]["skip_dsids"]: # don't lose time with jets that don't pass pt cut or wrong signal sample
+                print("Skipping file with DSID", dsid_test)
                 continue
 
             # Determine how many entries to load based on fraction
             total_events = tree.num_entries
             entries_to_load = int(total_events * config["event_fraction"])
             entry_stop = min(entries_to_load, total_events)
+            print(f"Loading {entry_stop} entries from {total_events} total entries")
 
             # Load the data
+            jet_properties = {
+                jet_property: ak.flatten(tree[jet_property].array(entry_stop=entry_stop, library="ak"))
+                for jet_property in [*jet_property_names.values(), "jetLundZ", "jetLundKt", "jetLundDeltaR", "jetLundIDParent1", "jetLundIDParent2"]
+                if jet_property in tree
+            }
             truth_labels_unflattened = tree["LRJ_truthLabel"].array(entry_stop=entry_stop, library="ak")
-            truth_labels = ak.flatten(truth_labels_unflattened)
-
             numbers_of_jets_per_event = ak.num(truth_labels_unflattened)
 
             mcEventWeights = tree["mcEventWeight"].array(entry_stop=entry_stop, library="np")
-            mcEventWeights = np.repeat(mcEventWeights, numbers_of_jets_per_event) # expand out the array so it has same length as flattened array
-            dsids = np.repeat(dsids[:entry_stop], numbers_of_jets_per_event)            # TODO: can I do this without numpy? expand out the array so it has same length as flattened array
+            jet_properties["EventInfo_mcEventWeight"] = np.repeat(mcEventWeights, numbers_of_jets_per_event)       # expand out the array so it has same length as flattened array
+            jet_properties["EventInfo_mcChannelNumber"] = np.repeat(dsids[:entry_stop], numbers_of_jets_per_event) # TODO: can I do this without numpy? expand out the array so it has same length as flattened array
 
-            print(f"length dataset: {len(dataset)}, file number: {file_number}/{n_files}")
-            parent1 = ak.flatten(tree["jetLundIDParent1"].array(entry_stop=entry_stop, library="ak"))
-            parent2 = ak.flatten(tree["jetLundIDParent2"].array(entry_stop=entry_stop, library="ak"))
-            jet_ms = ak.flatten(tree["LRJ_mass"].array(entry_stop=entry_stop, library="ak"))
-            jet_pts = ak.flatten(tree["LRJ_pt"].array(entry_stop=entry_stop, library="ak"))
-            all_lund_zs = ak.flatten(tree["jetLundZ"].array(entry_stop=entry_stop, library="ak"))
-            all_lund_kts = ak.flatten(tree["jetLundKt"].array(entry_stop=entry_stop, library="ak"))
-            all_lund_drs = ak.flatten(tree["jetLundDeltaR"].array(entry_stop=entry_stop, library="ak"))
-            N_tracks = ak.flatten(tree["LRJ_Nconst_Charged"].array(entry_stop=entry_stop, library="ak"))
-            # N_tracks = ak.flatten(tree["LRJ_Ntrk500"].array(library="ak"))
-            # N_tracks = ak.flatten(tree["LRJ_Nconst"].array(library="ak"))
-
-            GN2X_score_branch_names = ["GN2Xv01_pqcd", "GN2Xv01_phbb", "GN2Xv01_ptop", "GN2Xv01_phcc"]
-            GN2X_score_attribute_names = ["GN2X_pqcd", "GN2X_phbb", "GN2X_ptop", "GN2X_phcc"]
-            GN2X_scores = {
-                attribute_name: ak.flatten(tree[branch_name].array(entry_stop=entry_stop, library="ak"))
-                for attribute_name, branch_name in zip(GN2X_score_attribute_names, GN2X_score_branch_names)
-                if branch_name in tree
-            }
-
+            # Calculate flat-pT weights
             print("\nCalculating weights:")
-            flat_weights = GetPtWeight(jet_pts, truth_labels, dsid_test, 5)
-            kT_selection = config["kT_cut"]
+            jet_properties["fjet_weight_pt"] = GetPtWeight(jet_properties["LRJ_pt"], jet_properties["LRJ_truthLabel"], dsid_test, 5)
 
             passed_selection = []   # will be a boolean array, True if jet passes selection
 
+            # Construct the graphs, applying jet selection and kT cuts
             print("\nCreating PyTorch graphs:")
             dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file(
-                dataset, all_lund_zs, all_lund_kts, all_lund_drs,
-                parent1, parent2, flat_weights, truth_labels, dsids,
-                N_tracks, jet_pts, jet_ms, GN2X_scores,
-                kT_selection,
-                primary_Lund_only_one_arr,
-                passed_selection,
-                config_signal[signal]["signal_jet_truth_label"],
+                dataset,
+                *itemgetter("jetLundZ", "jetLundKt", "jetLundDeltaR", "jetLundIDParent1", "jetLundIDParent2")(jet_properties),
+                *itemgetter("fjet_weight_pt", "LRJ_truthLabel", "EventInfo_mcChannelNumber", "LRJ_Nconst_Charged", "LRJ_pt", "LRJ_mass")(jet_properties),
+                GN2X_scores={
+                    key: jet_properties[jet_property_names[key]]
+                    for key in ["GN2X_pqcd", "GN2X_phbb", "GN2X_ptop", "GN2X_phcc"]
+                    if jet_property_names[key] in jet_properties},
+                kT_selection=config["kT_cut"],
+                primary_Lund_only_one_arr=primary_Lund_only_one_arr,
+                passed_selection=passed_selection,
+                signal_jet_truth_label=config_signal[signal]["signal_jet_truth_label"],
                 signal_dsid=config_signal[signal]["dsid"],
                 pt_range=config_signal[signal]["pt_range"],
                 mass_range=config_signal[signal]["mass_range"],
                 include_pt=config["include_pt"],
             )
 
-            out_tree_dict["dsids"] = ak.concatenate([out_tree_dict["dsids"], dsids[passed_selection]])
-            out_tree_dict["EventInfo_mcEventWeight"] = ak.concatenate([out_tree_dict["EventInfo_mcEventWeight"], mcEventWeights[passed_selection]])
-            out_tree_dict["fjet_m"] = ak.concatenate([out_tree_dict["fjet_m"], jet_ms[passed_selection]])
-            out_tree_dict["fjet_pt"] = ak.concatenate([out_tree_dict["fjet_pt"], jet_pts[passed_selection]])
-            out_tree_dict["fjet_weight_pt"] = ak.concatenate([out_tree_dict["fjet_weight_pt"], flat_weights[passed_selection]])
-            out_tree_dict["labels"] = ak.concatenate([out_tree_dict["labels"], truth_labels[passed_selection]])
-
-            for GN2X_score in GN2X_scores:
-                if GN2X_score in out_tree_dict:
-                    out_tree_dict[GN2X_score] = ak.concatenate([out_tree_dict[GN2X_score], GN2X_scores[GN2X_score][passed_selection]])
+            for jet_property_out, jet_propety_in in jet_property_names.items():
+                if jet_propety_in in jet_properties:
+                    out_tree_dict[jet_property_out] = ak.concatenate([out_tree_dict[jet_property_out], jet_properties[jet_propety_in][passed_selection]])
                 else:
-                    out_tree_dict[GN2X_score] = GN2X_scores[GN2X_score][passed_selection]
+                    print(f"Warning: {jet_propety_in} not found in file {file}, skipping")
+                    if jet_property_out in dict: del out_tree_dict[jet_property_out]
+            for output_var in additional_output_vars:
+                append_array = ak.Array([jet_graph.y for jet_graph in dataset]) if output_var=="labels" else jet_properties[output_var][passed_selection]
+                out_tree_dict[output_var] = ak.concatenate([out_tree_dict[output_var], append_array])
 
             gc.collect()
 
@@ -131,16 +138,18 @@ def main():
     delta_t_fileax = timedelta(seconds=round(time.time() - t_start))
     print(f"Time taken (hh:mm:ss): {delta_t_fileax}")
 
+    # Construct output file names
     out_file_name_graphs = config["out_file_name_graphs"]
     outfile_name_root = config["out_file_name_root"]
     filepath_placeholder_vals = dict(
         id = config["id"],
-        kT_cut = kT_selection,
+        kT_cut = config["kT_cut"],
         include_pt = "_with_pt" if config["include_pt"] else ""
     )
     out_dir = config["out_dir"].format(**filepath_placeholder_vals)
     os.makedirs(out_dir, exist_ok=True)
 
+    # Save the testing dataset, if specified
     test_frac = config["test_frac"]
     if test_frac is not None:
         print("Splitting dataset into train and test sets")
@@ -172,6 +181,7 @@ def main():
             outfile["FlatSubstructureJetTree"] = out_tree_dict_test
         print("Test dataset written to ROOT file:", output_path_root_test)
 
+    # Save the training dataset
     out_file_name_graphs = out_file_name_graphs.format(
         **filepath_placeholder_vals,
         test_frac = f"_{int((1-test_frac)*100)}percent" if test_frac is not None else "",
