@@ -1,17 +1,18 @@
 import argparse
 import os
 import glob
-
-import torch
-import awkward as ak
 import time
+from datetime import timedelta
+
+import awkward as ak
 import uproot
 import numpy as np
-from datetime import timedelta
-from torch_geometric.data import DataLoader
+import torch
+from torch_geometric.loader import DataLoader
+from torch_geometric.data import Data
 
 from tools.GNN_model_weight.models import *
-from tools.GNN_model_weight.utils_newdata import *
+from tools.GNN_model_weight.utils_newdata import GetPtWeight, load_yaml, create_train_dataset_fulld_new_Ntrk_pt_weight_file_test, get_scores
 
 print("Libraries loaded!")
 
