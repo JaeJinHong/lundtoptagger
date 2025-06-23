@@ -1,0 +1,20 @@
+data: 
+  path_to_test_file: "/data/ravinascos/Lund_Plane_2024_graphs/New_Samples/{sample}/*.root"  
+  path_to_outdir: "/data/ravinascos/LundNet/R_22_Top/{sample}/"
+
+  # If path_to_test_file, path_to_outdir or output_name contain the {sample} or {kT_cut} placeholders, they will be replaced by the values below.
+  sample: "TEST_05qcd_1z" # choices: TEST_05qcd_1z, Other_MC/Herwig_d, Other_MC/Sherpa_Cluster, Other_MC/Sherpa_Lund
+  kT_cut: null            # actually a cut in ln(kT); values: null, -0.5, 0.0, 0.5, 1.0, 2.0, 2.8
+
+test:
+  path_to_combined_ckpt:  # checkpoints for different kT cuts
+    null: "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/LundNet_R22_ExtraNode_No_ln_kT_Cut_LRJ_NewData_Primarye020_0.09045.pt"
+    -0.5: "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/LundNet_R22_ExtraNode_ln_kT_Cut_-0.5_LRJ_NewData_Primarye020_0.10169.pt"
+    0.0:  "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/LundNet_R22_ExtraNode_ln_kT_Cut_0.0_LRJ_NewData_Primarye020_0.10598.pt"
+    0.5:  "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/LundNet_R22_ExtraNode_ln_kT_Cut_0.5_LRJ_NewData_Primarye020_0.11077.pt"
+    1.0:  "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/LundNet_R22_ExtraNode_ln_kT_Cut_1.0_LRJ_NewData_Primarye020_0.12059.pt"
+    2.0:  "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/LundNet_R22_ExtraNode_ln_kT_Cut_2.0_LRJ_NewData_Primarye020_0.14809.pt"
+    2.8:  "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/LundNet_R22_ExtraNode_ln_kT_Cut_2.8_LRJ_NewData_Primarye020_0.17321.pt"
+  output_name: "LundNet_R22_ExtraNode_{sample}_ln_kT_Cut_{kT_cut}_e020"
+  choose_model: "LundNet"
+  batch_size: 2048

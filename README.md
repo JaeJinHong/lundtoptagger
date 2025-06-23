@@ -91,7 +91,25 @@ python weight_ONLY_TRAINS.py configs/config_ONLY_TRAIN.yaml --ln_kT_cut 0 --do_c
 
 ## Testing
 
-For the testing, you should run the final_makescores notebook. The only changes you should do are under the conditions in the for loop. The different variables should point to your test files, the ckpt you want to use and the repo to save your output root files 
+Run the testing:
+
+```bash
+python test_make_scores.py configs/config_weight_make_scores.yaml
+```
+
+Some paths and names in the configuration file can have placeholders that are replaced by values of other parameters,
+namely by the values of `kT_cut` and `sample`.
+This makes it easy to run on different samples:
+if you keep the paths to your samples and output files the same apart from a part that changes with the sample,
+you can just change the `sample` parameter in the config file without having to change 3 different variables
+(path_to_test_file, path_to_outdir, and output_name).
+
+These two parameters can be overridden via command-line arguments.
+For example:
+
+```bash
+python test_make_scores.py configs/config_make_scores.yaml --sample Sherpa_Cluster --ln_kT_cut 0
+```
 
 At the end, when you are done with the testing, make sure you hadd all the root files together: 
 ```

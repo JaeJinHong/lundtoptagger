@@ -27,25 +27,33 @@ def main():
     parser = argparse.ArgumentParser(description='Train with configurations')
     add_arg = parser.add_argument
     add_arg('config', help="job configuration")
+    add_arg('--ln_kT_cut', type=float, help="minimum value of kT kept for the training graphs")
+    add_arg('--sample', type=float, help="sample identifier which should be part of input and output file names")
     args = parser.parse_args()
+
     config_file = args.config
     config = load_yaml(config_file)
     config_signal = load_yaml("configs/config_signal.yaml") # TODO: make this an optional argument, but then the same file needs to be used in utils_newdata.py
     signal = config_signal["signal"]
 
-    path_to_test_file = config['data']['path_to_test_file']
+    kT_selection = args.ln_kT_cut if args.ln_kT_cut is not None else config['data']['kT_cut']
+    filepath_placeholder_vals = dict(
+        sample = args.sample if args.sample is not None else config['data']['sample'],
+        kT_cut = kT_selection
+    )
+
+    path_to_test_file = config['data']['path_to_test_file'].format(**filepath_placeholder_vals)
     files = glob.glob(path_to_test_file)
 
     print ("path_to_test_file:",path_to_test_file)
     print ("files:",files)
-    path_to_outdir = config['data']['path_to_outdir']
+    path_to_outdir = config['data']['path_to_outdir'].format(**filepath_placeholder_vals)
 
 
-    path_to_combined_ckpt = config['test']['path_to_combined_ckpt']
+    path_to_combined_ckpt = config['test']['path_to_combined_ckpt'][kT_selection]
     print("ckpt used:", path_to_combined_ckpt )
     
-    output_name = config['test']['output_name']
-    kT_selection = config['data']['kT_cut']
+    output_name = config['test']['output_name'].format(**filepath_placeholder_vals)
     
     files = glob.glob(path_to_test_file)
 
@@ -56,9 +64,7 @@ def main():
     nentries_total = sum(entry[-1] for entry in uproot.num_entries(files_and_trees))
     nentries_done = 0
 
-    learning_rate = 0.0005
-    batch_size = 2048
-    scale_factor = 1
+    batch_size = config['test']['batch_size']
 
     print("Evaluating on {} files with {} entries in total.".format(len(files), nentries_total))
     
@@ -150,8 +156,6 @@ def main():
             
             # USE THIS ONE!!!!
             ##dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file_test( dataset , all_lund_zs, all_lund_kts, all_lund_drs, parent1, parent2, labels ,N_tracks,jet_pts, jet_ms  )
-
-            #flat_weights = GetPtWeight_2( labels, jet_pts, filename=config['data']['weights_file'], SF=config['data']['scale_factor'])
 
             flat_weights = GetPtWeight(jet_pts, truth_labels, dsid_test, 5)
             #dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file( dataset , all_lund_zs, all_lund_kts, all_lund_drs, parent1, parent2, flat_weights, labels ,N_tracks,jet_pts, jet_ms  )
