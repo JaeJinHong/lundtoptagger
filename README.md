@@ -94,7 +94,7 @@ python weight_ONLY_TRAINS.py configs/config_ONLY_TRAIN.yaml --ln_kT_cut 0 --do_c
 Run the testing:
 
 ```bash
-python test_make_scores.py configs/config_weight_make_scores.yaml
+python test_make_scores.py configs/config_make_scores.yaml
 ```
 
 Some paths and names in the configuration file can have placeholders that are replaced by values of other parameters,
