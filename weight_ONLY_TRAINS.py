@@ -190,6 +190,8 @@ def main():
         model = EdgeGinNet()
     if choose_model == "PNANet":
         model = PNANet()
+    if choose_model == "LundNet_plus_GN2X":
+        model = LundNet_plus_GN2X()
 
     path_to_ckpt = config['retrain']['path_to_ckpt']
 

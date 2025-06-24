@@ -83,6 +83,14 @@ def main():
             # N_tracks = ak.flatten(tree["LRJ_Ntrk500"].array(library="ak"))
             # N_tracks = ak.flatten(tree["LRJ_Nconst"].array(library="ak"))
 
+            GN2X_score_branch_names = ["GN2Xv01_pqcd", "GN2Xv01_phbb", "GN2Xv01_ptop", "GN2Xv01_phcc"]
+            GN2X_score_attribute_names = ["GN2X_pqcd", "GN2X_phbb", "GN2X_ptop", "GN2X_phcc"]
+            GN2X_scores = {
+                attribute_name: ak.flatten(tree[branch_name].array(entry_stop=entry_stop, library="ak"))
+                for attribute_name, branch_name in zip(GN2X_score_attribute_names, GN2X_score_branch_names)
+                if branch_name in tree
+            }
+
             print("\nCalculating weights:")
             flat_weights = GetPtWeight(jet_pts, truth_labels, dsid_test, 5)
             kT_selection = config["kT_cut"]
@@ -93,7 +101,8 @@ def main():
             dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file(
                 dataset, all_lund_zs, all_lund_kts, all_lund_drs,
                 parent1, parent2, flat_weights, truth_labels, dsids,
-                N_tracks, jet_pts, jet_ms, kT_selection,
+                N_tracks, jet_pts, jet_ms, GN2X_scores,
+                kT_selection,
                 primary_Lund_only_one_arr,
                 passed_selection,
                 config_signal[signal]["signal_jet_truth_label"],
@@ -109,6 +118,12 @@ def main():
             out_tree_dict["fjet_pt"] = ak.concatenate([out_tree_dict["fjet_pt"], jet_pts[passed_selection]])
             out_tree_dict["fjet_weight_pt"] = ak.concatenate([out_tree_dict["fjet_weight_pt"], flat_weights[passed_selection]])
             out_tree_dict["labels"] = ak.concatenate([out_tree_dict["labels"], truth_labels[passed_selection]])
+
+            for GN2X_score in GN2X_scores:
+                if GN2X_score in out_tree_dict:
+                    out_tree_dict[GN2X_score] = ak.concatenate([out_tree_dict[GN2X_score], GN2X_scores[GN2X_score][passed_selection]])
+                else:
+                    out_tree_dict[GN2X_score] = GN2X_scores[GN2X_score][passed_selection]
 
             gc.collect()
 

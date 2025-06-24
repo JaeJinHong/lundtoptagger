@@ -38,7 +38,7 @@ python Make_data.py configs/config_make_data.yaml
 ```
 
 The script applies selections defined in the configuration files, creates Lund trees (graphs) for each jet, and calculates weights which make the jet $p_T$ distribution flat.
-Two file files are created:
+Two files are created:
 a file containing a list of graphs (`torch_geometric.data.Data` objects) that can be used for training and testing the tagging model,
 and a ROOT file containing some properties of the jets passing selection:
 
@@ -48,6 +48,7 @@ and a ROOT file containing some properties of the jets passing selection:
 - MC event weight
 - weight which makes the $p_T$ distribution flat
 - truth label - 0 for background, 1 for signal
+- GN2X scores (if available)
 
 Some of these are already stored as attributes of the graphs, and they could all be, but the graphs can take a long time to load,
 so it can be useful to have a separate file for plots which don't require the Lund trees.

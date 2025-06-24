@@ -44,7 +44,8 @@ architecture:
 
   # classifier
   n_epochs: 35
-  choose_model: LundNet ## LundNet, GATNet, GINNet, EdgeGinNet, PNANet
+  choose_model: LundNet # LundNet, LundNet_plus_GN2X, GATNet, GINNet, EdgeGinNet, PNANet
+  # if you want to use LundNet_plus_GN2X, make sure that the graphs have GN2X scores!
 
   # adversarial
   num_gaussians: 20
