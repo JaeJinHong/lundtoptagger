@@ -2,6 +2,7 @@ import argparse
 import os
 import glob
 import time
+import gc
 
 import uproot
 import numpy as np
@@ -60,8 +61,29 @@ def main():
 
     t_filestart = time.time()
 
+    # Set up model
+    if choose_model == "LundNet":
+        model = LundNet()
+        # model = LundNet_old()
+    if choose_model == "GATNet":
+        model = GATNet()
+    if choose_model == "GINNet":
+        model = GINNet()
+    if choose_model == "EdgeGinNet":
+        model = EdgeGinNet()
+    if choose_model == "PNANet":
+        model = PNANet()
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') # Usually gpu 4 worked best, it had the most memory available
+    model.load_state_dict(torch.load(path_to_combined_ckpt, map_location=device))
+    print(f'\nUsing device: {device}')
+    model.to(device)
+
+    # Evaluation
     for file_number, (file_graphs, file_root) in enumerate(zip(files_graphs,files_root), start=1):
         t_start = time.time()
+
+        # Load the data
         print(f"\nLoading file: {file_number}/{len(files_graphs)}\n", file_graphs)
 
         dataset = torch.load(file_graphs, weights_only=False)
@@ -74,31 +96,19 @@ def main():
 
         test_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
-        # Set up model
-        if choose_model == "LundNet":
-            model = LundNet()
-            # model = LundNet_old()
-        if choose_model == "GATNet":
-            model = GATNet()
-        if choose_model == "GINNet":
-            model = GINNet()
-        if choose_model == "EdgeGinNet":
-            model = EdgeGinNet()
-        if choose_model == "PNANet":
-            model = PNANet()
-
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') # Usually gpu 4 worked best, it had the most memory available
-        model.load_state_dict(torch.load(path_to_combined_ckpt, map_location=device))
-        print(f'\nUsing device: {device}')
-        model.to(device)
-
         # Predict scores
+        print("\nCalculating scores...")
         y_pred = get_scores(test_loader, model, device)
         tagger_scores = np.array(y_pred[:,0])
 
         delta_t_pred = time.time() - t_start - delta_t_fileax
         minutes, seconds = divmod(round(delta_t_pred), 60)
         print(f"Time taken to calculate predictions: {minutes:d} min {seconds:d} s")
+
+        # free up memory
+        del dataset, test_loader, y_pred
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
         # Get the tree from the input ROOT file and add the scores to it
         print("\nSaving scores to ROOT file...")
@@ -114,6 +124,7 @@ def main():
 
         with uproot.recreate(outfile_path) as f:
             f["FlatSubstructureJetTree"] = arrays
+        print("Scores saved to:", outfile_path)
 
         delta_t_save = time.time() - t_start - delta_t_fileax - delta_t_pred
         minutes, seconds = divmod(round(delta_t_save), 60)
@@ -124,6 +135,10 @@ def main():
         time_per_entry = (time.time() - t_start)/(nentries_done)
         eta = time_per_entry * (nentries_total - nentries_done)
         minutes, seconds = divmod(round(eta), 60)
+
+        # free up memory
+        del arrays, tagger_scores
+        gc.collect()
 
         print(f"\nEvaluated on {nentries_done} out of {nentries_total} jets")
         print(f"Estimated time until completion: {minutes:d} min {seconds:d} s")
