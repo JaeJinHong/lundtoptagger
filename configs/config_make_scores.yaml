@@ -18,5 +18,5 @@ test:
     2.0:  "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/LundNet_R22_ExtraNode_ln_kT_Cut_2.0_LRJ_NewData_Primarye020_0.14809.pt"
     2.8:  "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/LundNet_R22_ExtraNode_ln_kT_Cut_2.8_LRJ_NewData_Primarye020_0.17321.pt"
   output_name: "LundNet_R22_ExtraNode_{sample}_e020" # TODO: get the epoch automatically from the checkpoint file name
-  choose_model: "LundNet"
+  choose_model: "LundNet" # choices: LundNet, LundNet_plus_GN2X, GATNet, GINNet, EdgeGinNet, PNANet
   batch_size: 2048

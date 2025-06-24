@@ -62,6 +62,7 @@ def main():
     t_filestart = time.time()
 
     # Set up model
+    # TODO: test multiple models, so there is no need to re-load the data for each model
     if choose_model == "LundNet":
         model = LundNet()
         # model = LundNet_old()
@@ -73,6 +74,8 @@ def main():
         model = EdgeGinNet()
     if choose_model == "PNANet":
         model = PNANet()
+    if choose_model == "LundNet_plus_GN2X":
+        model = LundNet_plus_GN2X()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') # Usually gpu 4 worked best, it had the most memory available
     model.load_state_dict(torch.load(path_to_combined_ckpt, map_location=device))
@@ -114,7 +117,7 @@ def main():
         print("\nSaving scores to ROOT file...")
         with uproot.open(file_root) as f:
             arrays = f[intreename].arrays()
-        arrays["fjet_nnscore"] = tagger_scores
+        arrays[f"fjet_{choose_model}_score"] = tagger_scores
 
         # Save ROOT files containing model scores
         # TODO: just add scores to existing ROOT files instead of creating new ones; can keep adding scores for different models
