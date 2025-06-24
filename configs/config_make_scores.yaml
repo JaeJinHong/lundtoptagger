@@ -1,5 +1,7 @@
-data: 
-  path_to_test_file: "/data/ravinascos/Lund_Plane_2024_graphs/New_Samples/{sample}/*.root"  
+data:
+  # The ROOT and graphs files should be the output of Make_data.py
+  path_to_test_file_root: "/data/ravinascos/Lund_Plane_2024_graphs/New_Samples/{sample}/*.root" 
+  path_to_test_file_graphs: "graphs/graphs*"
   path_to_outdir: "/data/ravinascos/LundNet/R_22_Top/{sample}/"
 
   # If path_to_test_file, path_to_outdir or output_name contain the {sample} or {kT_cut} placeholders, they will be replaced by the values below.
@@ -15,6 +17,6 @@ test:
     1.0:  "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/LundNet_R22_ExtraNode_ln_kT_Cut_1.0_LRJ_NewData_Primarye020_0.12059.pt"
     2.0:  "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/LundNet_R22_ExtraNode_ln_kT_Cut_2.0_LRJ_NewData_Primarye020_0.14809.pt"
     2.8:  "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/LundNet_R22_ExtraNode_ln_kT_Cut_2.8_LRJ_NewData_Primarye020_0.17321.pt"
-  output_name: "LundNet_R22_ExtraNode_{sample}_ln_kT_Cut_{kT_cut}_e020"
+  output_name: "LundNet_R22_ExtraNode_{sample}_e020" # TODO: get the epoch automatically from the checkpoint file name
   choose_model: "LundNet"
   batch_size: 2048
