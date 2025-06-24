@@ -108,7 +108,7 @@ def main():
         minutes, seconds = divmod(round(delta_t_pred), 60)
         print(f"Time taken to calculate predictions: {minutes:d} min {seconds:d} s")
 
-        # free up memory
+        # Free up memory
         del dataset, test_loader, y_pred
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
@@ -121,8 +121,10 @@ def main():
 
         # Save ROOT files containing model scores
         # TODO: just add scores to existing ROOT files instead of creating new ones; can keep adding scores for different models
+        # (this can already be done by setting the output path equal to the input path, but is inefficient,
+        # since the whole tree is read and written again, with PyROOT it is possible to add new branches to an existing tree)
         filename_no_ext = os.path.splitext(os.path.basename(file_root))[0]  # get the input file name without the .root extension
-        outfile_path = os.path.join(path_to_outdir, filename_no_ext) + f"_score_{output_name}.root"
+        outfile_path = os.path.join(path_to_outdir, filename_no_ext) + f"{output_name}.root"
         outfile_path = outfile_path.format(**filepath_placeholder_vals)
 
         with uproot.recreate(outfile_path) as f:
@@ -139,7 +141,7 @@ def main():
         eta = time_per_entry * (nentries_total - nentries_done)
         minutes, seconds = divmod(round(eta), 60)
 
-        # free up memory
+        # Free up memory
         del arrays, tagger_scores
         gc.collect()
 

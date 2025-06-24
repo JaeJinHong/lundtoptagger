@@ -17,6 +17,11 @@ test:
     1.0:  "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/LundNet_R22_ExtraNode_ln_kT_Cut_1.0_LRJ_NewData_Primarye020_0.12059.pt"
     2.0:  "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/LundNet_R22_ExtraNode_ln_kT_Cut_2.0_LRJ_NewData_Primarye020_0.14809.pt"
     2.8:  "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/LundNet_R22_ExtraNode_ln_kT_Cut_2.8_LRJ_NewData_Primarye020_0.17321.pt"
-  output_name: "LundNet_R22_ExtraNode_{sample}_e020" # TODO: get the epoch automatically from the checkpoint file name
+
+  # the name of the output file will be the same as the name of the input ROOT file, with this suffix added (but in a different directory)
+  # if you want to just add the scores for a new model to an existing ROOT file,
+  # you can set path_to_outdir to be equal to path_to_test_file_root and set output_name to ""
+  # TODO: get the epoch automatically from the checkpoint file name
+  output_name: "_score_LundNet_R22_ExtraNode_e020"
   choose_model: "LundNet" # choices: LundNet, LundNet_plus_GN2X, GATNet, GINNet, EdgeGinNet, PNANet
   batch_size: 2048
