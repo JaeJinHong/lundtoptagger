@@ -257,74 +257,15 @@ def roc_from_histos(h_sig, h_bkg, h_sigCut, h_bkgCut, wpcut=None, massCut=False)
 
 
 dijet_xsweights_dict = {
-    361022:   811423.536 *    1.0,
-    361023:   8453.64024 *    1.0,
-    361024:   134.9920945 *   1.0,
-    361025:   4.19814486 *    1.0,
-    361026:   0.241941709 *   1.0,
-    361027:   0.006358874 *   1.0,
-    361028:   0.006354782 *   1.0,
-    361029:   0.000236819 *   1.0,
-    361030:   7.054e-06 *     1.0,
-    361031:   1.13e-07 *      1.0,
-    361032:   4.405975e-10 *  1.0,
-    #'''
-    364702: 2432800000.0 * 0.0098225 / 151.1152745216136,
-    364703: 26452000.0   * 0.011653  / 24.124114769654568,
-    364704: 254610.0 * 0.013358 / 0.6689032716609136,
-    364705: 4553.5   * 0.014513 / 0.021711071504255608, 
-    364706: 257.56 * 0.0094451 / 0.0005569217145566935, 
-    364707: 16.214 * 0.011092 / 7.647190915207464e-05,
-    364708: 0.6254500000000001 * 0.010228 / 2.2289720308783095e-05,
-    364709: 0.019619 * 0.012308 / 4.284172977649797e-06,
-    364710: 0.0011964999999999999 * 0.0058854 / 8.032928132152561e-07,
-    364711: 4.2246e-05 * 0.0026517 / 4.2650239492989656e-07,
-    364712: 1.0366e-06 * 0.00042964 / 2.466817687713993e-07,
-
-    
-    #364687: #jz2 # Sherpa Lund
-    364688: 9275000.0   *  0.0005641 / 120000,
-    364689: 55101.0 *  0.0014985 /  120000,
-    364690: 1631.2   * 0.024259 / 120000.25337970257,
-    364691: 128.41 *  0.010844/ 120000.0,
-    364692: 27.211 *  0.0036264 / 120000.0,
-    364693: 0.20584 *  0.016003/ 120005.68194687366,
-    364694: 0.035683 * 0.0033126 / 120000.38300478458,
-
-    #364678: #jz2 #sherpa cluster
-    364679: 9275100.0  *   0.000565161 / 368000,
-    364680: 55101.0 *  0.001497205 /   330000,
-    364681: 1631.5   * 0.024211 /  120000.91869974136,
-    364682: 128.42000000000002   * 0.010823 / 120001.27094936371,
-    364683: 27.212   * 0.0036186 / 120000.0,
-    364684: 0.20582   * 0.015963 / 120002.66371273994,
-    364685: 0.035684   * 0.0033036 /  120001.09185814857,
-
-    # Herwig dipole
-    364902: 3396100000.0 * 0.0044714 / 409.7054006540602, #jz3
-    364903: 36974000.0  *  0.0055708 /  19.54829668750436, #jz3
-    364904: 353410.0 * 0.0069756/1.0281692986950288,
-    364905: 6033.7   * 0.0079811 / 0.07533525510931005,
-    364906: 322.49 *  0.0054878/ 0.004763684206146035,
-    364907: 19.16 *  0.0068288/ 0.0004891307327146155,
-    364908: 0.70035 *  0.0066413/ 9.542566452203083e-05,
-    364909: 0.021235 * 0.0082273 / 3.404197327001868e-05,
-    
-    #ttbar
-    426347:   1.0,
-    426345:   1.0,
-    -1: 1.0,
-
-    364677:0,
-    364678:0,
-    364686:0,
-    364687:0,
-    700659:1*1,
-    411316:1*1,
-    801661:1,
-    801859:1, # W
-    802017:1 #W Flat mass
-    #'''
+    364703: 12823.94988,
+    364704: 5081.45927,
+    364705: 3017.75098,
+    364706: 4371.00012,
+    364707: 2349.98631,
+    426345: 950.41935
+    #801471: 0.0189,
+    #801859: 12.45803
+#801661: 426345
 }
 
 
@@ -420,7 +361,7 @@ def make_efficiencies_all(taggers, prefix=''):
     #legend.AddEntry(h2, "LundNet^{ANN}", 'l')
     #legend.AddEntry(h2, "LundNet^{NN}_400_to_600", 'l')
     #legend.AddEntry(h2, "LundNet^{NN}_{6000}", 'l')
-    legend.AddEntry(h2, "LundNet+GN2X_top", 'l')
+    legend.AddEntry(h2, "LundNet+GN2X_all", 'l')
     #legend.AddEntry(h2, "FTAG1", 'l')
 
     do_gn2x = True # GN2Xv00_ptop
@@ -510,7 +451,8 @@ def make_efficiencies_all(taggers, prefix=''):
     s.DrawLatex(0.18+(0.14), 0.89, " Simulation Preliminary")
     s.DrawLatex(0.18, 0.84,        "#sqrt{s} = 13 TeV, #it{W} tagging")
     s.DrawLatex(0.18, 0.79,        "anti-#it{k_{t}} #it{R}=1.0 UFO Soft-Drop CS+SK jets")
-    s.DrawLatex(0.18, 0.74, "p_{T} > 200 GeV, |#eta| < 2.0")#  70GeV<mass<90GeV")
+    s.DrawLatex(0.18, 0.74, "p_{T} > 350 GeV, |#eta| < 2.0 100GeV<mass") #  70GeV<mass<90GeV")
+    #s.DrawLatex(0.18, 0.74, "p_{T} > 350 GeV, |#eta| < 2.0 150GeV<mass<200GeV ") #  70GeV<mass<90GeV")
 
     legend.Draw()
     c1.save("{}/fig_02a.png".format(prefix))
@@ -881,7 +823,7 @@ def gn2x_top_discriminant(tagger, prefix=''):
     h_gn2x_top_sig   = TH1D( "signal_top_dis{}".format(tagger.name), "signal_top_dis{}".format(tagger.name), 100, -10, 10)
     h_gn2x_top_qcd   = TH1D( "bkg_top_dis{}".format(tagger.name), "bkg_top_dis{}".format(tagger.name), 100, -10, 10)
     for nn,weight in zip(tagger.signal["GN2X_ptop_copy"],tagger.signal["fjet_weight_pt"]):
-        h_gn2x_top_sig.Fill(nn,weight)
+        h_gn2x_top_sig.Fill(nn,weight/200)
     for nn,weight in zip(tagger.bg["GN2X_ptop_copy"],tagger.bg["fjet_weight_pt"]):
         h_gn2x_top_qcd.Fill(nn,weight)
     #'''
@@ -915,7 +857,7 @@ def gn2x_top_discriminant(tagger, prefix=''):
     c1.xlabel('top-discriminant ')
     c1.ylabel('counts  ')
     c1.xlim(-10, 10) ## c1.xlim(0.2, 1)
-    c1.ylim(1, 1e6)
+    c1.ylim(0.01, 1e4)
 
     c1.log()
     '''
@@ -991,15 +933,15 @@ class tagger_scores():
         # GN2X_phcc GN2X_phbb
         
         self.scores      = self.scores[ self.scores.fjet_pt > 350 ]
-        self.scores      = self.scores[ self.scores.fjet_pt < 3000 ]
-        self.scores      = self.scores[ self.scores.fjet_m > 40 ]
-        #self.scores      = self.scores[ self.scores.fjet_m < 300 ]
+        #self.scores      = self.scores[ self.scores.fjet_pt < 3000 ]
+        self.scores      = self.scores[ self.scores.fjet_m > 100 ]
+        #self.scores      = self.scores[ self.scores.fjet_m < 200 ]
 
         ########### include only good jets  ##########333
         #self.scores      = self.scores[ self.scores["Good_jets"] > 0.9 ]
         #self.scores["fjet_nnscore"] = np.where(self.scores["Good_jets"] == 2, 0, self.scores["fjet_nnscore"] )
         
-        #self.signal        = self.scores[self.scores.EventInfo_mcChannelNumber>370000]
+        self.signal        = self.scores[self.scores.EventInfo_mcChannelNumber>370000]
         self.signal        = self.scores[self.scores["labels"]==1]
 
         # self.signal =  self.signal[ self.signal["ungroomedtruthjet_m"]>50000 ]
@@ -1112,8 +1054,8 @@ class tagger_scores():
 
         # #print(self.signal["fjet_nnscore"].values)
 
-        self.h_signal = TH1D( "signal{}".format(self.name), "signal{}".format(self.name), 400, 0, 1)
-        self.h_bg     = TH1D(     "bg{}".format(self.name),     "bg{}".format(self.name), 400, 0, 1)
+        self.h_signal = TH1D( "signal{}".format(self.name), "signal{}".format(self.name), 800, 0, 1)
+        self.h_bg     = TH1D(     "bg{}".format(self.name),     "bg{}".format(self.name), 800, 0, 1)
         self.h_signal_300_650 = TH1D( "signal_300_650{}".format(self.name), "signal_300_650{}".format(self.name), 200, 0, 1)
         self.h_bg_300_650     = TH1D(     "bg_300_650{}".format(self.name),     "bg_300_650{}".format(self.name), 200, 0, 1)
         self.h_signal_650_1000 = TH1D( "signal_650_1000{}".format(self.name), "signal_650_1000{}".format(self.name), 200, 0, 1)
@@ -1192,7 +1134,7 @@ class tagger_scores():
         if self.name == "LundNet":
             #f_hbb=0.07 , f_hcc=0.07 , 
             #self.scores["GN2X_ptop_copy"] = self.scores["GN2X_ptop"]
-            self.scores["GN2X_ptop_copy"] = np.log( self.scores["GN2X_ptop"] / (0.07*self.scores["GN2X_phcc"] +  0.07*self.scores["GN2X_phbb"] + 0.75*self.scores["GN2X_pqcd"] ) )
+            self.scores["GN2X_ptop_copy"] = np.log( self.scores["GN2X_ptop"] / (0.05*self.scores["GN2X_phcc"] +  0.05*self.scores["GN2X_phbb"] + 0.9*self.scores["GN2X_pqcd"] ) )
             #gn2x_top_discriminant()
             self.scores["GN2X_ptop"] = 0.5 + (self.scores["GN2X_ptop_copy"] / 20)
         

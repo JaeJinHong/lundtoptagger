@@ -28,13 +28,22 @@ for variation in range(1):
         #tagger_files["LundNet"]    = './FTAG1/LundNet_R22_None_ln_kT_Cut_LRJ_toptagging_FTAG_qcd005_top02.root' ## just to compare with JETM2
 
         
-        tagger_files["LundNet"]    = './FTAG1/LundNet_PLUS_R22_None_ln_kT_Cut_LRJ_toptagging_FTAG_qcd005_top02_try2.root'
+        #tagger_files["LundNet"]    = './FTAG1/LundNet_PLUS_R22_None_ln_kT_Cut_LRJ_toptagging_FTAG_qcd005_top02_try2.root'
+        #tagger_files["LundNet"]    = './FTAG1/LundNet_R22_None_ln_kT_Cut_LRJ_toptagging_FTAG_qcd005_top02_PLUS_justTOPScorePythia.root'
+        
+        #tagger_files["LundNet"]    = './FTAG1/LundNetPLUS_R22_LRJ_qcd05_top10_b-tagging_167Wcontained_topPythia.root'
+        #tagger_files["LundNet"]    = './FTAG1/LundNetPLUS_R22_LRJ_qcd05_top10_b-tagging_167Wcontained_top_ALLPythia.root'
+        
         #tagger_files["LundNet"]    = './FTAG1/LundNetPLUS_R22_LRJ_qcd05_top10_b-tagging_6Wcontained_only_top.root'
+        tagger_files["LundNet"]    = './FTAG1/LundNetPLUS_R22_LRJ_qcd05_top10_b-tagging_1top_ALLPythia.root'
+
+
         
     
         #tagger_files["LundNet_class"]    = './top_moredata/LundNet_R22_15P8QCD_75P8TOP_BS4800_LR0004MoreDataTestPythia.root'
 
-        tagger_files["LundNet_class"]    = './top_moredata/LundNet_R22_-1_ln_kT_Cut_LRJ_NewNtrk_qcd75_top15_lr0003_modif_opt11_6000Pythia.root' ## LundNet
+        tagger_files["LundNet_class"]    = './FTAG1/LundNetPLUS_R22_LRJ_qcd05_top10_b-tagging_1top_ALLPythia.root' ## LundNet
+        #tagger_files["LundNet_class"]    = './top_moredata/TESTPYTHIA.root' ## LundNet
 
             
 
