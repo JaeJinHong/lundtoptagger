@@ -23,5 +23,6 @@ test:
   # you can set path_to_outdir to be equal to path_to_test_file_root and set output_name to ""
   # TODO: get the epoch automatically from the checkpoint file name
   output_name: "_score_LundNet_R22_ExtraNode_e020"
-  choose_model: "LundNet" # choices: LundNet, LundNet_plus_GN2X, GATNet, GINNet, EdgeGinNet, PNANet
+  choose_model: LundNet                   # choices: LundNet, LundNet_plus_GN2X, GATNet, GINNet, EdgeGinNet, PNANet
+  scores_branch_name: fjet_{model}_score  # {model} will be replaced by the value of choose_model, optional
   batch_size: 2048

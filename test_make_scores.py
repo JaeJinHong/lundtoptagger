@@ -117,7 +117,7 @@ def main():
         print("\nSaving scores to ROOT file...")
         with uproot.open(file_root) as f:
             arrays = f[intreename].arrays()
-        arrays[f"fjet_{choose_model}_score"] = tagger_scores
+        arrays[config["test"]["scores_branch_name"].format(model=choose_model)] = tagger_scores
 
         # Save ROOT files containing model scores
         # TODO: just add scores to existing ROOT files instead of creating new ones; can keep adding scores for different models
