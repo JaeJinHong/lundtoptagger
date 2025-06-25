@@ -1,0 +1,36 @@
+data:
+  path_to_trainfiles: "/data/ravinascos/Lund_Plane_2024_graphs/FTAG1_May/TRAIN_05QCD_2Z_CONTROL/*train.root"
+  path_to_save: "/home/ravinascos/LundNet/b-tagging/lundtoptagger/Models/"
+  model_name: "LundNetPLUS_R22_-1_ln_kT_Cut_LRJ_NewNtrk_qcd01_top04_b-tagging"
+
+
+architecture:
+  batch_size: 3000
+  test_size: 0.1
+  n_epochs: 30
+  learning_rate: 0.0004
+  kT_cut: -500 ## indeed this is a cut in ln(kT)
+  choose_model: LundNetPLUS ## LundNetPLUS, LundNet, GATNet, GINNet, EdgeGinNet, PNANet
+  save_every_epoch: True
+
+retrain:
+  flag: False
+  path_to_ckpt: "/sps/atlas/k/khandoga/TrainGNN/Models/LundNet_ufob_e012_0.12481.pt"
+
+
+data_test: 
+  do_all_MC: 0  # 1->Do all MC ; 0-> Only Phythia
+  path_to_test_file_pythia: "/data/ravinascos/Lund_Plane_2024_graphs/FTAG1_May/TEST_QCD1_5Z/*test.root"
+  path_to_test_file_Herwig: "/data/ravinascos/Lund_Plane_2025_graphs/top_train05_test_05/Herwig*/*001.*test.root"
+  path_to_test_file_SherpaCluster: "/data/ravinascos/Lund_Plane_2025_graphs/top_train05_test_05/SherpaCluster*/*001.*test.root"
+  path_to_test_file_SherpaLund: "/data/ravinascos/Lund_Plane_2025_graphs/top_train05_test_05/SherpaLund_*/*001.*test.root"
+  path_to_outdir: "/data/ravinascos/LundNet/R_22_Top/b-tagging-TEST/"
+  weights_file: ""
+  scale_factor: 1
+
+test:
+  path_to_combined_ckpt: "./Models/LundNetPLUS_R22_-1_ln_kT_Cut_LRJ_NewNtrk_qcd01_top04_b-tagginge018_0.02572.pt"
+  output_name: "LundNet_R22_None_ln_kT_Cut_LRJ_toptagging_FTAG_qcd005_top02_PLUS"
+  choose_model: "LundNetPLUS"
+  learning_rate: 0.001
+  batch_size: 2000

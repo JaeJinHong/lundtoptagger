@@ -90,10 +90,10 @@ def main():
             jet_pts = ak.to_numpy(ak.flatten(tree["LRJ_pt"].array(library="ak")) )
 
             
-            GN2X_pqcd = ak.to_numpy(ak.flatten(tree["GN2Xv00_pqcd"].array(library="ak")) )
-            GN2X_phbb = ak.to_numpy(ak.flatten(tree["GN2Xv00_phbb"].array(library="ak")) )
-            GN2X_ptop = ak.to_numpy(ak.flatten(tree["GN2Xv00_ptop"].array(library="ak")) )
-            GN2X_phcc = ak.to_numpy(ak.flatten(tree["GN2Xv00_phcc"].array(library="ak")) )
+            GN2X_pqcd = ak.to_numpy(ak.flatten(tree["GN2Xv01_pqcd"].array(library="ak")) )
+            GN2X_phbb = ak.to_numpy(ak.flatten(tree["GN2Xv01_phbb"].array(library="ak")) )
+            GN2X_ptop = ak.to_numpy(ak.flatten(tree["GN2Xv01_ptop"].array(library="ak")) )
+            GN2X_phcc = ak.to_numpy(ak.flatten(tree["GN2Xv01_phcc"].array(library="ak")) )
 
 
             #flat_weights = GetPtWeight_2( labels, jet_pts, 5)
@@ -108,6 +108,7 @@ def main():
                 N_tracks, jet_pts, jet_ms, kT_selection,
                 primary_Lund_only_one_arr,
                 GN2X_pqcd, GN2X_phbb, GN2X_ptop, GN2X_phcc,
+                dsids_test,
                 config_signal[signal]["signal_jet_truth_label"]
             )
 
@@ -165,7 +166,9 @@ def main():
         model = PNANet()
     if choose_model == "LundNetPLUS":
         model = LundNet_plus_GNX2()
-
+    if choose_model == "LundNet_plus_GNX2_all":
+        model = LundNet_plus_GNX2_all()
+    
     flag = config['retrain']['flag']
     path_to_ckpt = config['retrain']['path_to_ckpt']
 
@@ -295,6 +298,9 @@ def main():
     
         check_file = 1
         file_count = 0
+
+        #eerrrrrrrorrrrrr
+        
         for file in files:
             
             t_start = time.time()
@@ -341,10 +347,10 @@ def main():
                 N_tracks = ak.to_numpy(ak.flatten(tree["LRJ_Nconst_Charged"].array(library="ak")) )
                 #N_tracks = ak.to_numpy(ak.flatten(tree["LRJ_Nconst"].array(library="ak")) )
                 
-                GN2X_pqcd = ak.to_numpy(ak.flatten(tree["GN2Xv00_pqcd"].array(library="ak")) )
-                GN2X_phbb = ak.to_numpy(ak.flatten(tree["GN2Xv00_phbb"].array(library="ak")) )
-                GN2X_ptop = ak.to_numpy(ak.flatten(tree["GN2Xv00_ptop"].array(library="ak")) )
-                GN2X_phcc = ak.to_numpy(ak.flatten(tree["GN2Xv00_phcc"].array(library="ak")) )
+                GN2X_pqcd = ak.to_numpy(ak.flatten(tree["GN2Xv01_pqcd"].array(library="ak")) )
+                GN2X_phbb = ak.to_numpy(ak.flatten(tree["GN2Xv01_phbb"].array(library="ak")) )
+                GN2X_ptop = ak.to_numpy(ak.flatten(tree["GN2Xv01_ptop"].array(library="ak")) )
+                GN2X_phcc = ak.to_numpy(ak.flatten(tree["GN2Xv01_phcc"].array(library="ak")) )
                 
                 
                 flat_weights = GetPtWeight_all_MC( dsids, dsids_test,  jet_pts, 5, Pythia_or_All=True)
@@ -386,10 +392,15 @@ def main():
                     GN2X_pqcd, GN2X_phbb, GN2X_ptop, GN2X_phcc,
                     config_signal[signal]["signal_jet_truth_label"]
                 )#, count_files)
-    
+
+                truth_labeling = labels
                 #Good_jets = labels
-                labels = labels==config_signal[signal]["signal_jet_truth_label"] #1
-                labels = 1*labels
+                if config_signal[signal]["signal_jet_truth_label"]==1:
+                    labels = labels==config_signal[signal]["signal_jet_truth_label"] #1
+                    labels = 1*labels
+                if config_signal[signal]["signal_jet_truth_label"]==6:
+                    labels = (labels==1) | (labels==6) | (labels==7)  #1
+                    labels = 1*labels
                 
                 if count_files==0:
                     graph_small_example = dataset[2]
@@ -424,6 +435,8 @@ def main():
                 model = PNANet()
             if choose_model == "LundNetPLUS":
                 model = LundNet_plus_GNX2()
+            if choose_model == "LundNet_plus_GNX2_all":
+                model = LundNet_plus_GNX2_all()
     
             model.load_state_dict(torch.load(path_to_combined_ckpt))
             device = torch.device('cuda') # Usually gpu 4 worked best, it had more memory available
@@ -462,6 +475,7 @@ def main():
                                               "fjet_m": "float32",
                                               "fjet_weight_pt": "float32", 
                                               "labels" : "float32",
+                                              "truth_labeling" : "float32",
                                               "Good_jets" : "float32",
                                                # "ungroomedtruthjet_m" : "float32",
                                                # "ungroomedtruthjet_split12" : "float32",
@@ -482,6 +496,7 @@ def main():
                                     "fjet_m": jet_ms,
                                     "fjet_weight_pt": ptweights,
                                     "labels" : labels,
+                                    "truth_labeling" : truth_labeling,
                                     "Good_jets" : Good_jets,
                                     # "ungroomedtruthjet_m" : truth_ungroomedjet_m,
                                     # "ungroomedtruthjet_split12" : truth_ungroomedjet_split12,

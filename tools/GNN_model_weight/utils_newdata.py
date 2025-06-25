@@ -178,7 +178,7 @@ def GetPtWeight_all_MC( dsid , dsid_input, pt, SF, Pythia_or_All=False ):
     print("proportion QCD_pythia/SIGNAL", total_jets_qcd / total_jets_signal)
     #ERRORRR
     QCD_SIGNAL_proportion = total_jets_qcd / total_jets_signal
-    sig_bkg_proportion = 5 #5  ## if is taked 5% of signal and 1% of qcd for training then sig_bkg_proportion=5
+    sig_bkg_proportion = 10 #5  ## if is taked 5% of signal and 1% of qcd for training then sig_bkg_proportion=5
     scale_factor = (lenght_bkg/lenght_sig) / sig_bkg_proportion #1
     scale_factor = scale_factor * QCD_SIGNAL_proportion
     print(scale_factor)
@@ -244,15 +244,15 @@ def to_categorical(y, num_classes=None, dtype='float32'):
 
 
 #def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms, kT_selection):
-def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms, kT_selection, primary_Lund_only_one_arr, GN2X_pqcd, GN2X_phbb, GN2X_ptop, GN2X_phcc, signal_jet_truth_label):
+def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, edge2, weight, label, Ntracks, jet_pts, jet_ms, kT_selection, primary_Lund_only_one_arr, GN2X_pqcd, GN2X_phbb, GN2X_ptop, GN2X_phcc, dsid, signal_jet_truth_label):
 
     test_bool = 1
     buildID_from_graphs = 0
     Primary_Lund_Plane = 0
     extra_node = 0
 
-    if signal_jet_truth_label == 1 :
-        print("signal_jet_truth_label->top")
+    if signal_jet_truth_label == 1 or signal_jet_truth_label == 6:
+        print("signal_jet_truth_label->top", signal_jet_truth_label)
     if signal_jet_truth_label == 2 :
         print("signal_jet_truth_label->W")
     
@@ -273,15 +273,28 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, e
             continue
         #print(label[i])
         # skip jets which are not signal (1 for top and 2 for W) or background (10)
-        if (label[i]!=signal_jet_truth_label) and (label[i]!=10):
-            continue
+        #if (label[i]!=signal_jet_truth_label) and (label[i]!=10):
+        #    continue
 
         # label signal as 1 and background as 0
         label_out = label[i] # label_np
-        if label[i] == 10:
-            label_out = 0
-        if label[i] == signal_jet_truth_label:
-            label_out = 1
+
+        if signal_jet_truth_label == 1:
+            if label[i] == 10:
+                label_out = 0
+            elif label[i] == 1:
+                label_out = 1
+            else:
+                continue
+
+        if signal_jet_truth_label == 6:
+            if label[i] == 10:
+                label_out = 0
+            elif label[i] == 1 or label[i] == 6 or label[i] == 7 :
+                label_out = 1
+            else:
+                continue
+                
 
         if signal_jet_truth_label == 2 : # W tagging selection for all jets
             if jet_pts[i] < 200: continue 
@@ -289,11 +302,17 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(graphs, z, k, d, edge1, e
             if jet_ms[i] < 40: continue
             if jet_ms[i] > 300: continue # I prefer avoid great masses in order to obtain stability in ANN
 
-        if signal_jet_truth_label == 1 : # Top tagging selection for all jets
+        if signal_jet_truth_label == 1 or signal_jet_truth_label == 6 : # Top tagging selection for all jets
             if jet_pts[i] < 350: continue 
             if jet_pts[i] > 3000: continue # not really necessary, in testing jets with pt>3k are not included
-            if jet_ms[i] < 40: continue
+            if jet_ms[i] < 40: continue 
 
+        if label_out == 1:
+            #if dsid[0] != 426345 and dsid[0] != 801859 :  # 801471 hbb
+            #    continue
+            if dsid[0] < 370000 : continue
+        if label_out == 0:
+            if dsid[0] > 370000 and dsid[0] < 360000: continue #== 426345: continue
         
         z_out = ak.to_numpy(z[i])
         k_out = ak.to_numpy(k[i])
@@ -711,8 +730,8 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file_test(graphs, graph_small_
     extra_node = 0
     print("extra_node condition-", extra_node)
 
-    if signal_jet_truth_label == 1 :
-        print("signal_jet_truth_label->top")
+    if signal_jet_truth_label == 1 or signal_jet_truth_label == 6 :
+        print("signal_jet_truth_label->top", signal_jet_truth_label)
     if signal_jet_truth_label == 2 :
         print("signal_jet_truth_label->W")
     
@@ -735,21 +754,42 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file_test(graphs, graph_small_
 
         #print(label[i])
         # skip jets which are not signal (1 for top and 2 for W) or background (10)
+        '''
         if (label[i]!=signal_jet_truth_label) and (label[i]!=10) :
-            label_out = 6
+            label_out = 96
             graphs.append(graph_small_example)
             Good_jets.append(0)
             mcweights_out.append(mc_weight_event)
             #print("label_second_2",label_out)
             continue
-
+        '''
+        
         # label signal as 1 and background as 0
         label_out = label[i] # label_np
-        if label[i]== 10:
-            label_out = 0
-        if label[i] == signal_jet_truth_label:
-            label_out = 1
 
+        if signal_jet_truth_label == 1:
+            if label[i] == 10:
+                label_out = 0
+            elif label[i] == 1:
+                label_out = 1
+            else:
+                label_out = 96
+                graphs.append(graph_small_example)
+                Good_jets.append(0)
+                mcweights_out.append(mc_weight_event)
+                continue
+                
+        if signal_jet_truth_label == 6:
+            if label[i] == 10:
+                label_out = 0
+            elif label[i] == 1 or label[i] == 6 or label[i] == 7:
+                label_out = 1
+            else:
+                label_out = 96
+                graphs.append(graph_small_example)
+                Good_jets.append(0)
+                mcweights_out.append(mc_weight_event)
+                continue
         '''
         if jet_pts[i] > 3200: continue
         if jet_pts[i] < 350: continue # . ./run.txt

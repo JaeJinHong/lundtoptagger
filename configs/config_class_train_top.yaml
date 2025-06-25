@@ -1,13 +1,15 @@
 data:
-  path_to_trainfiles: "/data/jmsardain/LJPTagger/FullSplittings/SplitForTopTagger/5_Signal_and_BKG_cutTruth350/*_train.root"
-  path_to_save: "/data/jmsardain/LJPTagger/Models/TopTagger/LundNetCut350_MultiOptimizers/"
-  model_name: "LundNet_"
+  path_to_trainfiles: "/data/ravinascos/Lund_Plane_2025_graphs/top_train05_test_05/*/*train.root"
+  #path_to_trainfiles: "/data/ravinascos/Lund_Plane_2025_graphs/Pythia_SignalW/*/*train.root"
+  path_to_save: "/data/ravinascos/LundNet/2025_graphs/"
+  model_name: "LundNet_R22_No_ln_kT_Cut_LRJ_NewNtrk_top_Mix_MC_01qcd_05top"
 
 architecture:
-  batch_size: 2048
-  test_size: 0.2
+  batch_size: 1200
+  test_size: 0.1
   n_epochs: 30
   learning_rate: 0.0004
+  kT_cut: -500 ## indeed this is a cut in ln(kT)
   choose_model: LundNet ## LundNet, GATNet, GINNet, EdgeGinNet, PNANet
   save_every_epoch: True
 
