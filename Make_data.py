@@ -60,146 +60,119 @@ def main():
         "EventInfo_mcEventWeight",
         "EventInfo_mcChannelNumber", # dsid
     ]
-    out_tree_dict = {branch_name: ak.Array([]) for branch_name in [*jet_property_names.keys(), *additional_output_vars]}
+
+    # Accept a list of fractions
+    event_fractions = config["event_fractions"]
+    if sum(event_fractions) > 1.0 + 1e-8:
+        raise ValueError(f"Sum of event_fractions ({sum(event_fractions)}) exceeds 1.")
 
     # Calculate flat-pT weights, apply jet selection and kT cuts, and construct the graphs
-    dataset = []
-    primary_Lund_only_one_arr = []
-    for file_number, file in enumerate(files, start=1):
-        print(f"\nLoading file: {file_number}/{n_files}\n", file)
+    for frac_idx, event_fraction in enumerate(event_fractions):
+        print(f"\nProcessing event fraction {event_fraction} ({frac_idx}/{len(event_fractions)})")
+        dataset = []
+        primary_Lund_only_one_arr = []
+        out_tree_dict = {branch_name: ak.Array([]) for branch_name in [*jet_property_names.keys(), *additional_output_vars]}
+        for file_number, file in enumerate(files, start=1):
+            print(f"\nLoading file: {file_number}/{n_files}\n", file)
 
-        with uproot.open(file) as infile:
-            tree = infile[intreename]
+            with uproot.open(file) as infile:
+                tree = infile[intreename]
 
-            dsids = tree["dsid"].array(library="np")
-            dsid_test = dsids[0]                                 # check the first DSID, they should all be the same
-            if dsid_test in config_signal[signal]["skip_dsids"]: # don't lose time with jets that don't pass pt cut or wrong signal sample
-                print("Skipping file with DSID", dsid_test)
-                continue
+                dsids = tree["dsid"].array(library="np")
+                dsid_test = dsids[0]                                 # check the first DSID, they should all be the same
+                if dsid_test in config_signal[signal]["skip_dsids"]: # don't lose time with jets that don't pass pt cut or wrong signal sample
+                    print("Skipping file with DSID", dsid_test)
+                    continue
 
-            # Determine how many entries to load based on fraction
-            total_events = tree.num_entries
-            entries_to_load = int(total_events * config["event_fraction"])
-            entry_stop = min(entries_to_load, total_events)
-            print(f"Loading {entry_stop} entries from {total_events} total entries")
+                total_events = tree.num_entries
 
-            # Load the data
-            jet_properties = {
-                jet_property: ak.flatten(tree[jet_property].array(entry_stop=entry_stop, library="ak"))
-                for jet_property in [*jet_property_names.values(), "jetLundZ", "jetLundKt", "jetLundDeltaR", "jetLundIDParent1", "jetLundIDParent2"]
-                if jet_property in tree
-            }
-            truth_labels_unflattened = tree["LRJ_truthLabel"].array(entry_stop=entry_stop, library="ak")
-            numbers_of_jets_per_event = ak.num(truth_labels_unflattened)
+                # Calculate start and stop indices for this fraction
+                prev_fractions = sum(event_fractions[:frac_idx])
+                start_entry = int(total_events * prev_fractions)
+                stop_entry = int(total_events * (prev_fractions + event_fraction))
+                stop_entry = min(stop_entry, total_events)
+                if start_entry >= stop_entry:
+                    print(f"Skipping: start_entry {start_entry} >= stop_entry {stop_entry}")
+                    continue
+                print(f"Loading entries {start_entry}:{stop_entry} from {total_events} total entries")
 
-            mcEventWeights = tree["mcEventWeight"].array(entry_stop=entry_stop, library="np")
-            jet_properties["EventInfo_mcEventWeight"] = np.repeat(mcEventWeights, numbers_of_jets_per_event)       # expand out the array so it has same length as flattened array
-            jet_properties["EventInfo_mcChannelNumber"] = np.repeat(dsids[:entry_stop], numbers_of_jets_per_event) # TODO: can I do this without numpy? expand out the array so it has same length as flattened array
+                # Load the data
+                jet_properties = {
+                    jet_property: ak.flatten(tree[jet_property].array(entry_start=start_entry, entry_stop=stop_entry, library="ak"))
+                    for jet_property in [*jet_property_names.values(), "jetLundZ", "jetLundKt", "jetLundDeltaR", "jetLundIDParent1", "jetLundIDParent2"]
+                    if jet_property in tree
+                }
+                truth_labels_unflattened = tree["LRJ_truthLabel"].array(entry_start=start_entry, entry_stop=stop_entry, library="ak")
+                numbers_of_jets_per_event = ak.num(truth_labels_unflattened)
 
-            # Calculate flat-pT weights
-            print("\nCalculating weights:")
-            jet_properties["fjet_weight_pt"] = GetPtWeight(jet_properties["LRJ_pt"], jet_properties["LRJ_truthLabel"], dsid_test, 5)
+                mcEventWeights = tree["mcEventWeight"].array(entry_start=start_entry, entry_stop=stop_entry, library="np")
+                jet_properties["EventInfo_mcEventWeight"] = np.repeat(mcEventWeights, numbers_of_jets_per_event)       # expand out the array so it has same length as flattened array
+                jet_properties["EventInfo_mcChannelNumber"] = np.repeat(dsids[start_entry:stop_entry], numbers_of_jets_per_event) # TODO: can I do this without numpy? expand out the array so it has same length as flattened array
 
-            passed_selection = []   # will be a boolean array, True if jet passes selection
+                # Calculate flat-pT weights
+                print("\nCalculating weights:")
+                jet_properties["fjet_weight_pt"] = GetPtWeight(jet_properties["LRJ_pt"], jet_properties["LRJ_truthLabel"], dsid_test, 5)
 
-            # Construct the graphs, applying jet selection and kT cuts
-            print("\nCreating PyTorch graphs:")
-            dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file(
-                dataset,
-                *itemgetter("jetLundZ", "jetLundKt", "jetLundDeltaR", "jetLundIDParent1", "jetLundIDParent2")(jet_properties),
-                *itemgetter("fjet_weight_pt", "LRJ_truthLabel", "EventInfo_mcChannelNumber", "LRJ_Nconst_Charged", "LRJ_pt", "LRJ_mass")(jet_properties),
-                GN2X_scores={
-                    key: jet_properties[jet_property_names[key]]
-                    for key in ["GN2X_pqcd", "GN2X_phbb", "GN2X_ptop", "GN2X_phcc"]
-                    if jet_property_names[key] in jet_properties},
-                kT_selection=config["kT_cut"],
-                primary_Lund_only_one_arr=primary_Lund_only_one_arr,
-                passed_selection=passed_selection,
-                signal_jet_truth_label=config_signal[signal]["signal_jet_truth_label"],
-                signal_dsid=config_signal[signal]["dsid"],
-                pt_range=config_signal[signal]["pt_range"],
-                mass_range=config_signal[signal]["mass_range"],
-                include_pt=config["include_pt"],
-            )
+                passed_selection = []   # will be a boolean array, True if jet passes selection
 
-            for jet_property_out, jet_propety_in in jet_property_names.items():
-                if jet_propety_in in jet_properties:
-                    out_tree_dict[jet_property_out] = ak.concatenate([out_tree_dict[jet_property_out], jet_properties[jet_propety_in][passed_selection]])
-                else:
-                    print(f"Warning: {jet_propety_in} not found in file {file}, skipping")
-                    if jet_property_out in dict: del out_tree_dict[jet_property_out]
-            for output_var in additional_output_vars:
-                append_array = ak.Array([jet_graph.y for jet_graph in dataset]) if output_var=="labels" else jet_properties[output_var][passed_selection]
-                out_tree_dict[output_var] = ak.concatenate([out_tree_dict[output_var], append_array])
+                # Construct the graphs, applying jet selection and kT cuts
+                print("\nCreating PyTorch graphs:")
+                dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file(
+                    dataset,
+                    *itemgetter("jetLundZ", "jetLundKt", "jetLundDeltaR", "jetLundIDParent1", "jetLundIDParent2")(jet_properties),
+                    *itemgetter("fjet_weight_pt", "LRJ_truthLabel", "EventInfo_mcChannelNumber", "LRJ_Nconst_Charged", "LRJ_pt", "LRJ_mass")(jet_properties),
+                    GN2X_scores={
+                        key: jet_properties[jet_property_names[key]]
+                        for key in ["GN2X_pqcd", "GN2X_phbb", "GN2X_ptop", "GN2X_phcc"]
+                        if jet_property_names[key] in jet_properties},
+                    kT_selection=config["kT_cut"],
+                    primary_Lund_only_one_arr=primary_Lund_only_one_arr,
+                    passed_selection=passed_selection,
+                    signal_jet_truth_label=config_signal[signal]["signal_jet_truth_label"],
+                    signal_dsid=config_signal[signal]["dsid"],
+                    pt_range=config_signal[signal]["pt_range"],
+                    mass_range=config_signal[signal]["mass_range"],
+                    include_pt=config["include_pt"],
+                )
 
-            gc.collect()
+                for jet_property_out, jet_propety_in in jet_property_names.items():
+                    if jet_propety_in in jet_properties:
+                        out_tree_dict[jet_property_out] = ak.concatenate([out_tree_dict[jet_property_out], jet_properties[jet_propety_in][passed_selection]])
+                    else:
+                        print(f"Warning: {jet_propety_in} not found in file {file}, skipping")
+                        if jet_property_out in dict: del out_tree_dict[jet_property_out]
+                for output_var in additional_output_vars:
+                    if output_var!="labels":
+                        out_tree_dict[output_var] = ak.concatenate([out_tree_dict[output_var], jet_properties[output_var][passed_selection]])
 
-    print("\nDataset created! len():", len(dataset))
-    delta_t_fileax = timedelta(seconds=round(time.time() - t_start))
-    print(f"Time taken (hh:mm:ss): {delta_t_fileax}")
+                gc.collect()
 
-    # Construct output file names
-    out_file_name_graphs = config["out_file_name_graphs"]
-    outfile_name_root = config["out_file_name_root"]
-    filepath_placeholder_vals = dict(
-        id = config["id"],
-        kT_cut = config["kT_cut"],
-        include_pt = "_with_pt" if config["include_pt"] else ""
-    )
-    out_dir = config["out_dir"].format(**filepath_placeholder_vals)
-    os.makedirs(out_dir, exist_ok=True)
+        out_tree_dict["labels"] = ak.Array([jet_graph.y for jet_graph in dataset])
 
-    # Save the testing dataset, if specified
-    test_frac = config["test_frac"]
-    if test_frac is not None:
-        print("Splitting dataset into train and test sets")
-        test_num = int(len(dataset) * test_frac)
-        indices = np.arange(len(dataset))
-        np.random.shuffle(indices)
-        dataset = [dataset[i] for i in indices]
-        dataset_test = dataset[:test_num]
-        dataset = dataset[test_num:]
+        print("\nDataset created! len():", len(dataset))
+        delta_t_fileax = timedelta(seconds=round(time.time() - t_start))
+        print(f"Time taken (hh:mm:ss): {delta_t_fileax}")
 
-        out_file_name_graphs_test = out_file_name_graphs.format(
-            **filepath_placeholder_vals,
-            test_frac = f"_{int(test_frac*100)}percent"
+        # Save graphs and accompanying ROOT files
+        filepath_placeholder_vals = dict(
+            id = config["id"],
+            kT_cut = config["kT_cut"],
+            include_pt = "_with_pt" if config["include_pt"] else "",
+            frac = f"_part{frac_idx}_{event_fraction*100:.2f}percent" if event_fraction < 1.0 else "",
         )
-        output_path_graphs_test = os.path.join(out_dir, out_file_name_graphs_test)
-        torch.save(dataset_test, output_path_graphs_test)
-        print("Test graphs saved to:", output_path_graphs_test)
+        out_dir = config["out_dir"].format(**filepath_placeholder_vals)
+        os.makedirs(out_dir, exist_ok=True)
 
-        outfile_name_root_test = outfile_name_root.format(
-            **filepath_placeholder_vals,
-            test_frac = f"_{int(test_frac*100)}percent"
-        )
-        output_path_root_test = os.path.join(out_dir, outfile_name_root_test)
-        out_tree_dict_test = {}
-        for key in out_tree_dict:
-            out_tree_dict_test[key] = out_tree_dict[key][indices][:test_num]
-            out_tree_dict[key] = out_tree_dict[key][indices][test_num:]
-        with uproot.recreate(output_path_root_test) as outfile:
-            outfile["FlatSubstructureJetTree"] = out_tree_dict_test
-        print("Test dataset written to ROOT file:", output_path_root_test)
+        out_file_name_graphs = config["out_file_name_graphs"].format(**filepath_placeholder_vals)
+        output_path_graphs = os.path.join(out_dir, out_file_name_graphs)
+        torch.save(dataset, output_path_graphs)
+        print("Graphs saved to:", output_path_graphs)
 
-    # Save the training dataset
-    out_file_name_graphs = out_file_name_graphs.format(
-        **filepath_placeholder_vals,
-        test_frac = f"_{int((1-test_frac)*100)}percent" if test_frac is not None else "",
-    )
-    output_path_graphs = os.path.join(out_dir, out_file_name_graphs)
-
-    torch.save(dataset, output_path_graphs)
-    print("Training graphs saved to:", output_path_graphs)
-
-    outfile_name_root = outfile_name_root.format(
-        **filepath_placeholder_vals,
-        test_frac = f"_{int((1-test_frac)*100)}percent" if test_frac is not None else "",
-    )
-    output_path_root = os.path.join(out_dir, outfile_name_root)
-    with uproot.recreate(os.path.join(output_path_root)) as outfile:
-        outfile["FlatSubstructureJetTree"] = out_tree_dict
-    print("Training dataset written to ROOT file:", output_path_root)
-
+        outfile_name_root = config["out_file_name_root"].format(**filepath_placeholder_vals)
+        output_path_root = os.path.join(out_dir, outfile_name_root)
+        with uproot.recreate(output_path_root) as outfile:
+            outfile["FlatSubstructureJetTree"] = out_tree_dict
+        print("Dataset written to ROOT file:", output_path_root)
 
 if __name__ == "__main__":
     main()
