@@ -1,9 +1,9 @@
 # NOTE: it is assumed all data in a single file has the same DSID
-#path_to_trainfiles: "/data/ravinascos/Lund_Plane_2024_graphs/TRAIN_DUMMY_01QCD_05Z/*.root" #TRAIN_DUMMY_fewEvents # TRAIN_DUMMY_01QCD_05Z
-path_to_trainfiles: '/data/ravinascos/Lund_Plane_2024_graphs/TRAIN_DUMMY_02QCD_1Z/*.root'
-# path_to_trainfiles: '/eos/user/r/ravinasc/R_22_Samples/'
-# path_to_trainfiles: '/eos/user/r/ravinasc/R_22_Samples/JETM2_mc20/Pythia_train/Pythia_qcd_01/*.root'
-# path_to_trainfiles: '/eos/user/r/ravinasc/R_22_Samples/JETM2_mc20/Pythia_test/test_qcd05_1W_Pythia/*.root'
+#path_to_rootfiles: "/data/ravinascos/Lund_Plane_2024_graphs/TRAIN_DUMMY_01QCD_05Z/*.root" #TRAIN_DUMMY_fewEvents # TRAIN_DUMMY_01QCD_05Z
+path_to_rootfiles: '/data/ravinascos/Lund_Plane_2024_graphs/TRAIN_DUMMY_02QCD_1Z/*.root'
+# path_to_rootfiles: '/eos/user/r/ravinasc/R_22_Samples/'
+# path_to_rootfiles: '/eos/user/r/ravinasc/R_22_Samples/JETM2_mc20/Pythia_train/Pythia_qcd_01/*.root'
+# path_to_rootfiles: '/eos/user/r/ravinasc/R_22_Samples/JETM2_mc20/Pythia_test/test_qcd05_1W_Pythia/*.root'
 n_files: null      # choose a small number of files in case you don't want to process all files; otherwise set to null
 event_fractions: [0.0025, 0.0025, 0.005, 0.01, 0.01, 0.02, 0.05, 0.1, 0.1, 0.1, 0.2, 0.2, 0.2]  # list of fractions to process sequentially; these will be saved in separate files
 # e.g. [0.01, 0.01, 0.5] - the first 1% of events will be saved in the first file, the next 1% in the second file, and so on

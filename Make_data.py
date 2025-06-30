@@ -12,6 +12,7 @@ import numpy as np
 import torch
 
 from tools.GNN_model_weight.utils_newdata import load_yaml, GetPtWeight, create_train_dataset_fulld_new_Ntrk_pt_weight_file
+from tools.utils_config import recursive_update, parse_dot_args
 
 print("Libraries loaded!")
 
@@ -19,19 +20,30 @@ def main():
     parser = argparse.ArgumentParser(description="Prepare data for classifier input")
     add_arg = parser.add_argument
     add_arg("config", help="job configuration file")
+    parser.add_argument('--override', nargs='*', default=[], help='Overrides in the form key.subkey=value')
     args = parser.parse_args()
     config_file = args.config
     config = load_yaml(config_file)
     config_signal = load_yaml("configs/config_signal.yaml") # TODO: make this an optional argument, but then the same file needs to be used in utils_newdata.py
     signal = config_signal["signal"]
 
-    path_to_files = config["path_to_trainfiles"]
+    # Override configuration with command line arguments
+    override_dict = parse_dot_args(args.override)
+    config = recursive_update(config, override_dict)
+
+    # Get some configuration parameters
+    path_to_files = config["path_to_rootfiles"]
     files = glob.glob(path_to_files)[:config["n_files"]]
 
     intreename = "AnalysisTree"
 
     n_files = len(files)
     print(f"Processing {n_files} files")
+
+    event_fractions = config["event_fractions"]
+    if sum(event_fractions) > 1.0 + 1e-8:
+        raise ValueError(f"Sum of event_fractions ({sum(event_fractions)}) exceeds 1.")
+
     t_start = time.time()
 
     # Jet properties that will be loaded and saved in the output ROOT file
@@ -60,11 +72,6 @@ def main():
         "EventInfo_mcEventWeight",
         "EventInfo_mcChannelNumber", # dsid
     ]
-
-    # Accept a list of fractions
-    event_fractions = config["event_fractions"]
-    if sum(event_fractions) > 1.0 + 1e-8:
-        raise ValueError(f"Sum of event_fractions ({sum(event_fractions)}) exceeds 1.")
 
     # Calculate flat-pT weights, apply jet selection and kT cuts, and construct the graphs
     for frac_idx, event_fraction in enumerate(event_fractions):
