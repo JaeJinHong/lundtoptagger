@@ -67,6 +67,15 @@ so that they are proportional to 1/(bin count).
 These histograms are included in the repository; they are located in the `histos` folder.
 They can be created with the `make_histos.py` script, which also applies mass and $pT$ cuts from `config_signal.yaml`.
 
+You can override any of the parameters in `config_make_data.yaml` using the `--override` command-line argument; for example:
+
+```bash
+python Make_data.py configs/config_make_data.yaml --override path_to_rootfiles="/path/to/root/files/*.root" id="QCD" event_fractions="[0.0025, 0.0025]" kT_cut=0.5
+```
+
+The values for the override arguments should be in the YAML format - e.g. `null` will be interpreted as `None` and `.inf` as `float('inf')`.
+
+
 ## Training
 
 For the training, the main changes one should do are in the configuration file: `config_ONLY_TRAIN.yaml`.

@@ -1,27 +1,28 @@
 # NOTE: it is assumed all data in a single file has the same DSID
-#path_to_trainfiles: "/data/ravinascos/Lund_Plane_2024_graphs/TRAIN_DUMMY_01QCD_05Z/*.root" #TRAIN_DUMMY_fewEvents # TRAIN_DUMMY_01QCD_05Z
-path_to_trainfiles: '/data/ravinascos/Lund_Plane_2024_graphs/TRAIN_DUMMY_02QCD_1Z/*.root'
-# path_to_trainfiles: '/eos/user/r/ravinasc/R_22_Samples/'
-# path_to_trainfiles: '/eos/user/r/ravinasc/R_22_Samples/JETM2_mc20/Pythia_train/Pythia_qcd_01/*.root'
-# path_to_trainfiles: '/eos/user/r/ravinasc/R_22_Samples/JETM2_mc20/Pythia_test/test_qcd05_1W_Pythia/*.root'
+#path_to_rootfiles: "/data/ravinascos/Lund_Plane_2024_graphs/TRAIN_DUMMY_01QCD_05Z/*.root" #TRAIN_DUMMY_fewEvents # TRAIN_DUMMY_01QCD_05Z
+path_to_rootfiles: '/data/ravinascos/Lund_Plane_2024_graphs/TRAIN_DUMMY_02QCD_1Z/*.root'
+# path_to_rootfiles: '/eos/user/r/ravinasc/R_22_Samples/'
+# path_to_rootfiles: '/eos/user/r/ravinasc/R_22_Samples/JETM2_mc20/Pythia_train/Pythia_qcd_01/*.root'
+# path_to_rootfiles: '/eos/user/r/ravinasc/R_22_Samples/JETM2_mc20/Pythia_test/test_qcd05_1W_Pythia/*.root'
 n_files: null      # choose a small number of files in case you don't want to process all files; otherwise set to null
-event_fraction: 1  # fraction of events to process in each file, set to 1 to process all events
+event_fractions: [0.0025, 0.0025, 0.005, 0.01, 0.01, 0.02, 0.05, 0.1, 0.1, 0.1, 0.2, 0.2, 0.2]  # list of fractions to process sequentially; these will be saved in separate files
+# e.g. [0.01, 0.01, 0.5] - the first 1% of events will be saved in the first file, the next 1% in the second file, and so on
+# to process all events at once, set to [1.0]
 
 # The output directory and file name can contain some placeholders inside curly brackets.
 # They will be replaced by the corresponding values:
 # {id} -> value of id specified below
 # {kT_cut} -> value of kT_cut (None if kT_cut is null)
 # {include_pt} -> "_with_pt" if include_pt is True, "" if include_pt is False
-# {test_frac} -> f"_{test_frac*100}percent" if test_frac is not null, "" if test_frac is null
+# {frac} -> f"_part{frac_idx}_{event_fraction*100}_percent" if event_fraction < 1.0 else ""; frac_idx is the index of the event_fraction in the list
 # out_dir: "/home/ravinascos/LundNet/Jad_git/lundtoptagger/Models/"
-out_dir: "/data/ravinascos/LundNet/2024_graphs/"
-out_file_name_graphs: "graphs_{id}{test_frac}_ln_kT_cut_{kT_cut}{include_pt}"
-out_file_name_root: "data_{id}{test_frac}_ln_kT_cut_{kT_cut}.root"
+out_dir: "/data/ravinascos/LundNet/2024_graphs/data{frac}/"
+out_file_name_graphs: "graphs_{id}{frac}_ln_kT_cut_{kT_cut}{include_pt}"
+out_file_name_root: "data_{id}{frac}_ln_kT_cut_{kT_cut}.root"
 # the ROOT file will store mass, pT, mcEventWeight, dsids, truth labels and the flat-pT weights of the jets passing the selection
 
 id: "QCD_mass_40-300"    # your own identifier for the dataset, used in the output file names
 # e.g. you might use "QCD_mass_40-300" when processing QCD samples for W jets
-test_frac: null   # fraction of jets to save into a separate file for testing, can be null to not save a test file
 
 # selection and output variables to include as graph attributes
 kT_cut: null           # actually a cut in ln(kT), set to null to not apply any cut
