@@ -16,7 +16,7 @@ from scipy.stats import entropy, gaussian_kde
 from ..GNN_model_weight.models import mdn_loss, mdn_loss_new
 
 
-def GetPtWeight(pts, truth_labels, dsid_input: int, SF: float = 5, signal_config_file: str = "configs/config_signal.yaml") -> np.array:
+def GetPtWeight(pts, truth_labels, dsid_input: int, SF: float = 5, signal_config_file: str = "configs/config_signal.yaml", signal: str = "top") -> np.array:
     """
     Return an array of weights for jets that make their pT distribution flat.
 
@@ -26,13 +26,13 @@ def GetPtWeight(pts, truth_labels, dsid_input: int, SF: float = 5, signal_config
         dsid_input (int): DSID of the input sample. It is assumed that all of the jets are from the same sample (or the same group of QCD samples).
         SF (float): Scale factor used for correct relative weighting of signal and background. Not important any more since weights are rescaled in training script to balance signal and background.
         signal_config_file (str): Path to the YAML configuration file for signal settings.
+        signal (str): Signal name used to choose a set of parameters from the configuration file.
     Returns:
         np.array: An array of weights for the jets.
     """
     # get signal and backgound pT histograms
     with open(signal_config_file) as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
-    signal = config["signal"]
 
     filename_sig = config[signal]["pt_hist_file_signal"]
     filenames_bkg = config[signal]["pt_hist_files_bkg"]["files"]

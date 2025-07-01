@@ -55,13 +55,18 @@ so it can be useful to have a separate file for plots which don't require the Lu
 
 ### Configuration and parameters for `Make_data.py`
 
-The input and output file paths and a value for the optional $k_T$ cut are set in `config_make_data.yaml`.
-You can also set the fraction of the data to save in a separate file for testing, if any.
-The path to this config file must be given as a command-line argument, as in the example above.
+The configuration is defined in `configs/config_make_data.yaml`. The path to this config file must be given as a command-line argument, as in the example above.
+
+In this file, you can set:
+
+- the input and output file paths,
+- fractions of the data to save in separate files - this can be used for train/test splits, or memory management,
+as the events are loaded and processed in chunks of sizes determined by these fractions
+- a value for the optional $k_T$ cut
 
 The script uses another configuration file, `config_signal.yaml`, which contains parameter sets for several signal samples.
-You should choose the appropriate paramter set by modifying the first line of the file.
-The parameters include values for the selection cuts (mass, $p_T$, minimum number of splittings)
+The path to this file and the choice of parameter set from it are also specified in `config_make_data.yaml` under the `signal_config_file` and `signal` keys, respectively.
+The parameters in `config_signal.yaml` include values for the selection cuts (mass, $p_T$, minimum number of splittings)
 and paths to files with histograms of the $p_T$ distributions of the jets, which are used to calculate the $p_T$ weights
 so that they are proportional to 1/(bin count).
 These histograms are included in the repository; they are located in the `histos` folder.

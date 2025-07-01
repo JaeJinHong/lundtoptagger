@@ -14,6 +14,7 @@ print("Libraries loaded!")
 
 # parameters
 config_signal_path = "configs/config_signal.yaml"
+signal = "W"
 # infiles_path = "/eos/home-t/tmlinare/Lund/jetetmiss/JETMDataMC/jpierre/run/submitDir-2025-01-06-1052-fee0 files 1-50/data-ANALYSIS/mc20_13TeV.802017.Py8EG_A14NNPDF23LO_WprimeWZ_flatpT_wideWmass.deriv.DAOD_JETM2.e8482_s3797_r13145_p5548.root"
 # infiles_path = "/eos/home-t/tmlinare/Lund/jetetmiss/JETMDataMC/jpierre/run/submitDir-2025-01-12-1919-bc4c W files 1-50 (not flat mass)/data-ANALYSIS/mc20_13TeV.801859.Py8EG_A14NNPDF23LO_WprimeWZ_flatpT.deriv.DAOD_JETM2.e8482_s3681_r13145_p5548.root"
 infiles_path = "/eos/user/r/ravinasc/R_22_Samples/JETM2_mc20/Pythia_train/Pythia_qcd_01/*.root"
@@ -37,13 +38,12 @@ def main():
     add_arg("--outfile", default=None, help="Output file path")
     args = parser.parse_args()
 
-    global config_signal_path, infiles_path, outfile_path
+    global config_signal_path, infiles_path, outfile_path, signal
     config_signal_path = args.config if args.config is not None else config_signal_path
     infiles_path = args.infile if args.infile is not None else infiles_path
     outfile_path = args.outfile if args.outfile is not None else outfile_path
 
     config_signal = load_yaml(config_signal_path)
-    signal = config_signal["signal"]
     pt_min, pt_max = config_signal[signal]["pt_range"]
     m_min, m_max = config_signal[signal]["mass_range"]
 

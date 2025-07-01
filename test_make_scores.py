@@ -29,8 +29,8 @@ def main():
     args = parser.parse_args()
     config_file = args.config
     config = load_yaml(config_file)
-    config_signal = load_yaml("configs/config_signal.yaml") # TODO: make this an optional argument, but then the same file needs to be used in utils_newdata.py
-    signal = config_signal["signal"]
+    config_signal = load_yaml(config["signal_config_file"]) # TODO: make this an optional argument, but then the same file needs to be used in utils_newdata.py
+    signal = config["signal"]
 
     path_to_test_file = config['data']['path_to_test_file']
     files = glob.glob(path_to_test_file)

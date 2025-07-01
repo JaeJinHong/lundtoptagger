@@ -24,8 +24,8 @@ def main():
     args = parser.parse_args()
     config_file = args.config
     config = load_yaml(config_file)
-    config_signal = load_yaml("configs/config_signal.yaml") # TODO: make this an optional argument, but then the same file needs to be used in utils_newdata.py
-    signal = config_signal["signal"]
+    config_signal = load_yaml(config["signal_config_file"])
+    signal = config["signal"]
 
     # Override configuration with command line arguments
     override_dict = parse_dot_args(args.override)
@@ -118,7 +118,14 @@ def main():
 
                 # Calculate flat-pT weights
                 print("\nCalculating weights:")
-                jet_properties["fjet_weight_pt"] = GetPtWeight(jet_properties["LRJ_pt"], jet_properties["LRJ_truthLabel"], dsid_test, 5)
+                jet_properties["fjet_weight_pt"] = GetPtWeight(
+                    jet_properties["LRJ_pt"],
+                    jet_properties["LRJ_truthLabel"],
+                    dsid_test,
+                    SF=5,
+                    signal_config_file=config["signal_config_file"],
+                    signal=signal,
+                )
 
                 passed_selection = []   # will be a boolean array, True if jet passes selection
 
