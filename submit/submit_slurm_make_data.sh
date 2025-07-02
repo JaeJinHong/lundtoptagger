@@ -22,8 +22,8 @@
 # request enough memory - probaby don't need this much
 #SBATCH --mem=50G
 
-# SLURM array: one job per input/id pair (0-6 for 7 pairs, only run 4 simultaneously)
-#SBATCH --array=0-6%4
+# SLURM array: one job per input/id/signal set (0-6 for 7 sets, only run up to 8 simultaneously)
+#SBATCH --array=0-6%8
 
 # email notifications
 #SBATCH --mail-user=toni.mlinarevic.20@ucl.ac.uk
@@ -45,6 +45,7 @@ input_paths=( \
     "/share/lustre/tmlinare/Lund_tagging/jetmdatamc_output/FTAG1_2025-06-03/user.jecifuen.mc20_13TeV.364707.e7142_s3681_r13144_p6453.FTAG1_TV3_ANALYSIS.root/*.root" \
     "/share/lustre/tmlinare/Lund_tagging/jetmdatamc_output/FTAG1_2025-06-03/user.jecifuen.mc20_13TeV.426345.e6880_s3681_r13144_p5981.FTAG1_TV3_ANALYSIS.root/*.root" \
     "/share/lustre/tmlinare/Lund_tagging/jetmdatamc_output/FTAG1_2025-06-03/user.jecifuen.mc20_13TeV.801859.e8482_s3681_r13144_p6781.FTAG1_TV3_ANALYSIS.root/*.root" \
+    # "/share/lustre/tmlinare/Lund_tagging/jetmdatamc_output/JETM2_old/mc20_13TeV.801859.Py8EG_A14NNPDF23LO_WprimeWZ_flatpT.deriv.DAOD_JETM2.e8482_s3681_r13145_p5548_files_3-4.root" \
 )
 ids=( \
     QCD_364703 \
@@ -53,7 +54,16 @@ ids=( \
     QCD_364706 \
     QCD_364707 \
     Zprime_tt_426345 \
-    W_flat_pt_801859_801859 \
+    W_flat_pt_801859 \
+)
+signals=( \
+    top \
+    top \
+    top \
+    top \
+    top \
+    top \
+    W \
 )
 
 cd ~/Lund_tagging/lundtoptagger
@@ -71,13 +81,19 @@ echo $CONDA_DEFAULT_ENV
 echo "CUDA_VISIBLE_DEVICES:"
 echo $CUDA_VISIBLE_DEVICES
 
-# Select the current pair based on SLURM_ARRAY_TASK_ID
+# Select the current parameters based on SLURM_ARRAY_TASK_ID
 path_to_rootfiles="${input_paths[$SLURM_ARRAY_TASK_ID]}"
 id="${ids[$SLURM_ARRAY_TASK_ID]}"
+signal="${signals[$SLURM_ARRAY_TASK_ID]}"
 echo ""
 echo "path_to_rootfiles: $path_to_rootfiles"
 echo "id: $id"
+echo "signal: $signal"
 
 echo "Running training script..."
 echo ""
-python Make_data.py configs/config_make_data.yaml --override path_to_rootfiles="$path_to_rootfiles" id="$id"
+python Make_data.py configs/config_make_data.yaml --override \
+    out_dir="/share/lustre/tmlinare/Lund_tagging/graphs/v2.1.6_GN2X_m40-inf_pt200-3100/data{frac}" \
+    path_to_rootfiles="$path_to_rootfiles" \
+    id="$id" \
+    signal="$signal"

@@ -24,6 +24,10 @@ out_file_name_root: "data_{id}{frac}_ln_kT_cut_{kT_cut}.root"
 id: "QCD_mass_40-300"    # your own identifier for the dataset, used in the output file names
 # e.g. you might use "QCD_mass_40-300" when processing QCD samples for W jets
 
+# path to the configuration file for the signal sample, which contains the selection criteria and other parameters
+signal_config_file: "configs/config_signal.yaml"
+signal: top  # top or W; flag to choose one of the configurations from the signal_config_file
+
 # selection and output variables to include as graph attributes
 kT_cut: null           # actually a cut in ln(kT), set to null to not apply any cut
 include_pt: True       # choose whether to include jet pT as an attribute of the graphs - this is needed for training with the adversarial network and can be useful for evaluation
