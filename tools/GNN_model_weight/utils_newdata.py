@@ -16,40 +16,36 @@ from scipy.stats import entropy, gaussian_kde
 from ..GNN_model_weight.models import mdn_loss, mdn_loss_new
 
 
-def GetPtWeight(pts, truth_labels, dsid_input: int, SF: float = 5, signal_config_file: str = "configs/config_signal.yaml", signal: str = "top") -> np.array:
+def GetPtWeight(pts, truth_labels, dsid_input: int, signal_config: dict, SF: float = 5) -> np.array:
     """
     Return an array of weights for jets that make their pT distribution flat.
 
     Args:
         pts (array-like): Jet pT values.
         truth_labels (array-like): Integer large-R jet truth labels (e.g. 1 for tqqb, 2 for Wqq, 5 for Zqq, 10 for QCD).
-        dsid_input (int): DSID of the input sample. It is assumed that all of the jets are from the same sample (or the same group of QCD samples).
+        dsid_input (int): DSID of the input sample. It is assumed that all of the jets are from the same sample (or the same group of QCD samples).¸
+        signal_config (dict): Dictionary containing the configuration for signal and background pT histograms.
         SF (float): Scale factor used for correct relative weighting of signal and background. Not important any more since weights are rescaled in training script to balance signal and background.
-        signal_config_file (str): Path to the YAML configuration file for signal settings.
-        signal (str): Signal name used to choose a set of parameters from the configuration file.
     Returns:
         np.array: An array of weights for the jets.
     """
     # get signal and backgound pT histograms
-    with open(signal_config_file) as f:
-        config = yaml.load(f, Loader=yaml.FullLoader)
-
-    filenames_bkg = config[signal]["pt_hist_files_bkg"]["files"]
-    histos_dir = config[signal]["pt_hist_files_bkg"]["dir_path"]
+    filenames_bkg = signal_config["pt_hist_files_bkg"]["files"]
+    histos_dir = signal_config["pt_hist_files_bkg"]["dir_path"]
 
     filename_Phythia = os.path.join(histos_dir, "qcdP8.root")  # default file for background jets if no match found
     filename_bkg = filename_Phythia
 
-    if dsid_input in config[signal]["pt_hist_files_signal"]:
-        filename_sig = config[signal]["pt_hist_files_signal"][dsid_input]
+    if dsid_input in signal_config["pt_hist_files_signal"]:
+        filename_sig = signal_config["pt_hist_files_signal"][dsid_input]
     else:
         filename_sig = filename_Phythia
-        print(f"WARNING: No signal histogram file found for DSID {dsid_input} for {signal} signal configuration.")
+        print(f"WARNING: No signal histogram file found for DSID {dsid_input} for given signal configuration.")
         print("Instead, using default background histogram file for signal pT reweighting:", filename_sig)
 
     print("DSID:", dsid_input)
     # only works if all the data in a single ROOT file is from the same DSID
-    if dsid_input not in config[signal]["dsids"]:
+    if dsid_input not in signal_config["dsids"]:
         found_background_file = False
         for filename, dsid_range in filenames_bkg.items():
             if dsid_range[0] <= dsid_input <= dsid_range[1]:
@@ -57,7 +53,7 @@ def GetPtWeight(pts, truth_labels, dsid_input: int, SF: float = 5, signal_config
                 found_background_file = True
                 break
         if not found_background_file:
-            print(f"WARNING: No background histogram file found for DSID {dsid_input} for {signal} signal configuration.")
+            print(f"WARNING: No background histogram file found for DSID {dsid_input} for given signal configuration.")
 
     print("Using signal file:", filename_sig)
     print("Using background file:", filename_bkg)

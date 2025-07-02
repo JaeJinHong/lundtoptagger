@@ -122,9 +122,8 @@ def main():
                     jet_properties["LRJ_pt"],
                     jet_properties["LRJ_truthLabel"],
                     dsid_test,
+                    config_signal[signal],
                     SF=5,
-                    signal_config_file=config["signal_config_file"],
-                    signal=signal,
                 )
 
                 passed_selection = []   # will be a boolean array, True if jet passes selection
