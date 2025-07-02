@@ -21,7 +21,7 @@ cut_pt_mass: True
 # However, if you have already prepared graph files with the cuts applied,
 # then this will only waste time and should be set to False.
 config_signal_path: "./configs/config_signal.yaml"  # path to the config file with the signal configuration
-signal: top                                         # top, W, or W_flat
+signal: top                                         # top or W; flag to choose one of the configurations from the signal_config_file
 
 flatten_pt: True
 # if applying cuts which were not used for the pT spectrum that was used for reweighting in Make_data.py,

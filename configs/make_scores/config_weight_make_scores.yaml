@@ -13,4 +13,4 @@ test:
   batch_size: 2000
 
 signal_config_file: "configs/config_signal.yaml"
-signal: top  # top, W, W_flat or Wqq_SM; flag to choose one of the configurations from the signal_config_file
+signal: top  # top or W; flag to choose one of the configurations from the signal_config_file

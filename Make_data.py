@@ -143,7 +143,7 @@ def main():
                     primary_Lund_only_one_arr=primary_Lund_only_one_arr,
                     passed_selection=passed_selection,
                     signal_jet_truth_label=config_signal[signal]["signal_jet_truth_label"],
-                    signal_dsid=config_signal[signal]["dsid"],
+                    signal_dsid=config_signal[signal]["dsids"],
                     pt_range=config_signal[signal]["pt_range"],
                     mass_range=config_signal[signal]["mass_range"],
                     include_pt=config["include_pt"],
