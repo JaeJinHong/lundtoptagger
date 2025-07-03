@@ -23,6 +23,7 @@ top:
   dsids: [801661, 426345]         # for these DSIDs, keep only jets with truth label 1, and for other samples, keep the QCD jets (with truth label 10)
   pt_range: [350, 3100]           # jet pT selection in GeV, upper limit not really necessary, in testing jets with pt > 3k are not included
   mass_range: [40, .inf]          # jet mass selection in GeV, for no upper limit use .inf
+  eta_max: 2                      # maximum absolute value of jet pseudorapidity, for no upper limit use .inf
   min_splits: 3                   # minimum number of splittings, or emissions, that jets must have
   skip_dsids:
   - 364700  # don't lose time with jets that don't pass pt cut
@@ -43,6 +44,7 @@ W:
   dsids: [801859, 802017, 700843] # for these DSIDs, keep only jets with truth label 2, and for other samples, keep the QCD jets (with truth label 10)
   pt_range: [200, 3100]           # jet pT selection in GeV, upper limit not really necessary, in testing jets with pt > 3k are not included
   mass_range: [40, 300]           # mass selection in GeV, for no upper limit use .inf; upper limit can help with stability in ANN
+  eta_max: 2                      # maximum absolute value of jet pseudorapidity, for no upper limit use .inf
   min_splits: 3                   # minimum number of splittings, or emissions, that jets must have
   skip_dsids:
   - 364700  # don't lose time with jets that don't pass pt cut
