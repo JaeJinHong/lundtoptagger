@@ -44,6 +44,14 @@ def main():
     if sum(event_fractions) > 1.0 + 1e-8:
         raise ValueError(f"Sum of event_fractions ({sum(event_fractions)}) exceeds 1.")
 
+    # Select which event fractions to process
+    if config["event_fraction_idx"] is not None:
+        # Only process the specified fraction
+        event_fraction_indices = [config["event_fraction_idx"]]
+    else:
+        # Process all fractions (default behavior)
+        event_fraction_indices = list(range(len(event_fractions)))
+
     t_start = time.time()
 
     # Jet properties that will be loaded and saved in the output ROOT file
@@ -74,7 +82,8 @@ def main():
     ]
 
     # Calculate flat-pT weights, apply jet selection and kT cuts, and construct the graphs
-    for frac_idx, event_fraction in enumerate(event_fractions):
+    for frac_idx in event_fraction_indices:
+        event_fraction = event_fractions[frac_idx]
         print(f"\nProcessing event fraction {event_fraction} ({frac_idx}/{len(event_fractions)})")
         dataset = []
         primary_Lund_only_one_arr = []

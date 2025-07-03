@@ -8,6 +8,7 @@ n_files: null      # choose a small number of files in case you don't want to pr
 event_fractions: [0.0025, 0.0025, 0.005, 0.01, 0.01, 0.02, 0.05, 0.1, 0.1, 0.1, 0.2, 0.2, 0.2]  # list of fractions to process sequentially; these will be saved in separate files
 # e.g. [0.01, 0.01, 0.5] - the first 1% of events will be saved in the first file, the next 1% in the second file, and so on
 # to process all events at once, set to [1.0]
+event_fraction_idx: null  # index of the event_fraction to process in case you only want to process one of them; set to null to process all of them sequentially
 
 # The output directory and file name can contain some placeholders inside curly brackets.
 # They will be replaced by the corresponding values:
