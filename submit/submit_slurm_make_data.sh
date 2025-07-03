@@ -20,19 +20,22 @@
 #SBATCH -n4
 
 # request enough memory - probaby don't need this much
-#SBATCH --mem=50G
+#SBATCH --mem=35G
 
-# SLURM array: one job per input/id/signal set (0-6 for 7 sets, only run up to 8 simultaneously)
-#SBATCH --array=0-6%8
+# SLURM array: one job per input/id/signal set and event fraction
+# only run up to 10 simultaneously
+# number of elements should be equal to NUM_INPUTS * NUM_EVENT_FRACTIONS
+# last index is included in the array
+#SBATCH --array=0-174%10
 
 # email notifications
 #SBATCH --mail-user=toni.mlinarevic.20@ucl.ac.uk
 #SBATCH --mail-type=ALL
 
 # change log names; %j gives job id, %x gives job name, %a gives array index
-#SBATCH --output=/home/tmlinare/Lund_tagging/lundtoptagger_job_outputs/slurm-%j.%a.%x.out
+#SBATCH --output=/home/tmlinare/Lund_tagging/lundtoptagger_job_outputs/make_data/slurm-%j.%a.%x.out
 # optional separate error output file
-# #SBATCH --error=/home/tmlinare/Lund_tagging/lundtoptagger_job_outputs/slurm-%j.%a.%x.err
+# #SBATCH --error=/home/tmlinare/Lund_tagging/lundtoptagger_job_outputs/make_data/slurm-%j.%a.%x.err
 
 # speedup trick
 # export OMP_NUM_THREADS=1
@@ -66,6 +69,9 @@ signals=( \
     W \
 )
 
+NUM_INPUTS=7
+NUM_EVENT_FRACTIONS=25
+
 cd ~/Lund_tagging/lundtoptagger
 echo "Moved dir, now in:"
 pwd
@@ -81,19 +87,25 @@ echo $CONDA_DEFAULT_ENV
 echo "CUDA_VISIBLE_DEVICES:"
 echo $CUDA_VISIBLE_DEVICES
 
-# Select the current parameters based on SLURM_ARRAY_TASK_ID
-path_to_rootfiles="${input_paths[$SLURM_ARRAY_TASK_ID]}"
-id="${ids[$SLURM_ARRAY_TASK_ID]}"
-signal="${signals[$SLURM_ARRAY_TASK_ID]}"
+# Compute indices for event fraction and input set
+event_fraction_idx=$(( SLURM_ARRAY_TASK_ID / NUM_INPUTS ))
+input_set_idx=$(( SLURM_ARRAY_TASK_ID % NUM_INPUTS ))
+
+path_to_rootfiles="${input_paths[$input_set_idx]}"
+id="${ids[$input_set_idx]}"
+signal="${signals[$input_set_idx]}"
+
 echo ""
 echo "path_to_rootfiles: $path_to_rootfiles"
 echo "id: $id"
 echo "signal: $signal"
+echo "event_fraction_idx: $event_fraction_idx"
 
 echo "Running training script..."
 echo ""
 python Make_data.py configs/config_make_data.yaml --override \
-    out_dir="/share/lustre/tmlinare/Lund_tagging/graphs/v2.1.6_GN2X_m40-inf_pt200-3100/data{frac}" \
+    out_dir="/share/lustre/tmlinare/Lund_tagging/graphs/v2.1.8_GN2X_m40-inf_pt200-3100/data{frac}" \
     path_to_rootfiles="$path_to_rootfiles" \
     id="$id" \
-    signal="$signal"
+    signal="$signal" \
+    event_fraction_idx="$event_fraction_idx"

@@ -208,7 +208,7 @@ def to_categorical(y, num_classes=None, dtype='float32'):
 
 def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
     graphs: list[Data],
-    z, k, d, edge1, edge2, weight, label, dsids, Ntracks, jet_pts, jet_ms,
+    z, k, d, edge1, edge2, weight, label, dsids, Ntracks, jet_pts, jet_ms, jet_etas,
     GN2X_scores,
     kT_selection: Union[float, None],
     primary_Lund_only_one_arr: list,
@@ -217,6 +217,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
     signal_dsids: list[int],
     pt_range: tuple = (350, 3200),
     mass_range: tuple = (0, float('inf')),
+    eta_max: float = 2.0,
     min_splits: int = 3,
     include_pt: bool = False,
 ) -> list[Data]:
@@ -236,6 +237,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         Ntracks (array): Array of Ntracks values.
         jet_pts (array): Array of jet pT values.
         jet_ms (array): Array of jet mass values.
+        jet_etas (array): Array of jet pseudorapidity values.
         GN2X_scores (dict[str, array]): Dictionary of arrays with GN2X scores for the jets.
         kT_selection (float | None): kT selection threshold.
         primary_Lund_only_one_arr (list): List to keep track of how many jets have only 1 splitting.
@@ -244,6 +246,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         signal_dsid (int): List of DSIDs for the signal jets.
         pt_range (tuple): Minimum and maximum jet pT values for selected jets, in GeV.
         mass_range (tuple): Minimum and maximum jet mass values for selected jets, in GeV.
+        eta_max (float): Maximum absolute value of jet pseudorapidity, for selected jets.
         min_splits (int): Minimum number of splittings, or emissions, for a jet to be selected.
         include_pt (bool): Whether to include pT as a graph attribute.
 
@@ -266,10 +269,11 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         jet_ms_np = jet_ms_np.astype(float)
         '''
 
-        # skip jets with mass or pT outside the specified ranges
+        # skip jets with mass, pT or eta outside the specified ranges
         # or with less than the specified number of splittings
         if (not (pt_range[0] < jet_pts[i] < pt_range[1])
             or not (mass_range[0] < jet_ms[i] < mass_range[1])
+            or not (abs(jet_etas[i]) < eta_max)
             or len(z[i]) < min_splits
             # skip jets which are not signal (1 for top and 2 for W) or background (10)
             or dsids[i] in signal_dsids and label[i]!=signal_jet_truth_label) or (dsids[i] not in signal_dsids and label[i]!=10

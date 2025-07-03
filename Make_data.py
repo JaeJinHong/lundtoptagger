@@ -24,12 +24,13 @@ def main():
     args = parser.parse_args()
     config_file = args.config
     config = load_yaml(config_file)
-    config_signal = load_yaml(config["signal_config_file"])
-    signal = config["signal"]
 
     # Override configuration with command line arguments
     override_dict = parse_dot_args(args.override)
     config = recursive_update(config, override_dict)
+
+    config_signal = load_yaml(config["signal_config_file"])
+    signal = config["signal"]
 
     # Get some configuration parameters
     path_to_files = config["path_to_rootfiles"]
@@ -40,9 +41,19 @@ def main():
     n_files = len(files)
     print(f"Processing {n_files} files")
 
-    event_fractions = config["event_fractions"]
+    event_fractions = []
+    for frac, n_chunks in config["event_fractions"].items():
+        event_fractions.extend([frac] * n_chunks)
     if sum(event_fractions) > 1.0 + 1e-8:
         raise ValueError(f"Sum of event_fractions ({sum(event_fractions)}) exceeds 1.")
+
+    # Select which event fractions to process
+    if config["event_fraction_idx"] is not None:
+        # Only process the specified fraction
+        event_fraction_indices = [config["event_fraction_idx"]]
+    else:
+        # Process all fractions (default behavior)
+        event_fraction_indices = list(range(len(event_fractions)))
 
     t_start = time.time()
 
@@ -74,7 +85,8 @@ def main():
     ]
 
     # Calculate flat-pT weights, apply jet selection and kT cuts, and construct the graphs
-    for frac_idx, event_fraction in enumerate(event_fractions):
+    for frac_idx in event_fraction_indices:
+        event_fraction = event_fractions[frac_idx]
         print(f"\nProcessing event fraction {event_fraction} ({frac_idx}/{len(event_fractions)})")
         dataset = []
         primary_Lund_only_one_arr = []
@@ -128,12 +140,14 @@ def main():
 
                 passed_selection = []   # will be a boolean array, True if jet passes selection
 
+                # TODO: just filter the arrays by mass, pT and eta before passing them to the dataset creation function
+
                 # Construct the graphs, applying jet selection and kT cuts
                 print("\nCreating PyTorch graphs:")
                 dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file(
                     dataset,
                     *itemgetter("jetLundZ", "jetLundKt", "jetLundDeltaR", "jetLundIDParent1", "jetLundIDParent2")(jet_properties),
-                    *itemgetter("fjet_weight_pt", "LRJ_truthLabel", "EventInfo_mcChannelNumber", "LRJ_Nconst_Charged", "LRJ_pt", "LRJ_mass")(jet_properties),
+                    *itemgetter("fjet_weight_pt", "LRJ_truthLabel", "EventInfo_mcChannelNumber", "LRJ_Nconst_Charged", "LRJ_pt", "LRJ_mass", "LRJ_eta")(jet_properties),
                     GN2X_scores={
                         key: jet_properties[jet_property_names[key]]
                         for key in ["GN2X_pqcd", "GN2X_phbb", "GN2X_ptop", "GN2X_phcc"]
@@ -142,9 +156,11 @@ def main():
                     primary_Lund_only_one_arr=primary_Lund_only_one_arr,
                     passed_selection=passed_selection,
                     signal_jet_truth_label=config_signal[signal]["signal_jet_truth_label"],
-                    signal_dsid=config_signal[signal]["dsids"],
+                    signal_dsids=config_signal[signal]["dsids"],
                     pt_range=config_signal[signal]["pt_range"],
                     mass_range=config_signal[signal]["mass_range"],
+                    eta_max=config_signal[signal]["eta_max"],
+                    min_splits=config_signal[signal]["min_splits"],
                     include_pt=config["include_pt"],
                 )
 
