@@ -40,7 +40,9 @@ def main():
     n_files = len(files)
     print(f"Processing {n_files} files")
 
-    event_fractions = config["event_fractions"]
+    event_fractions = []
+    for frac, n_chunks in config["event_fractions"].items():
+        event_fractions.extend([frac] * n_chunks)
     if sum(event_fractions) > 1.0 + 1e-8:
         raise ValueError(f"Sum of event_fractions ({sum(event_fractions)}) exceeds 1.")
 

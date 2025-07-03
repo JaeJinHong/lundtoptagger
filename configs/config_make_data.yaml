@@ -5,10 +5,12 @@ path_to_rootfiles: '/data/ravinascos/Lund_Plane_2024_graphs/TRAIN_DUMMY_02QCD_1Z
 # path_to_rootfiles: '/eos/user/r/ravinasc/R_22_Samples/JETM2_mc20/Pythia_train/Pythia_qcd_01/*.root'
 # path_to_rootfiles: '/eos/user/r/ravinasc/R_22_Samples/JETM2_mc20/Pythia_test/test_qcd05_1W_Pythia/*.root'
 n_files: null      # choose a small number of files in case you don't want to process all files; otherwise set to null
-event_fractions: [0.0025, 0.0025, 0.005, 0.01, 0.01, 0.02, 0.05, 0.1, 0.1, 0.1, 0.2, 0.2, 0.2]  # list of fractions to process sequentially; these will be saved in separate files
-# e.g. [0.01, 0.01, 0.5] - the first 1% of events will be saved in the first file, the next 1% in the second file, and so on
-# to process all events at once, set to [1.0]
-event_fraction_idx: null  # index of the event_fraction to process in case you only want to process one of them; set to null to process all of them sequentially
+event_fractions: {0.0025: 2, 0.005: 1, 0.01: 2, 0.02: 1, 0.05: 19}  # dict of fractions to process sequentially; these will be saved in separate files
+# e.g. {0.01: 2, 0.02: 1, ...} - the processing and output files will be divided in 2 chunks of 1% of the events, then 1 chunk of 2% and so on
+# to process all events at once, set to {1.0: 1}
+# if the fraction is too large, torch.save will fail, e.g. for the JZ4 QCD sample, processing 10% of events at once fails
+event_fraction_idx: null  # index of the event_fraction to process (after the dictionary is converted to a list) in case you only want to process one of them
+# set to null to process all chunks
 
 # The output directory and file name can contain some placeholders inside curly brackets.
 # They will be replaced by the corresponding values:
