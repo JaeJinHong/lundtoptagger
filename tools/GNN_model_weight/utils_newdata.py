@@ -259,7 +259,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
     extra_node = 0
 
     # loop over jets
-    for i in trange(len(z)):  
+    for i in trange(len(z), miniters=len(z) // 10, desc="Processing jets, printing at min. 10% intervals"):
         '''
         label_np = ak.to_numpy(label[i])
         jet_pts_np = ak.to_numpy(jet_pts[i])
