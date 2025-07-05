@@ -72,6 +72,16 @@ so that they are proportional to 1/(bin count).
 These histograms are included in the repository; they are located in the `histos` folder.
 They can be created with the `make_histos.py` script, which also applies mass and $pT$ cuts from `config_signal.yaml`.
 
+Rather than choosing a single signal configuraion, the `signal` key in `config_make_data.yaml` can also be set to `all`,
+in which case the script will combine the selections (to include jets which pass any of the selections)
+and store multiple sets of flat-pT weights (in both the graphs and ROOT files), one for each signal configuration.
+The main reason for this is that you don't have to process the background jets (QCD) multiple times,
+and there is no need to have multiple QCD graphs files with slightly different selections.
+Instead, when later using the file, you can choose which set of weights to use and apply corresponding selection cuts.
+If saving multple sets of weights, they will be saved with the signal configuration identifier as a suffix in the branch/attribure names.
+You can also do this with a single signal configuration by setting `signal_name_in_weight` to `True` in `config_make_data.yaml`,
+in order to have matching names between the signal files where you would probably only use 1 configuration and the background files where you might want to use multiple configurations.
+
 You can override any of the parameters in `config_make_data.yaml` using the `--override` command-line argument; for example:
 
 ```bash

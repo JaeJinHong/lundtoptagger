@@ -4,6 +4,7 @@ import glob
 import time
 from datetime import timedelta
 
+import numpy as np
 import uproot
 import awkward as ak
 from ROOT import TH1F, TFile
@@ -87,13 +88,16 @@ def main():
             tree = infile[intreename]
 
             dsid_test = tree["dsid"].array(library="np")[0]
-            jet_truth_label = config_signal[signal]["signal_jet_truth_label"] if dsid_test in config_signal[signal]["dsids"] else 10
-            truth_labels = ak.flatten(tree["LRJ_truthLabel"].array(library="ak"))
-            jet_masses = ak.flatten(tree["LRJ_mass"].array(library="ak"))
+            jet_truth_labels = config_signal[signal]["signal_jet_truth_labels"] if dsid_test in config_signal[signal]["dsids"] else 10
+            truth_labels = ak.flatten(tree["LRJ_truthLabel"].array())
+            jet_masses = ak.flatten(tree["LRJ_mass"].array())
+            jet_pts = ak.flatten(tree["LRJ_pt"].array())
 
-            selection = (truth_labels == jet_truth_label) & (jet_masses >= m_min) & (jet_masses <= m_max)
-            jet_pts = ak.flatten(tree["LRJ_pt"].array(library="ak"))[selection]
+            selection = np.isin(ak.to_numpy(truth_labels), jet_truth_labels) \
+                      & (jet_masses >= m_min) & (jet_masses <= m_max) \
+                      & (jet_pts >= pt_min) & (jet_pts <= pt_max)
             jet_masses = jet_masses[selection]
+            jet_pts = jet_pts[selection]
             truth_labels = truth_labels[selection]
 
         # Fill histograms

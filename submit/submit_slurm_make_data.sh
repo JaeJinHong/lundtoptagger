@@ -60,11 +60,11 @@ ids=( \
     W_flat_pt_801859 \
 )
 signals=( \
-    top \
-    top \
-    top \
-    top \
-    top \
+    all \
+    all \
+    all \
+    all \
+    all \
     top \
     W \
 )
@@ -104,8 +104,9 @@ echo "event_fraction_idx: $event_fraction_idx"
 echo "Running training script..."
 echo ""
 python Make_data.py configs/config_make_data.yaml --override \
-    out_dir="/share/lustre/tmlinare/Lund_tagging/graphs/v2.1.8_GN2X_m40-inf_pt200-3100/data{frac}" \
+    out_dir="/share/lustre/tmlinare/Lund_tagging/graphs/v2.2.0_GN2X_m40-inf_pt200-3100/data{frac}" \
     path_to_rootfiles="$path_to_rootfiles" \
     id="$id" \
     signal="$signal" \
+    signal_name_in_weight=True \
     event_fraction_idx="$event_fraction_idx"
