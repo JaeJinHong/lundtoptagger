@@ -7,7 +7,7 @@ from datetime import timedelta
 import numpy as np
 import uproot
 import awkward as ak
-from ROOT import TH1F, TFile
+from ROOT import TH1D, TFile
 
 from tools.GNN_model_weight.utils_newdata import load_yaml
 
@@ -81,10 +81,10 @@ def main():
     t_start = time.time()
 
     # Create histograms
-    hist_pt = TH1F("pt", "Jet pT histogram", nbins, pt_min, pt_max)
-    hist_m = TH1F("mass", "Jet mass histogram", nbins, m_min, m_max)
-    hist_eta = TH1F("eta", "Jet eta histogram", nbins, -eta_max, eta_max)
-    hist_truth_label = TH1F("truth_label", "Jet truth label histogram", 11, -0.5, 10.5)
+    hist_pt = TH1D("pt", "Jet pT histogram", nbins, pt_min, pt_max)
+    hist_m = TH1D("mass", "Jet mass histogram", nbins, m_min, m_max)
+    hist_eta = TH1D("eta", "Jet eta histogram", nbins, -eta_max, eta_max)
+    hist_truth_label = TH1D("truth_label", "Jet truth label histogram", 11, -0.5, 10.5)
 
     for file_number, file in enumerate(files, start=1):
         print(f"\nLoading file {file_number}/{len(files)}: {file}")
@@ -94,12 +94,12 @@ def main():
 
             dsid_test = tree["dsid"].array(library="np")[0]
             jet_truth_labels = config_signal[signal]["signal_jet_truth_labels"] if dsid_test in config_signal[signal]["dsids"] else 10
-            truth_labels = ak.flatten(tree["LRJ_truthLabel"].array())
-            jet_masses = ak.flatten(tree["LRJ_mass"].array())
-            jet_pts = ak.flatten(tree["LRJ_pt"].array())
-            jet_etas = ak.flatten(tree["LRJ_eta"].array())
+            truth_labels = ak.to_numpy(ak.flatten(tree["LRJ_truthLabel"].array()))
+            jet_masses = ak.to_numpy(ak.flatten(tree["LRJ_mass"].array()))
+            jet_pts = ak.to_numpy(ak.flatten(tree["LRJ_pt"].array()))
+            jet_etas = ak.to_numpy(ak.flatten(tree["LRJ_eta"].array()))
 
-            selection = np.isin(ak.to_numpy(truth_labels), jet_truth_labels) \
+            selection = np.isin(truth_labels, jet_truth_labels) \
                       & (jet_masses >= m_min) & (jet_masses <= m_max) \
                       & (jet_pts >= pt_min) & (jet_pts <= pt_max) \
                       & (abs(jet_etas) <= eta_max)
@@ -109,14 +109,12 @@ def main():
             truth_labels = truth_labels[selection]
 
         # Fill histograms
-        for pt in jet_pts:
-            hist_pt.Fill(pt)
-        for m in jet_masses:
-            hist_m.Fill(m)
-        for eta in jet_etas:
-            hist_eta.Fill(eta)
-        for label in truth_labels:
-            hist_truth_label.Fill(label)
+        njets = len(jet_pts)
+        weights = np.ones(njets)
+        hist_pt.FillN(njets, jet_pts, weights)
+        hist_m.FillN(njets, jet_masses, weights)
+        hist_eta.FillN(njets, jet_etas, weights)
+        hist_truth_label.FillN(njets, truth_labels.astype(float), weights)
 
     # Save histograms to a ROOT file
     os.makedirs(os.path.dirname(outfile_path), exist_ok=True)
