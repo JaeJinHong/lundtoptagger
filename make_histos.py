@@ -46,6 +46,7 @@ def main():
     add_arg("--nbins",   default=nbins,    type=int, help="Number of bins for histograms")
     add_arg("--pt_max",  default=3100,   type=float, help="Maximum pT value for histograms, only used if value in config is .inf")
     add_arg("--m_max",   default=3500,   type=float, help="Maximum mass value for histograms, only used if value in config is .inf")
+    add_arg("--eta_max", default=5.0, type=float, help="Maximum pseudorapidity value for histograms, only used if value in config is .inf")
     args = parser.parse_args()
 
     config_signal_path = args.config
@@ -57,10 +58,13 @@ def main():
     config_signal = load_yaml(config_signal_path)
     pt_min, pt_max = config_signal[signal]["pt_range"]
     m_min, m_max = config_signal[signal]["mass_range"]
+    eta_max = config_signal[signal]["eta_max"]
     if pt_max == float("inf"):
         pt_max = args.pt_max
     if m_max == float("inf"):
         m_max = args.m_max
+    if eta_max == float("inf"):
+        eta_max = args.eta_max
 
     # Create list of files from glob patterns
     files = []
@@ -79,6 +83,7 @@ def main():
     # Create histograms
     hist_pt = TH1F("pt", "Jet pT histogram", nbins, pt_min, pt_max)
     hist_m = TH1F("mass", "Jet mass histogram", nbins, m_min, m_max)
+    hist_eta = TH1F("eta", "Jet eta histogram", nbins, -eta_max, eta_max)
     hist_truth_label = TH1F("truth_label", "Jet truth label histogram", 11, -0.5, 10.5)
 
     for file_number, file in enumerate(files, start=1):
@@ -92,12 +97,15 @@ def main():
             truth_labels = ak.flatten(tree["LRJ_truthLabel"].array())
             jet_masses = ak.flatten(tree["LRJ_mass"].array())
             jet_pts = ak.flatten(tree["LRJ_pt"].array())
+            jet_etas = ak.flatten(tree["LRJ_eta"].array())
 
             selection = np.isin(ak.to_numpy(truth_labels), jet_truth_labels) \
                       & (jet_masses >= m_min) & (jet_masses <= m_max) \
-                      & (jet_pts >= pt_min) & (jet_pts <= pt_max)
+                      & (jet_pts >= pt_min) & (jet_pts <= pt_max) \
+                      & (abs(jet_etas) <= eta_max)
             jet_masses = jet_masses[selection]
             jet_pts = jet_pts[selection]
+            jet_etas = jet_etas[selection]
             truth_labels = truth_labels[selection]
 
         # Fill histograms
@@ -105,6 +113,8 @@ def main():
             hist_pt.Fill(pt)
         for m in jet_masses:
             hist_m.Fill(m)
+        for eta in jet_etas:
+            hist_eta.Fill(eta)
         for label in truth_labels:
             hist_truth_label.Fill(label)
 
@@ -113,6 +123,7 @@ def main():
     output_file = TFile(outfile_path, "RECREATE")
     hist_pt.Write()
     hist_m.Write()
+    hist_eta.Write()
     hist_truth_label.Write()
     output_file.Close()
 
