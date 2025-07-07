@@ -30,6 +30,12 @@ id: "QCD_mass_40-300"    # your own identifier for the dataset, used in the outp
 # path to the configuration file for the signal sample, which contains the selection criteria and other parameters
 signal_config_file: "configs/config_signal.yaml"
 signal: top  # top or W; flag to choose one of the configurations from the signal_config_file
+# can also be set to "all" to calculate multiple flat-pt weights will be calculated for the background jets,
+# one for each signal configuration (top, W);
+# each one will be saved in a branch/attribute named "fjet_weight_pt_{signal}" in the output ROOT/graphs file
+signal_name_in_weight: False  # if True, the flat-pT weight will be saved in a branch/attribute named "fjet_weight_pt_{signal}" in the output ROOT/graphs file
+# automatically set to True if if signal is set to "all"
+# you can also set it to true even if using only one signal type to have a matching branch/attribute name
 
 # selection and output variables to include as graph attributes
 kT_cut: null           # actually a cut in ln(kT), set to null to not apply any cut

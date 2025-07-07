@@ -79,10 +79,14 @@ def main():
     # because they need to be calculated or they have one value per event rather than per jet
     additional_output_vars = [
         "labels",                    # 1 for signal 0 for background
-        "fjet_weight_pt",            # weight which makes pT distribution flat
         "EventInfo_mcEventWeight",
         "EventInfo_mcChannelNumber", # dsid
     ]
+    # add weights which make pT distribution flat
+    # one or multiple variations depending on the configuration
+    signals = [s for s in config_signal.keys() if s != "bkg_histos"] if signal=="all" else [signal]
+    fjet_weight_pt_branches = [f"fjet_weight_pt_{s}" for s in signals] if signal=="all" or config["signal_name_in_weight"] else ["fjet_weight_pt"]
+    additional_output_vars.extend(fjet_weight_pt_branches)
 
     # Calculate flat-pT weights, apply jet selection and kT cuts, and construct the graphs
     for frac_idx in event_fraction_indices:
@@ -99,7 +103,9 @@ def main():
 
                 dsids = tree["dsid"].array(library="np")
                 dsid_test = dsids[0]                                 # check the first DSID, they should all be the same
-                if dsid_test in config_signal[signal]["skip_dsids"]: # don't lose time with jets that don't pass pt cut or wrong signal sample
+                print(*[config_signal[s]["skip_dsids"] for s in signals])
+                skip_dsids = set.intersection(*[set(config_signal[s]["skip_dsids"]) for s in signals])
+                if dsid_test in skip_dsids: # don't lose time with jets that don't pass pt cut or wrong signal sample
                     print("Skipping file with DSID", dsid_test)
                     continue
 
@@ -130,24 +136,25 @@ def main():
 
                 # Calculate flat-pT weights
                 print("\nCalculating weights:")
-                jet_properties["fjet_weight_pt"] = GetPtWeight(
-                    jet_properties["LRJ_pt"],
-                    jet_properties["LRJ_truthLabel"],
-                    dsid_test,
-                    config_signal[signal],
-                    SF=5,
-                )
-
-                passed_selection = []   # will be a boolean array, True if jet passes selection
+                for fjet_weight_pt_branch, s in zip(fjet_weight_pt_branches, signals):
+                    jet_properties[fjet_weight_pt_branch] = GetPtWeight(
+                        jet_properties["LRJ_pt"],
+                        jet_properties["LRJ_truthLabel"],
+                        dsid_test,
+                        config_signal[s],
+                        SF=5,
+                    )
 
                 # TODO: just filter the arrays by mass, pT and eta before passing them to the dataset creation function
 
                 # Construct the graphs, applying jet selection and kT cuts
                 print("\nCreating PyTorch graphs:")
+                passed_selection = []   # will be a boolean array, True if jet passes selection
                 dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file(
                     dataset,
                     *itemgetter("jetLundZ", "jetLundKt", "jetLundDeltaR", "jetLundIDParent1", "jetLundIDParent2")(jet_properties),
-                    *itemgetter("fjet_weight_pt", "LRJ_truthLabel", "EventInfo_mcChannelNumber", "LRJ_Nconst_Charged", "LRJ_pt", "LRJ_mass", "LRJ_eta")(jet_properties),
+                    *itemgetter("LRJ_truthLabel", "EventInfo_mcChannelNumber", "LRJ_Nconst_Charged", "LRJ_pt", "LRJ_mass", "LRJ_eta")(jet_properties),
+                    weights = {fjet_weight_pt_branch: jet_properties[fjet_weight_pt_branch] for fjet_weight_pt_branch in fjet_weight_pt_branches},
                     GN2X_scores={
                         key: jet_properties[jet_property_names[key]]
                         for key in ["GN2X_pqcd", "GN2X_phbb", "GN2X_ptop", "GN2X_phcc"]
@@ -155,12 +162,18 @@ def main():
                     kT_selection=config["kT_cut"],
                     primary_Lund_only_one_arr=primary_Lund_only_one_arr,
                     passed_selection=passed_selection,
-                    signal_jet_truth_label=config_signal[signal]["signal_jet_truth_label"],
-                    signal_dsids=config_signal[signal]["dsids"],
-                    pt_range=config_signal[signal]["pt_range"],
-                    mass_range=config_signal[signal]["mass_range"],
-                    eta_max=config_signal[signal]["eta_max"],
-                    min_splits=config_signal[signal]["min_splits"],
+                    signal_jet_truth_labels=set().union(*[config_signal[s]["signal_jet_truth_labels"] for s in signals]),
+                    signal_dsids=set().union(*[config_signal[s]["dsids"] for s in signals]),
+                    pt_range=(
+                        min(min(config_signal[s]["pt_range"]) for s in signals),
+                        max(max(config_signal[s]["pt_range"]) for s in signals)
+                    ),
+                    mass_range= (
+                        min(min(config_signal[s]["mass_range"]) for s in signals),
+                        max(max(config_signal[s]["mass_range"]) for s in signals)
+                    ),
+                    eta_max=max(config_signal[s]["eta_max"] for s in signals),
+                    min_splits=min(config_signal[s]["min_splits"] for s in signals),
                     include_pt=config["include_pt"],
                 )
 

@@ -208,12 +208,13 @@ def to_categorical(y, num_classes=None, dtype='float32'):
 
 def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
     graphs: list[Data],
-    z, k, d, edge1, edge2, weight, label, dsids, Ntracks, jet_pts, jet_ms, jet_etas,
+    z, k, d, edge1, edge2, label, dsids, Ntracks, jet_pts, jet_ms, jet_etas,
+    weights: dict[str, ak.Array],
     GN2X_scores,
     kT_selection: Union[float, None],
     primary_Lund_only_one_arr: list,
     passed_selection: list[bool],
-    signal_jet_truth_label: int,
+    signal_jet_truth_labels: list[int],
     signal_dsids: list[int],
     pt_range: tuple = (350, 3200),
     mass_range: tuple = (0, float('inf')),
@@ -231,19 +232,19 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         d (array): 2D array, with an array of ΔR values for each jet.
         edge1 (array): Array of edge1 values.
         edge2 (array): Array of edge2 values.
-        weight (array): Array of jet weights.
         label (array): Array of jet truth labels (1 for top, 2 for W, 10 for QCD).
         dsids (array): Array of DSIDs for the jets.
         Ntracks (array): Array of Ntracks values.
         jet_pts (array): Array of jet pT values.
         jet_ms (array): Array of jet mass values.
         jet_etas (array): Array of jet pseudorapidity values.
+        weights (dict[str, ak.Array]): Dictionary of arrays with jet weights.
         GN2X_scores (dict[str, array]): Dictionary of arrays with GN2X scores for the jets.
         kT_selection (float | None): kT selection threshold.
         primary_Lund_only_one_arr (list): List to keep track of how many jets have only 1 splitting.
         passed_selection (list): List to keep track of jets that passed the selection criteria.
-        signal_jet_truth_label (int): Truth label for signal jets.
-        signal_dsid (int): List of DSIDs for the signal jets.
+        signal_jet_truth_labels (list[int]): List of jet truth labels that are treated as signal (e.g., [1] for top, [2] for W).
+        signal_dsid (int): List of DSIDs that signal jets are taken from.
         pt_range (tuple): Minimum and maximum jet pT values for selected jets, in GeV.
         mass_range (tuple): Minimum and maximum jet mass values for selected jets, in GeV.
         eta_max (float): Maximum absolute value of jet pseudorapidity, for selected jets.
@@ -259,7 +260,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
     extra_node = 0
 
     # loop over jets
-    for i in trange(len(z)):  
+    for i in trange(len(z), miniters=len(z) // 10, desc="Processing jets, printing at min. 10% intervals"):
         '''
         label_np = ak.to_numpy(label[i])
         jet_pts_np = ak.to_numpy(jet_pts[i])
@@ -276,7 +277,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
             or not (abs(jet_etas[i]) < eta_max)
             or len(z[i]) < min_splits
             # skip jets which are not signal (1 for top and 2 for W) or background (10)
-            or dsids[i] in signal_dsids and label[i]!=signal_jet_truth_label) or (dsids[i] not in signal_dsids and label[i]!=10
+            or dsids[i] in signal_dsids and label[i] not in signal_jet_truth_labels) or (dsids[i] not in signal_dsids and label[i]!=10
         ):
             passed_selection.append(False)
             continue
@@ -287,7 +288,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         label_out = label[i] # label_np
         if label[i] == 10:
             label_out = 0
-        if label[i] == signal_jet_truth_label:
+        if label[i] in signal_jet_truth_labels:
             label_out = 1
 
         # convert LJP variables to appropriate format
@@ -657,15 +658,15 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
             x = vec.detach(),
             #edge_index = torch.tensor(edge, dtype=torch.int64).detach(),
             edge_index = edge.detach(),
-            #Ntrk=torch.tensor(Ntracks[i], dtype=torch.int).detach(),
             Ntrk = torch.tensor(Ntrk, dtype=torch.float).detach(),
-            weights = torch.tensor(weight[i], dtype=torch.float).detach(),
             #graph_size = torch.tensor(graph_size, dtype=torch.float).detach(),
             mass =  float(jet_ms[i]), #torch.tensor(jet_ms[i], dtype=torch.float).detach(),
             y = float(label_out), #torch.tensor(label_out, dtype=torch.float).detach() ))
         )
         if include_pt:
             graph["pt"] = float(jet_pts[i]) #torch.tensor(jet_pts[i] , dtype=torch.float).detach()
+        for weight_name, weights_array in weights.items():
+            graph[weight_name] = float(weights_array[i])
         for score_name, scores in GN2X_scores.items():
             graph[score_name] = float(scores[i])
 

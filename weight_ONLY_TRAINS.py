@@ -96,8 +96,9 @@ def main():
         weights_bkg = assign_flat_weights(*arrays_to_flatten_bkg, n_bins=n_bins, iterations=iterations)
         weights_sig = assign_flat_weights(*arrays_to_flatten_sig, n_bins=n_bins, iterations=iterations)
     else:
-        weights_bkg = np.array([jet_graph.weights for jet_graph in dataset if jet_graph.y == 0], dtype=np.float64)
-        weights_sig = np.array([jet_graph.weights for jet_graph in dataset if jet_graph.y == 1], dtype=np.float64)
+        weights_attr_name = 'fjet_weight_pt' if hasattr(dataset[0], 'fjet_weight_pt') else f'fjet_weight_pt_{config["signal"]}'
+        weights_bkg = np.array([jet_graph[weights_attr_name] for jet_graph in dataset if jet_graph.y == 0], dtype=np.float64)
+        weights_sig = np.array([jet_graph[weights_attr_name] for jet_graph in dataset if jet_graph.y == 1], dtype=np.float64)
 
     path_to_save = config['data']['path_to_save'].format(ln_kT_cut=ln_kT_cut)
     os.makedirs(path_to_save, exist_ok=True)
