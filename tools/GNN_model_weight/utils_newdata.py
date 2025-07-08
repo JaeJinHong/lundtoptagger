@@ -254,7 +254,6 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
     Returns:
         list[Data]: List of torch_geometric.data.Data objects.
     """
-    test_bool = 1
     buildID_from_graphs = 0
     Primary_Lund_Plane = 0
     extra_node = 0

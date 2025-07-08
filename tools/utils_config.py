@@ -1,5 +1,5 @@
 import yaml
-from typing import Any, Dict, List
+from typing import Any
 
 def recursive_update(d: dict, u: dict) -> dict:
     """
@@ -21,7 +21,7 @@ def recursive_update(d: dict, u: dict) -> dict:
             d[k] = v
     return d
 
-def parse_dot_args(dot_args: List[str]) -> Dict[str, Any]:
+def parse_dot_args(dot_args: list[str]) -> dict[str, Any]:
     """
     Parse a list of override arguments in the form 'key.subkey=value' into a nested dictionary.
 
