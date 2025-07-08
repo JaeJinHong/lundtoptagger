@@ -254,13 +254,12 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
     Returns:
         list[Data]: List of torch_geometric.data.Data objects.
     """
-    test_bool = 1
     buildID_from_graphs = 0
     Primary_Lund_Plane = 0
     extra_node = 0
 
     # loop over jets
-    for i in trange(len(z), miniters=len(z) // 10, desc="Processing jets, printing at min. 10% intervals"):
+    for i in trange(len(z), miniters=len(z) // 10, maxinterval=60*60*2, desc="Processing jets, printing at min. 10% intervals or every 2 hours"):
         '''
         label_np = ak.to_numpy(label[i])
         jet_pts_np = ak.to_numpy(jet_pts[i])
