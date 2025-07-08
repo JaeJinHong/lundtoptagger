@@ -54,9 +54,9 @@ infile_lists=(
     "/share/lustre/tmlinare/Lund_tagging/jetmdatamc_output/FTAG1_2025-06-03/user.jecifuen.mc20_13TeV.364706.e7142_s3681_r13144_p6453.FTAG1_TV3_ANALYSIS.root/*.root"
     "/share/lustre/tmlinare/Lund_tagging/jetmdatamc_output/FTAG1_2025-06-03/user.jecifuen.mc20_13TeV.364707.e7142_s3681_r13144_p6453.FTAG1_TV3_ANALYSIS.root/*.root"
     # alternative QCD samples, to be used with top selection
-    "/share/lustreslow/tmlinare/Lund_tagging/jetmdatamc_output/JETM2_mc20_alternative_MC_JeanPierre/Herwing_dipole/*.root"
-    "/share/lustreslow/tmlinare/Lund_tagging/jetmdatamc_output/JETM2_mc20_alternative_MC_JeanPierre/Sherpa_Cluster/*.root"
-    "/share/lustreslow/tmlinare/Lund_tagging/jetmdatamc_output/JETM2_mc20_alternative_MC_JeanPierre/Sherpa_Lund/*.root"
+    "/share/lustreslow/tmlinare/Lund_tagging/jetmdatamc_output/JETM2_mc20_alternative_MC_Rafael/Herwing_dipole/*.root"
+    "/share/lustreslow/tmlinare/Lund_tagging/jetmdatamc_output/JETM2_mc20_alternative_MC_Rafael/Sherpa_Cluster/*.root"
+    "/share/lustreslow/tmlinare/Lund_tagging/jetmdatamc_output/JETM2_mc20_alternative_MC_Rafael/Sherpa_Lund/*.root"
     # FTAG1 W flat pT sample
     "/share/lustre/tmlinare/Lund_tagging/jetmdatamc_output/FTAG1_2025-06-03/user.jecifuen.mc20_13TeV.801859.e8482_s3681_r13144_p6781.FTAG1_TV3_ANALYSIS.root/*.root"
     # FTAG1 QCD samples, to be used with W selection
@@ -66,9 +66,9 @@ infile_lists=(
     "/share/lustre/tmlinare/Lund_tagging/jetmdatamc_output/FTAG1_2025-06-03/user.jecifuen.mc20_13TeV.364706.e7142_s3681_r13144_p6453.FTAG1_TV3_ANALYSIS.root/*.root"
     "/share/lustre/tmlinare/Lund_tagging/jetmdatamc_output/FTAG1_2025-06-03/user.jecifuen.mc20_13TeV.364707.e7142_s3681_r13144_p6453.FTAG1_TV3_ANALYSIS.root/*.root"
     # alternative QCD samples, to be used with W selection
-    "/share/lustreslow/tmlinare/Lund_tagging/jetmdatamc_output/JETM2_mc20_alternative_MC_JeanPierre/Herwing_dipole/*.root"
-    "/share/lustreslow/tmlinare/Lund_tagging/jetmdatamc_output/JETM2_mc20_alternative_MC_JeanPierre/Sherpa_Cluster/*.root"
-    "/share/lustreslow/tmlinare/Lund_tagging/jetmdatamc_output/JETM2_mc20_alternative_MC_JeanPierre/Sherpa_Lund/*.root"
+    "/share/lustre/tmlinare/Lund_tagging/jetmdatamc_output/JETM2_mc20_alternative_MC_Rafael/Herwing_dipole/*.root"
+    "/share/lustre/tmlinare/Lund_tagging/jetmdatamc_output/JETM2_mc20_alternative_MC_Rafael/Sherpa_Cluster/*.root"
+    "/share/lustre/tmlinare/Lund_tagging/jetmdatamc_output/JETM2_mc20_alternative_MC_Rafael/Sherpa_Lund/*.root"
     # JETM2 W flat mass sample
     "$JETM2_W_flatmass"
 )

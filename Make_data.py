@@ -103,7 +103,6 @@ def main():
 
                 dsids = tree["dsid"].array(library="np")
                 dsid_test = dsids[0]                                 # check the first DSID, they should all be the same
-                print(*[config_signal[s]["skip_dsids"] for s in signals])
                 skip_dsids = set.intersection(*[set(config_signal[s]["skip_dsids"]) for s in signals])
                 if dsid_test in skip_dsids: # don't lose time with jets that don't pass pt cut or wrong signal sample
                     print("Skipping file with DSID", dsid_test)
@@ -182,7 +181,7 @@ def main():
                         out_tree_dict[jet_property_out] = ak.concatenate([out_tree_dict[jet_property_out], jet_properties[jet_propety_in][passed_selection]])
                     else:
                         print(f"Warning: {jet_propety_in} not found in file {file}, skipping")
-                        if jet_property_out in dict: del out_tree_dict[jet_property_out]
+                        if jet_property_out in out_tree_dict: del out_tree_dict[jet_property_out]
                 for output_var in additional_output_vars:
                     if output_var!="labels":
                         out_tree_dict[output_var] = ak.concatenate([out_tree_dict[output_var], jet_properties[output_var][passed_selection]])
