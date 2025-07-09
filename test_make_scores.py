@@ -63,7 +63,7 @@ def main():
     path_to_combined_ckpt = config['test']['path_to_combined_ckpt'][kT_selection]
     print("ckpt used:", path_to_combined_ckpt )
 
-    output_name = config['test']['output_name'].format(**filepath_placeholder_vals)
+    output_suffix = config['data']['output_suffix'].format(**filepath_placeholder_vals)
 
     intreename = "FlatSubstructureJetTree"
     files_and_trees = {file_name: intreename for file_name in files_root}
@@ -131,7 +131,7 @@ def main():
         # either the file created by the Make_data.py script or from the scores file if it already exists
         print("Getting the tree from the existing ROOT file...")
         filename_no_ext = os.path.splitext(os.path.basename(file_root))[0]  # get the input file name without the .root extension
-        outfile_path = os.path.join(path_to_outdir, filename_no_ext) + f"{output_name}.root"
+        outfile_path = os.path.join(path_to_outdir, filename_no_ext) + output_suffix + ".root"
         outfile_path = outfile_path.format(**filepath_placeholder_vals)
 
         infile = outfile_path if os.path.exists(outfile_path) else file_root
