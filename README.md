@@ -82,13 +82,15 @@ If saving multple sets of weights, they will be saved with the signal configurat
 You can also do this with a single signal configuration by setting `signal_name_in_weight` to `True` in `config_make_data.yaml`,
 in order to have matching names between the signal files where you would probably only use 1 configuration and the background files where you might want to use multiple configurations.
 
-You can override any of the parameters in `config_make_data.yaml` using the `--override` command-line argument; for example:
+You can override any of the parameters in `config_make_data.yaml` except `event_fractions` using the `--override` command-line argument; for example:
 
 ```bash
-python Make_data.py configs/config_make_data.yaml --override path_to_rootfiles="/path/to/root/files/*.root" id="QCD" event_fractions="[0.0025, 0.0025]" kT_cut=0.5
+python Make_data.py configs/config_make_data.yaml --override path_to_rootfiles="/path/to/root/files/*.root" id="QCD" kT_cut=0.5
 ```
 
 The values for the override arguments should be in the YAML format - e.g. `null` will be interpreted as `None` and `.inf` as `float('inf')`.
+
+Warning: if you override `event_fractions`, the code will run without error, but it will only be done correctly if you use the all the same keys. So it's best to avoid overriding it via the command line and instead edit the config file directly.
 
 
 ## Training
