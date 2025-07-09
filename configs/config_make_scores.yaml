@@ -1,7 +1,7 @@
 data:
   # The ROOT and graphs files should be the output of Make_data.py
-  path_to_test_file_root: "/data/ravinascos/Lund_Plane_2024_graphs/New_Samples/{sample}/*.root" 
-  path_to_test_file_graphs: "graphs/graphs*"
+  paths_to_test_file_root: "/data/ravinascos/Lund_Plane_2024_graphs/New_Samples/{sample}/*.root"  # can also be a list of glob patterns
+  paths_to_test_file_graphs: "graphs/graphs*"                                                     # can also be a list of glob patterns
   path_to_outdir: "/data/ravinascos/LundNet/R_22_Top/{sample}/"
 
   # If path_to_test_file, path_to_outdir or output_name contain the {sample} or {kT_cut} placeholders, they will be replaced by the values below.

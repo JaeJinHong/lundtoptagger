@@ -31,14 +31,28 @@ def main():
         kT_cut = kT_selection
     )
 
-    path_to_test_file_root = config['data']['path_to_test_file_root'].format(**filepath_placeholder_vals)
-    files_root = glob.glob(path_to_test_file_root)
-    print ("path_to_test_file_root:", path_to_test_file_root)
+    paths_to_test_file_root = config['data']['paths_to_test_file_root']
+    if isinstance(paths_to_test_file_root, str):
+        # paths_to_test_file_root can be a list of file paths or a single path
+        # if it is a single path, convert it to a list
+        paths_to_test_file_root = [paths_to_test_file_root]
+    files_root = []
+    for file_path in paths_to_test_file_root:
+        file_path = file_path.format(**filepath_placeholder_vals)
+        files_root.extend(glob.glob(file_path))
+    print ("paths_to_test_file_root:", paths_to_test_file_root)
     print ("files:", files_root)
 
-    path_to_test_file_graphs = config['data']['path_to_test_file_graphs'].format(**filepath_placeholder_vals)
-    files_graphs = glob.glob(path_to_test_file_graphs)
-    print ("path_to_test_file_graphs:", path_to_test_file_graphs)
+    paths_to_test_file_graphs = config['data']['paths_to_test_file_graphs']
+    if isinstance(paths_to_test_file_graphs, str):
+        # paths_to_test_file_graphs can be a list of file paths or a single path
+        # if it is a single path, convert it to a list
+        paths_to_test_file_graphs = [paths_to_test_file_graphs]
+    files_graphs = []
+    for file_path in paths_to_test_file_graphs:
+        file_path = file_path.format(**filepath_placeholder_vals)
+        files_graphs.extend(glob.glob(file_path))
+    print ("paths_to_test_file_graphs:", paths_to_test_file_graphs)
     print ("files:", files_graphs)
 
     path_to_outdir = config['data']['path_to_outdir'].format(**filepath_placeholder_vals)
