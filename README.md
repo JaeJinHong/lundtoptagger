@@ -117,14 +117,54 @@ python weight_ONLY_TRAINS.py configs/config_ONLY_TRAIN.yaml --ln_kT_cut 0 --do_c
 
 ## Testing
 
-For the testing, you should run the final_makescores notebook. The only changes you should do are under the conditions in the for loop. The different variables should point to your test files, the ckpt you want to use and the repo to save your output root files 
+Run the testing:
 
-At the end, when you are done with the testing, make sure you hadd all the root files together: 
+```bash
+python test_make_scores.py configs/config_make_scores.yaml
 ```
-hadd -f tree.root user.*root
+
+Some paths and names in the configuration file can have placeholders that are replaced by values of other parameters,
+namely by the values of `kT_cut` and `sample`.
+This makes it easy to run on different samples:
+if you keep the paths to your samples and output files the same apart from a single segment that is different for every sample,
+you can just change the `sample` parameter in the config file without having to change several different variables
+(`paths_to_test_file_root`, `paths_to_test_file_graphs`, `path_to_outdir`, and `output_name`).
+
+In the configuration file, you can also specify the name of the branch to save the scores to.
+If the specified output already exists and has a branch with the same name,
+the branch will be overwritten; otherwise, it will be added to the file.
+In both cases the other branches will be preserved.
+This means you can run multiple times on the same test files and with the same output file,
+changing the model and score branch name each time to produce a single ROOT file with multiple sets of scores.
+
+You can override any of the parameters in `config_make_scores.yaml` using the `--override` command-line argument. To override a value specified in the config file like this:
+
+```yaml
+key:
+  subkey: value
 ```
+
+you can use the following syntax:
+
+```bash
+python test_make_scores.py configs/config_make_scores.yaml --override key.subkey=value
+```
+
+For example:
+
+```bash
+python test_make_scores.py configs/config_make_scores.yaml --override data.sample=Sherpa_Cluster data.kT_cut=0
+```
+
 
 ## Plotting
+
+To plot using the code in the plotting folder, you must first combine the ROOT file outputs of the testing scripts
+into a single file:
+
+```bash
+hadd -f tree.root user.*root
+```
 
 In a clean and new terminal, go to the plotting repo and source the setup file. 
 It will get the version of the libraries you want to use from /cvmfs/. 
