@@ -11,6 +11,7 @@ from torch_geometric.loader import DataLoader
 
 from tools.GNN_model_weight.models import *
 from tools.GNN_model_weight.utils_newdata import load_yaml, get_scores
+from tools.utils_config import recursive_update, parse_dot_args
 
 print("Libraries loaded!")
 
@@ -18,16 +19,18 @@ def main():
     parser = argparse.ArgumentParser(description='Train with configurations')
     add_arg = parser.add_argument
     add_arg('config', help="job configuration")
-    add_arg('--ln_kT_cut', type=float, help="minimum value of kT kept for the training graphs")
-    add_arg('--sample', type=float, help="sample identifier which should be part of input and output file names")
+    parser.add_argument('--override', nargs='*', default=[], help='Overrides of the values in the config file in the form key.subkey=value')
     args = parser.parse_args()
-
     config_file = args.config
     config = load_yaml(config_file)
 
-    kT_selection = args.ln_kT_cut if args.ln_kT_cut is not None else config['data']['kT_cut']
+    # Override configuration with command line arguments
+    override_dict = parse_dot_args(args.override)
+    config = recursive_update(config, override_dict)
+
+    kT_selection = config['data']['kT_cut']
     filepath_placeholder_vals = dict(
-        sample = args.sample if args.sample is not None else config['data']['sample'],
+        sample = config['data']['sample'],
         kT_cut = kT_selection
     )
 

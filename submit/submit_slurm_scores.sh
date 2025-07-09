@@ -4,7 +4,7 @@
 
 # job name
 # #SBATCH --job-name=lundtoptagger_full_a100_8CPUs
-#SBATCH --job-name=lundtoptagger_eval_v100_QCD_run34_rafael_graphs_adv_e200
+#SBATCH --job-name=lundtoptagger_eval
 
 # choose the GPU queue
 #SBATCH -p GPU
@@ -59,4 +59,17 @@ echo $CUDA_VISIBLE_DEVICES
 
 echo "Running training script..."
 echo ""
-python test_make_scores.py configs/config_make_scores.yaml
+python test_make_scores.py configs/config_make_scores.yaml  --override \
+    data.sample="v2.1.5_GN2X_m40-inf_pt200-3100_0.25percent" \
+    data.paths_to_test_file_root="[ \
+        '/home/tmlinare/Lund_tagging/lundtoptagger_data_rcif/graphs/{sample}/*W_flat_pt*.root',
+        '/home/tmlinare/Lund_tagging/lundtoptagger_data_rcif/graphs/{sample}/*QCD*.root'
+    ]" \
+    data.paths_to_test_file_graphs="[ \
+        '/home/tmlinare/Lund_tagging/lundtoptagger_data_rcif/graphs/{sample}/graphs*W_flat_pt*',
+        '/home/tmlinare/Lund_tagging/lundtoptagger_data_rcif/graphs/{sample}/graphs*QCD*'
+    ]" \
+    data.path_to_outdir="/home/tmlinare/Lund_tagging/lundtoptagger_data_rcif/scores/data_{sample}_scores_v2.2.3/" \
+    data.output_suffix="_scores" \
+    test.path_to_combined_ckpt.null="/home/tmlinare/Lund_tagging/lundtoptagger_data_rcif/models/hypatia_run34_v2.1.5_adversarial_rafael_graphs_SmallerW_Weights/LundNet_R22_ExtraNode_ln_kT_Cut_None_LRJ_NewData_Primary_comb_e200_0.03981.pt" \
+    test.scores_branch_name=fjet_{model}_run34_rafael_graphs_adv_e200
