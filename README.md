@@ -124,9 +124,9 @@ python test_make_scores.py configs/config_make_scores.yaml
 Some paths and names in the configuration file can have placeholders that are replaced by values of other parameters,
 namely by the values of `kT_cut` and `sample`.
 This makes it easy to run on different samples:
-if you keep the paths to your samples and output files the same apart from a part that changes with the sample,
-you can just change the `sample` parameter in the config file without having to change 3 different variables
-(path_to_test_file, path_to_outdir, and output_name).
+if you keep the paths to your samples and output files the same apart from a single segment that is different for every sample,
+you can just change the `sample` parameter in the config file without having to change several different variables
+(`paths_to_test_file_root`, `paths_to_test_file_graphs`, `path_to_outdir`, and `output_name`).
 
 These two parameters can be overridden via command-line arguments.
 For example:
@@ -135,12 +135,22 @@ For example:
 python test_make_scores.py configs/config_make_scores.yaml --sample Sherpa_Cluster --ln_kT_cut 0
 ```
 
-At the end, when you are done with the testing, make sure you hadd all the root files together: 
-```
-hadd -f tree.root user.*root
-```
+In the configuration file, you can specify the name of the branch to save the scores to.
+If the specified output already exists and has a branch with the same name,
+the branch will be overwritten; otherwise, it will be added to the file.
+In both cases the other branches will be preserved.
+This means you can run multiple times on the same test files and with the same output file,
+changing the model and score branch name each time to produce a single ROOT file with multiple sets of scores.
+
 
 ## Plotting
+
+To plot using the code in the plotting folder, you must first combine the ROOT file outputs of the testing scripts
+into a single file:
+
+```bash
+hadd -f tree.root user.*root
+```
 
 In a clean and new terminal, go to the plotting repo and source the setup file. 
 It will get the version of the libraries you want to use from /cvmfs/. 

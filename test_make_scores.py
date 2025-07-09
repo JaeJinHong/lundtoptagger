@@ -113,38 +113,40 @@ def main():
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-        # Get the tree from the input ROOT file and add the scores to it
-        print("\nSaving scores to ROOT file...")
-        with uproot.open(file_root) as f:
-            arrays = f[intreename].arrays()
-        arrays[config["test"]["scores_branch_name"].format(model=choose_model)] = tagger_scores
-
-        # Save ROOT files containing model scores
-        # TODO: just add scores to existing ROOT files instead of creating new ones; can keep adding scores for different models
-        # (this can already be done by setting the output path equal to the input path, but is inefficient,
-        # since the whole tree is read and written again, with PyROOT it is possible to add new branches to an existing tree)
+        # Get the tree from the existing ROOT file,
+        # either the file created by the Make_data.py script or from the scores file if it already exists
+        print("Getting the tree from the existing ROOT file...")
         filename_no_ext = os.path.splitext(os.path.basename(file_root))[0]  # get the input file name without the .root extension
         outfile_path = os.path.join(path_to_outdir, filename_no_ext) + f"{output_name}.root"
         outfile_path = outfile_path.format(**filepath_placeholder_vals)
 
+        infile = outfile_path if os.path.exists(outfile_path) else file_root
+        with uproot.open(infile) as f:
+            arrays = f[intreename].arrays()
+
+        # Add a new branch for the scores or overwrite the existing one
+        arrays[config["test"]["scores_branch_name"].format(model=choose_model)] = tagger_scores
+
+        # Save the new scores to file
+        # TODO: maybe this could be done more efficiently with PyROOT, without reading the whole tree and writing it again
+        print("\nSaving scores to ROOT file...")
         with uproot.recreate(outfile_path) as f:
             f["FlatSubstructureJetTree"] = arrays
         print("Scores saved to:", outfile_path)
-
-        delta_t_save = time.time() - t_start - delta_t_fileax - delta_t_pred
-        minutes, seconds = divmod(round(delta_t_save), 60)
-        print(f"Time taken to save: {minutes:d} min {seconds:d} s")
-
-        # Time statistics
-        nentries_done += n_jets
-        time_per_entry = (time.time() - t_start)/(nentries_done)
-        eta = time_per_entry * (nentries_total - nentries_done)
-        minutes, seconds = divmod(round(eta), 60)
 
         # Free up memory
         del arrays, tagger_scores
         gc.collect()
 
+        # Time statistics
+        delta_t_save = time.time() - t_start - delta_t_fileax - delta_t_pred
+        minutes, seconds = divmod(round(delta_t_save), 60)
+        print(f"Time taken to save: {minutes:d} min {seconds:d} s")
+
+        nentries_done += n_jets
+        time_per_entry = (time.time() - t_start)/(nentries_done)
+        eta = time_per_entry * (nentries_total - nentries_done)
+        minutes, seconds = divmod(round(eta), 60)
         print(f"\nEvaluated on {nentries_done} out of {nentries_total} jets")
         print(f"Estimated time until completion: {minutes:d} min {seconds:d} s")
 
