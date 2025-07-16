@@ -32,9 +32,12 @@ def GetPtWeight(pts, truth_labels, dsid_input: int, signal_config: dict, SF: flo
     # get signal and backgound pT histograms
     filenames_bkg = signal_config["pt_hist_files_bkg"]["files"]
     histos_dir = signal_config["pt_hist_files_bkg"]["dir_path"]
-
     filename_Phythia = os.path.join(histos_dir, "qcdP8.root")  # default file for background jets if no match found
-    filename_bkg = filename_Phythia
+
+    if filenames_bkg is None or len(filenames_bkg) == 0:
+        filename_bkg = filename_Phythia
+    else:
+        filename_bkg = os.path.join(histos_dir, filenames_bkg[0])  # use the first file in the list as the background histogram
 
     if dsid_input in signal_config["pt_hist_files_signal"]:
         filename_sig = signal_config["pt_hist_files_signal"][dsid_input]
@@ -285,10 +288,10 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
 
         # label signal as 1 and background as 0
         label_out = label[i] # label_np
-        if label[i] == 10:
-            label_out = 0
-        if label[i] in signal_jet_truth_labels:
-            label_out = 1
+        # if label[i] == 10:
+        #     label_out = 0
+        # if label[i] in signal_jet_truth_labels:
+        #     label_out = 1
 
         # convert LJP variables to appropriate format
         z_out = ak.to_numpy(z[i])
@@ -1047,3 +1050,11 @@ def JSD (P, Q, base=2):
     m = 0.5 * (p + q)
     return 0.5 * (entropy(p, m, base=base) + entropy(q, m, base=base))
 
+# JJ: Check CPU RAM usage
+import psutil
+import os
+
+def print_memory_usage(note=""):
+    process = psutil.Process(os.getpid())
+    mem = process.memory_info().rss / 1024**3  # in GB
+    print(f"[MEM] {note} Memory usage: {mem:.3f} GB")
