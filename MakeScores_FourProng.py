@@ -36,6 +36,7 @@ def main():
         torch.set_default_device('cuda')
     else:
         torch.set_default_device('cpu')
+        print("No GPU available, using CPU for computations.")
     device = torch.get_default_device()
     
     parser = argparse.ArgumentParser(description="Prepare data for classifier input")
@@ -48,8 +49,9 @@ def main():
     config_signal = config_signal[config_signal["signal"]]  
     
     # path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/HSbbWW_Val/*.FourProngV1_ANALYSIS.root/*.root"
-    path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/SS4W_Val/*.FourProngV1_ANALYSIS.root/*.root"
+    # path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/SS4W_Val/*.FourProngV1_ANALYSIS.root/*.root"
     # path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/QCD_Val/user.jjhong.mc23_13p6TeV.801170.e8514_s4159_r15224_p6646.four_prongV1_ANALYSIS.root/user.jjhong.45345262._000026.ANALYSIS.root"
+    path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/QCD_Val/*.FourProngV1_ANALYSIS.root/*.root"
     # path_to_outdir = "/data/jjhong96/LundNet_Test/QCD_SS4W_SingleMass/SS4W_450_550/"
     path_to_outdir = "/data/jjhong96/LundNet_Test/QCD_SS4W_SplitStudy/"
 
@@ -65,6 +67,11 @@ def main():
         "FullMass_25p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_25percent/LundNet_R22_QCD_SS4W_JetN_40_800_e049_0.23335.pt",
         "FullMass_50p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_50percent/LundNet_R22_QCD_SS4W_JetN_40_800_e049_0.20934.pt",
         "FullMass_90p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_90percent/LundNet_R22_QCD_SS4W_JetN_40_800_e047_0.20603.pt",
+        "FlatMass_10p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_10percent_flatmass/LundNet_R22_QCD_SS4W_JetN_40_800_e035_2.66677.pt",
+        "FlatMass_25p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_25percent_flatmass/LundNet_R22_QCD_SS4W_JetN_40_800_e024_2.73107.pt",
+        "FlatMass_50p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_50percent_flatmass/LundNet_R22_QCD_SS4W_JetN_40_800_e031_2.70216.pt",
+        "FlatMass_90p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_90percent_flatmass/LundNet_R22_QCD_SS4W_JetN_40_800_e049_2.89634.pt",
+
     }
     model_score_dict = {}
     # path_to_combined_ckpt = "/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS4W_40_150/LundNet_R22_QCD_SS4W_SingleMass_40_150_e050_0.16998.pt" # JJ: Test, QCD vs SS4W 
@@ -72,8 +79,8 @@ def main():
     # path_to_combined_ckpt = "/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS4W_450_550/LundNet_R22_QCD_SS4W_SingleMass_450_550_e049_0.04549.pt" # JJ: Test, QCD vs SS4W classification
     output_name = "LundNetScores"
     # output_tag = "HSbbWW_Val"
-    output_tag = "SS4W_Val"
-    # output_tag = "QCD_Val"
+    # output_tag = "SS4W_Val"
+    output_tag = "QCD_Val"
     choose_model = "LundNet"
     learning_rate = 0.0005
     batch_size = 2048
@@ -204,7 +211,8 @@ def main():
             model = PNANet()
 
         for model_dic_tag in model_dic:
-            model.load_state_dict(torch.load(model_dic[model_dic_tag]))
+            state_dict = torch.load(model_dic[model_dic_tag], map_location=device)
+            model.load_state_dict(state_dict)
         # model.load_state_dict(torch.load(path_to_combined_ckpt))
 
         # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') # Usually gpu 4 worked best, it had the most memory available

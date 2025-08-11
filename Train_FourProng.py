@@ -94,19 +94,21 @@ def main():
     flatten_pt = config['flatten_pt']
     if flatten_mass and flatten_pt:
         print_memory_usage("Before 2d flattening")
-        bkg_2dhist = np.histogram2d(pts[labels==0], masses[labels==0], bins=(config['n_bins_pt'], config['n_bins_mass']), range=((pts.min(), pts.max()), (masses.min(), masses.max())))
-        sig_2dhist = np.histogram2d(pts[labels==1], masses[labels==1], bins=(config['n_bins_pt'], config['n_bins_mass']), range=((pts.min(), pts.max()), (masses.min(), masses.max())))
+        bkg_2dhist = np.histogram2d(pts[labels==0], masses[labels==0], bins=(config['n_bins_pt'], config['n_bins_mass']), range=[[350, 3100], [40, 800]])
+        sig_2dhist = np.histogram2d(pts[labels==1], masses[labels==1], bins=(config['n_bins_pt'], config['n_bins_mass']), range=[[350, 3100], [40, 800]])
         # Multiply scale_factor to the background weights
-        scale_factor = sig_2dhist[0].sum() / bkg_2dhist[0].sum()
+        # sig_bkg_sf = sig_2dhist[0].sum() / bkg_2dhist[0].sum()
+        # print('sig_bkg_sf: ',sig_bkg_sf)
         arrays_to_flatten_bkg = [pts[labels==0], masses[labels==0]]
-        weights_bkg = assign_2d_flat_weights_light(*arrays_to_flatten_bkg, bkg_2dhist, scale_factor=scale_factor)
+        weights_bkg = assign_2d_flat_weights_light(arrays_to_flatten_bkg, bkg_2dhist, scale_factor=1.0)
         del arrays_to_flatten_bkg, bkg_2dhist
         # weights_bkg = assign_2d_flat_weights_kde(masses[labels==0], pts[labels==0], bw_method='scott')
         print_memory_usage("After bkg 2d flattening")
 
         arrays_to_flatten_sig = [pts[labels==1], masses[labels==1]]
-        weights_sig = assign_2d_flat_weights_light(*arrays_to_flatten_sig, sig_2dhist, scale_factor=1.0)
+        weights_sig = assign_2d_flat_weights_light(arrays_to_flatten_sig, sig_2dhist, scale_factor=1.0)
         del arrays_to_flatten_sig, sig_2dhist
+        print('len(weights_sig): ',len(weights_sig))
         # weights_sig = assign_2d_flat_weights_kde(masses[labels==1], pts[labels==1], bw_method='scott')
         print_memory_usage("After sig 2d flattening")
     elif flatten_mass or flatten_pt:

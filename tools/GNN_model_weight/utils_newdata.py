@@ -1059,25 +1059,32 @@ def print_memory_usage(note=""):
     mem = process.memory_info().rss / 1024**3  # in GB
     print(f"[MEM] {note} Memory usage: {mem:.3f} GB")
 
-def assign_2d_flat_weights_light(pt_mass_dataset_array, pt_mass_np_hist, scale_factor = 1.0):
-    maximum_hist_val = np.max(pt_mass_np_hist)
+def assign_2d_flat_weights_light(pt_mass_dataset_array, pt_mass_np_hist, scale_factor):
+
+    pt_mass_hist, pt_edges, mass_edges = pt_mass_np_hist
+    maximum_hist_val = np.max(pt_mass_hist)
 
     # Create a 2d hist with the same shape as the pt_mass_np_hist
-    pt_mass_weights = np.zeros_like(pt_mass_np_hist, dtype=np.float32)
-    for i in range(pt_mass_np_hist.shape[0]): # pt bins
-        for j in range(pt_mass_np_hist.shape[1]): # mass bins
-            bin_value = pt_mass_np_hist[i, j]
-            this_bin_weight = maximum_hist_val / bin_value if bin_value > 0 else 0
-            pt_mass_weights[i, j] = this_bin_weight * scale_factor
+    pt_mass_weights = np.zeros_like(pt_mass_hist, dtype=np.float64)
+    for i in range(pt_mass_hist.shape[0]): # pt bins
+        for j in range(pt_mass_hist.shape[1]): # mass bins
+            bin_value = pt_mass_hist[i][j]
+            this_bin_weight = maximum_hist_val / bin_value if bin_value > 0 else 1.0e-8
+            pt_mass_weights[i][j] = this_bin_weight * scale_factor
+            # print("pt: ", i, " , mass: ", j, ' , bin_value: ', bin_value, " , weight: ", pt_mass_weights[i][j])
     
     # Assign weights to the dataset
-    weight = np.zeros(len(pt_mass_dataset_array), dtype=np.float)
-    for i in range(len(pt_mass_dataset_array)):
-        pt = pt_mass_dataset_array[i][0]
-        mass = pt_mass_dataset_array[i][1]
-        pt_bin = np.digitize(pt, pt_mass_np_hist[:, 0]) - 1
-        mass_bin = np.digitize(mass, pt_mass_np_hist[0, :, 1]) - 1
-        weight[i] = pt_mass_weights[pt_bin, mass_bin]
+    print('dataset_len: ', len(pt_mass_dataset_array[0]))
+    weight = np.zeros(len(pt_mass_dataset_array[0]), dtype=np.float64)
+    for i in range(len(pt_mass_dataset_array[0])):
+        pt = pt_mass_dataset_array[0][i]
+        mass = pt_mass_dataset_array[1][i]
+        pt_bin = np.searchsorted(pt_edges, pt, side='right') - 1
+        mass_bin = np.searchsorted(mass_edges, mass, side='right') - 1
+        # print("pt, mass: ", pt, mass)
+        # print("pt_bin, mass_bin: ", pt_bin, mass_bin)
+        # print('weight: ', pt_mass_weights[pt_bin][mass_bin])
+        weight[i] = pt_mass_weights[pt_bin][mass_bin]
     
     return weight
 

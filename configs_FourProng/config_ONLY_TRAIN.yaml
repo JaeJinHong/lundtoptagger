@@ -76,8 +76,9 @@ flatten_mass: True
 num_iters: 4         # number of iterations for the iterative reweighting procedure
 # number of mass and pT bins for the iterative reweighting procedure
 # (the reweighting is done so that the total weight in each bin is the same)
-n_bins_pt:   100
-n_bins_mass: 50
+n_bins_pt: 100
+# n_bins_mass: 50
+n_bins_mass: 100
 # bins are only used for 1D reweighting, so the number of bins does not matter for the 2D reweighting
 
 # Architecture and training
@@ -89,7 +90,7 @@ architecture:
   save_every_epoch: True
 
   # classifier
-  n_epochs: 50
+  n_epochs: 100
   choose_model: LundNet # LundNet, LundNet_plus_GN2X, GATNet, GINNet, EdgeGinNet, PNANet
   # if you want to use LundNet_plus_GN2X, make sure that the graphs have GN2X scores!
 
