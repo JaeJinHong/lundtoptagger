@@ -67,6 +67,12 @@ def main():
         config_signal = load_yaml(config['config_signal_path'])[config['signal']]
         pt_range = config_signal['pt_range']
         mass_range = config_signal['mass_range']
+
+        if config['data']['do_pt_range_override']: # JJ: Use for the jet pt dependence study
+            pt_range = config['data']['pt_range_override']
+        if config['data']['do_mass_range_override']:
+            mass_range = mass_window
+
         print("Filtering jets with pT in range", pt_range, "and mass in range", mass_range)
         dataset = [jet_graph for jet_graph in dataset
                    if  pt_range[0]   < jet_graph.pt   < pt_range[1]

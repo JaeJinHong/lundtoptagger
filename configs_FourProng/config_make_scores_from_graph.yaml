@@ -1,0 +1,48 @@
+data:
+  # The ROOT and graphs files should be the output of Make_data.py
+  # paths_to_test_file_root: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/data_HHbbWW_Val_mc23d__ln_kT_cut_None.root"  # can also be a list of glob patterns
+  # paths_to_test_file_graphs: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/graphs_HHbbWW_Val_mc23d__ln_kT_cut_None_with_pt"                  
+  paths_to_test_file_root: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/data_HSbbWW*TeV_HSbbWW_Val_mc23d__ln_kT_cut_None.root"  # can also be a list of glob patterns
+  paths_to_test_file_graphs: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/graphs_HSbbWW*TeV_HSbbWW_Val_mc23d__ln_kT_cut_None_with_pt"                 
+  # paths_to_test_file_root: "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/data_SS4W_Train__part*_5.00percent_ln_kT_cut_None.root"  # can also be a list of glob patterns
+  # paths_to_test_file_graphs: "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_SS4W_Train__part*_5.00percent_ln_kT_cut_None_with_pt"                                                     # can also be a list of glob patterns
+  # paths_to_test_file_root: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/data_QCD_Val__part*_20.00percent_ln_kT_cut_None.root"  # can also be a list of glob patterns
+  # paths_to_test_file_graphs: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/graphs_QCD_Val__part*_20.00percent_ln_kT_cut_None_with_pt"                                                     # can also be a list of glob patterns
+  path_to_outdir: "/data/jjhong96/LundNet_Test/QCD_SS4W_MassStudy/"
+
+  # the name of the output file will be the same as the name of the input ROOT file, with this suffix added (but in a different directory)
+  # TODO: get the epoch automatically from the checkpoint file name
+  output_suffix: "_LundNetScores"
+
+  # If path_to_test_file, path_to_outdir or output_name contain the {sample} or {kT_cut} placeholders, they will be replaced by the values below.
+  sample: "SS4W_40_800" # Available: SS4W, TTbar_40_800, WZ_40_800, QCD_40_800
+  kT_cut: null            # actually a cut in ln(kT); values: null, -0.5, 0.0, 0.5, 1.0, 2.0, 2.8
+
+test:
+  path_to_combined_ckpt:  # checkpoints for different kT cuts
+    SingleMass_125: "/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS4W_40_150/LundNet_R22_QCD_SS4W_SingleMass_40_150_e027_0.17452.pt"
+    SingleMass_300: "/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS4W_250_350/LundNet_R22_QCD_SS4W_SingleMass_250_350_e028_0.08956.pt"
+    SingleMass_500: "/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS4W_450_550/LundNet_R22_QCD_SS4W_SingleMass_450_550_e038_0.04768.pt"
+    # DoubleMass_125_300: "/data/jjhong96/LundNet_Model/QCD_SS4W_MassWindow/SS4W_125_300/LundNet_R22_QCD_SS4W_MassWindow_125_300_e050_0.19437.pt"
+    # DoubleMass_125_500: "/data/jjhong96/LundNet_Model/QCD_SS4W_MassWindow/SS4W_125_500/LundNet_R22_QCD_SS4W_MassWindow_125_500_e050_0.16858.pt"
+    # DoubleMass_300_500: "/data/jjhong96/LundNet_Model/QCD_SS4W_MassWindow/SS4W_300_500/LundNet_R22_QCD_SS4W_MassWindow_300_500_e048_0.08870.pt"
+    # DoubleMass_300_500: "/data/jjhong96/LundNet_Model/QCD_SS4W_MassWindow/SS4W_300_500/LundNet_R22_QCD_SS4W_MassWindow_300_500_e048_0.08870.pt"
+    # FullMass_10p: "/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_10percent/LundNet_R22_QCD_SS4W_JetN_40_800_e043_0.24211.pt"
+    FullMass_25p: "/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_25percent/LundNet_R22_QCD_SS4W_JetN_40_800_e026_0.23496.pt"
+    FullMass_50p: "/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_50percent/LundNet_R22_QCD_SS4W_JetN_40_800_e026_0.21457.pt"
+    FullMass_90p: "/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_90percent/LundNet_R22_QCD_SS4W_JetN_40_800_e032_0.21020.pt"
+    # FlatMass_10p: "/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_10percent_flatmass/LundNet_R22_QCD_SS4W_JetN_40_800_e035_2.66677.pt"
+    FlatMass_25p: "/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_25percent_flatmass/LundNet_R22_QCD_SS4W_JetN_40_800_e024_2.73107.pt"
+    FlatMass_50p: "/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_50percent_flatmass/LundNet_R22_QCD_SS4W_JetN_40_800_e031_2.70216.pt"
+    FlatMass_90p: "/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_90percent_flatmass/LundNet_R22_QCD_SS4W_JetN_40_800_e022_2.91230.pt"
+    FlatMass_40_250: "/data/jjhong96/LundNet_Model/QCD_SS4W_FlatMass/SS4W_40_250_flatmass/LundNet_R22_QCD_SS4W_FlatMassWindow_40_250_e013_2.24512.pt"
+    pTRange_350_1500_90p: "/data/jjhong96/LundNet_Model/QCD_SS4W_pTWindow/SS4W_350_1500/LundNet_R22_QCD_SS4W_pT_350_1500_e016_0.11920.pt"
+    pTRange_1500_2500_90p: "/data/jjhong96/LundNet_Model/QCD_SS4W_pTWindow/SS4W_1500_2500/LundNet_R22_QCD_SS4W_pT_1500_2500_e017_0.26404.pt"
+    HH4W_40_600_Flatmass: "/data/jjhong96/LundNet_Model/QCD_SS4W_FlatMass/HH4W_40_600_flatmass/LundNet_R22_QCD_SS4W_FlatMassWindow_40_600_e014_15.32712.pt"
+    SS300_4W_40_600_Flatmass: "/data/jjhong96/LundNet_Model/QCD_SS4W_FlatMass/SS300_4W_40_600_flatmass/LundNet_R22_QCD_SS4W_FlatMassWindow_40_600_e012_5.72654.pt"
+    HH4W_40_600: "/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/HH4W_40_600/LundNet_R22_QCD_SS4W_SingleMass_40_600_e015_0.31864.pt"
+    SS300_4W_40_600: "/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS300_4W_40_600/LundNet_R22_QCD_SS4W_SingleMass_40_600_e018_0.13165.pt"
+
+  choose_model: LundNet                   # choices: LundNet, LundNet_plus_GN2X, GATNet, GINNet, EdgeGinNet, PNANet
+  scores_branch_name: fjet_{model}_LundNetScore  # {model} will be replaced by the value of path_to_combined_ckpt dictionary key
+  batch_size: 2048

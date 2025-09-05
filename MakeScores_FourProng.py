@@ -26,6 +26,8 @@ from tools.GNN_model_weight.models import *
 from tools.GNN_model_weight.utils  import *
 from tools.GNN_model_weight.utils_newdata  import *
 
+from operator import itemgetter
+
 print("Libraries loaded!")
 
 scale_factor = 14.475606  
@@ -47,40 +49,56 @@ def main():
     config = load_yaml(config_file)
     config_signal = load_yaml("configs_FourProng/config_signal.yaml") # TODO: make this an optional argument, but then the same file needs to be used in utils_newdata.py
     config_signal = config_signal[config_signal["signal"]]  
-    
-    # path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/HSbbWW_Val/*.FourProngV1_ANALYSIS.root/*.root"
-    # path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/SS4W_Val/*.FourProngV1_ANALYSIS.root/*.root"
-    # path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/QCD_Val/user.jjhong.mc23_13p6TeV.801170.e8514_s4159_r15224_p6646.four_prongV1_ANALYSIS.root/user.jjhong.45345262._000026.ANALYSIS.root"
-    path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/QCD_Val/*.FourProngV1_ANALYSIS.root/*.root"
+
     # path_to_outdir = "/data/jjhong96/LundNet_Test/QCD_SS4W_SingleMass/SS4W_450_550/"
-    path_to_outdir = "/data/jjhong96/LundNet_Test/QCD_SS4W_SplitStudy/"
+    # path_to_outdir = "/data/jjhong96/LundNet_Test/QCD_SS4W_SplitStudy/"
+    path_to_outdir = "/data/jjhong96/LundNet_Test/QCD_SS4W_MassStudy/"
 
     model_dic = {
-        "SingleMass_125":"/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS4W_40_150/LundNet_R22_QCD_SS4W_SingleMass_40_150_e050_0.16998.pt",
-        "SingleMass_300":"/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS4W_250_350/LundNet_R22_QCD_SS4W_SingleMass_250_350_e049_0.08852.pt",
-        "SingleMass_500":"/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS4W_450_550/LundNet_R22_QCD_SS4W_SingleMass_450_550_e049_0.04549.pt",
-        "DoubleMass_125_300":"/data/jjhong96/LundNet_Model/QCD_SS4W_MassWindow/SS4W_125_300/LundNet_R22_QCD_SS4W_MassWindow_125_300_e050_0.19437.pt",
-        "DoubleMass_125_500":"/data/jjhong96/LundNet_Model/QCD_SS4W_MassWindow/SS4W_125_500/LundNet_R22_QCD_SS4W_MassWindow_125_500_e050_0.16858.pt",
-        "DoubleMass_300_500":"/data/jjhong96/LundNet_Model/QCD_SS4W_MassWindow/SS4W_300_500/LundNet_R22_QCD_SS4W_MassWindow_300_500_e048_0.08870.pt",
-        "DoubleMass_300_500":"/data/jjhong96/LundNet_Model/QCD_SS4W_MassWindow/SS4W_300_500/LundNet_R22_QCD_SS4W_MassWindow_300_500_e048_0.08870.pt",
-        "FullMass_10p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_10percent/LundNet_R22_QCD_SS4W_JetN_40_800_e043_0.24211.pt",
-        "FullMass_25p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_25percent/LundNet_R22_QCD_SS4W_JetN_40_800_e049_0.23335.pt",
-        "FullMass_50p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_50percent/LundNet_R22_QCD_SS4W_JetN_40_800_e049_0.20934.pt",
-        "FullMass_90p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_90percent/LundNet_R22_QCD_SS4W_JetN_40_800_e047_0.20603.pt",
-        "FlatMass_10p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_10percent_flatmass/LundNet_R22_QCD_SS4W_JetN_40_800_e035_2.66677.pt",
+        "SingleMass_125":"/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS4W_40_150/LundNet_R22_QCD_SS4W_SingleMass_40_150_e027_0.17452.pt",
+        "SingleMass_300":"/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS4W_250_350/LundNet_R22_QCD_SS4W_SingleMass_250_350_e028_0.08956.pt",
+        "SingleMass_500":"/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS4W_450_550/LundNet_R22_QCD_SS4W_SingleMass_450_550_e038_0.04768.pt",
+        # "DoubleMass_125_300":"/data/jjhong96/LundNet_Model/QCD_SS4W_MassWindow/SS4W_125_300/LundNet_R22_QCD_SS4W_MassWindow_125_300_e050_0.19437.pt",
+        # "DoubleMass_125_500":"/data/jjhong96/LundNet_Model/QCD_SS4W_MassWindow/SS4W_125_500/LundNet_R22_QCD_SS4W_MassWindow_125_500_e050_0.16858.pt",
+        # "DoubleMass_300_500":"/data/jjhong96/LundNet_Model/QCD_SS4W_MassWindow/SS4W_300_500/LundNet_R22_QCD_SS4W_MassWindow_300_500_e048_0.08870.pt",
+        # "DoubleMass_300_500":"/data/jjhong96/LundNet_Model/QCD_SS4W_MassWindow/SS4W_300_500/LundNet_R22_QCD_SS4W_MassWindow_300_500_e048_0.08870.pt",
+        # "FullMass_10p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_10percent/LundNet_R22_QCD_SS4W_JetN_40_800_e043_0.24211.pt",
+        "FullMass_25p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_25percent/LundNet_R22_QCD_SS4W_JetN_40_800_e026_0.23496.pt",
+        "FullMass_50p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_50percent/LundNet_R22_QCD_SS4W_JetN_40_800_e026_0.21457.pt",
+        "FullMass_90p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_90percent/LundNet_R22_QCD_SS4W_JetN_40_800_e032_0.21020.pt",
+        # "FlatMass_10p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_10percent_flatmass/LundNet_R22_QCD_SS4W_JetN_40_800_e035_2.66677.pt",
         "FlatMass_25p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_25percent_flatmass/LundNet_R22_QCD_SS4W_JetN_40_800_e024_2.73107.pt",
         "FlatMass_50p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_50percent_flatmass/LundNet_R22_QCD_SS4W_JetN_40_800_e031_2.70216.pt",
-        "FlatMass_90p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_90percent_flatmass/LundNet_R22_QCD_SS4W_JetN_40_800_e049_2.89634.pt",
+        "FlatMass_90p":"/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_40_800_90percent_flatmass/LundNet_R22_QCD_SS4W_JetN_40_800_e022_2.91230.pt",
+        "FlatMass_40_250":"/data/jjhong96/LundNet_Model/QCD_SS4W_FlatMass/SS4W_40_250_flatmass/LundNet_R22_QCD_SS4W_FlatMassWindow_40_250_e013_2.24512.pt",
+        "pTRange_350_1500_90p":"/data/jjhong96/LundNet_Model/QCD_SS4W_pTWindow/SS4W_350_1500/LundNet_R22_QCD_SS4W_pT_350_1500_e016_0.11920.pt",
+        "pTRange_1500_2500_90p":"/data/jjhong96/LundNet_Model/QCD_SS4W_pTWindow/SS4W_1500_2500/LundNet_R22_QCD_SS4W_pT_1500_2500_e017_0.26404.pt",
+        "HH4W_40_600_Flatmass":"/data/jjhong96/LundNet_Model/QCD_SS4W_FlatMass/HH4W_40_600_flatmass/LundNet_R22_QCD_SS4W_FlatMassWindow_40_600_e014_15.32712.pt",
+        "SS300_4W_40_600_Flatmass":"/data/jjhong96/LundNet_Model/QCD_SS4W_FlatMass/SS300_4W_40_600_flatmass/LundNet_R22_QCD_SS4W_FlatMassWindow_40_600_e012_5.72654.pt",
+        "HH4W_40_600":"/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/HH4W_40_600/LundNet_R22_QCD_SS4W_SingleMass_40_600_e015_0.31864.pt",
+        "SS300_4W_40_600":"/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS300_4W_40_600/LundNet_R22_QCD_SS4W_SingleMass_40_600_e018_0.13165.pt",
 
     }
     model_score_dict = {}
     # path_to_combined_ckpt = "/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS4W_40_150/LundNet_R22_QCD_SS4W_SingleMass_40_150_e050_0.16998.pt" # JJ: Test, QCD vs SS4W 
     # path_to_combined_ckpt = "/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS4W_250_350/LundNet_R22_QCD_SS4W_SingleMass_250_350_e049_0.08852.pt" # JJ: Test, QCD vs SS4W 
     # path_to_combined_ckpt = "/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS4W_450_550/LundNet_R22_QCD_SS4W_SingleMass_450_550_e049_0.04549.pt" # JJ: Test, QCD vs SS4W classification
-    output_name = "LundNetScores"
-    # output_tag = "HSbbWW_Val"
+    
+    # path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/SS4W_Train/user.jjhong.mc23_13p6TeV.560091.e8590_s4369_r16083_p6808.FourProngV1_ANALYSIS.root/user.jjhong.45344049._000001.ANALYSIS.root"
+    # output_tag = "SS4W_Train"
+    path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/HSbbWW_Val/*.FourProngV1_ANALYSIS.root/*.root"
+    output_tag = "HSbbWW_Val"
+    # path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/HSbbWW_Val/user.jjhong.mc23_13p6TeV.52595*.FourProngV1_ANALYSIS.root/*.root"
+    # output_tag = "HHbbWW_Val" # Only interested in X4000 and X6000
+    # path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/SS4W_Val/*.FourProngV1_ANALYSIS.root/*.root"
     # output_tag = "SS4W_Val"
-    output_tag = "QCD_Val"
+    # path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/QCD_Val/user.jjhong.mc23_13p6TeV.801169.e8514_s4159_r15224_p6646.four_prongV1_ANALYSIS.root/user.jjhong.45345261._000055.ANALYSIS.root"
+    # output_tag = "QCD_Val"
+    # path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/QCD_Val/user.jjhong.mc23_13p6TeV.801170.e8514_s4159_r15224_p6646.four_prongV1_ANALYSIS.root/user.jjhong.45345262._000026.ANALYSIS.root"
+    # path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/QCD_Val/user.jjhong.mc23_13p6TeV.801171.e8514_s4159_r15224_p6646.four_prongV1_ANALYSIS.root/user.jjhong.45345263._000015.ANALYSIS.root"
+    # path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/QCD_Val/user.jjhong.mc23_13p6TeV.801172.e8514_s4159_r15224_p6453.four_prongV1_ANALYSIS.root/user.jjhong.45345264._000015.ANALYSIS.root"
+    # path_to_test_file = "/data/jjhong96/LundNet_Ntuple/FourProngV1/QCD_Val/*.four_prongV1_ANALYSIS.root/*.root"
+    output_name = "LundNetScores"
     choose_model = "LundNet"
     learning_rate = 0.0005
     batch_size = 2048
@@ -161,7 +179,47 @@ def main():
             Good_jets=[]
             mcweights_out=[]
 
-            dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file_test_OLD( dataset, graph_small_example , all_lund_zs, all_lund_kts, all_lund_drs, parent1, parent2, flat_weights, nprong_labels ,N_tracks,jet_pts, jet_ms, kT_selection, mcweights_out, Good_jets)
+            dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file_test_OLD( dataset, graph_small_example , all_lund_zs, all_lund_kts, all_lund_drs, parent1, parent2, flat_weights, nprong_labels ,N_tracks,jet_pts, jet_ms, kT_selection, mcweights_out, Good_jets) ## THIS IS OLD!!! USE THE SAME create_train_dataset_fulld_new_Ntrk_pt_weight_file as in the Make_data!!!!
+
+            # # Load the data
+            # jet_properties = {
+            #     jet_property: ak.flatten(tree[jet_property].array(entry_start=start_entry, entry_stop=stop_entry, library="ak"))
+            #     for jet_property in [*jet_property_names.values(), "jetLundZ", "jetLundKt", "jetLundDeltaR", "jetLundIDParent1", "jetLundIDParent2"]
+            #     if jet_property in tree
+            # }
+            # truth_labels_unflattened = tree["LRJ_truthLabel"].array(entry_start=start_entry, entry_stop=stop_entry, library="ak")
+            # numbers_of_jets_per_event = ak.num(truth_labels_unflattened)
+
+            # mcEventWeights = tree["mcEventWeight"].array(entry_start=start_entry, entry_stop=stop_entry, library="np")
+            # jet_properties["EventInfo_mcEventWeight"] = np.repeat(mcEventWeights, numbers_of_jets_per_event)       # expand out the array so it has same length as flattened array
+            # jet_properties["EventInfo_mcChannelNumber"] = np.repeat(dsids[start_entry:stop_entry], numbers_of_jets_per_event) # TODO: can I do this without numpy? expand out the array so it has same length as flattened array
+
+            # dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file(
+            #             dataset,
+            #             *itemgetter("jetLundZ", "jetLundKt", "jetLundDeltaR", "jetLundIDParent1", "jetLundIDParent2")(jet_properties),
+            #             *itemgetter(jet_label_branch, "EventInfo_mcChannelNumber", "LRJ_Nconst_Charged", "LRJ_pt", "LRJ_mass", "LRJ_eta",)(jet_properties),
+            #             weights = {fjet_weight_pt_branch: jet_properties[fjet_weight_pt_branch] for fjet_weight_pt_branch in fjet_weight_pt_branches},
+            #             GN2X_scores={
+            #                 key: jet_properties[jet_property_names[key]]
+            #                 for key in ["GN2X_pqcd", "GN2X_phbb", "GN2X_ptop", "GN2X_phcc"]
+            #                 if jet_property_names[key] in jet_properties},
+            #             kT_selection=config["kT_cut"],
+            #             primary_Lund_only_one_arr=primary_Lund_only_one_arr,
+            #             passed_selection=passed_selection,
+            #             signal_jet_truth_labels=set().union(*[config_signal[s]["signal_jet_label"] for s in signals]),
+            #             signal_dsids=set().union(*[config_signal[s]["dsids"] for s in signals]),
+            #             pt_range=(
+            #                 min(min(config_signal[s]["pt_range"]) for s in signals),
+            #                 max(max(config_signal[s]["pt_range"]) for s in signals)
+            #             ),
+            #             mass_range= (
+            #                 min(min(mass_window) for s in signals),
+            #                 max(max(mass_window) for s in signals)
+            #             ),
+            #             eta_max=max(config_signal[s]["eta_max"] for s in signals),
+            #             min_splits=min(config_signal[s]["min_splits"] for s in signals),
+            #             include_pt=config["include_pt"],
+            #         )
 
             # dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file_test(
             # dataset, graph_small_example, all_lund_zs, all_lund_kts, all_lund_drs,

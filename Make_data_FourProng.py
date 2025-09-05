@@ -89,6 +89,10 @@ def main():
         "GN2X_phbb":           "GN2Xv01_phbb",
         "GN2X_ptop":           "GN2Xv01_ptop",
         "GN2X_phcc":           "GN2Xv01_phcc",
+        "fjet_tau21_wta":      "Tau21_wta",
+        "fjet_tau32_wta":      "Tau32_wta",
+        "fjet_tau43_wta":      "Tau43_wta",
+        "fjet_tau42_wta":      "Tau42_wta",
     }
     # TODO: change this to just use the same names in the output file (requires modifying plotting code as well)
     
@@ -215,6 +219,7 @@ def main():
 
             # Save graphs and accompanying ROOT files
             filepath_placeholder_vals = dict(
+                signal = config["signal"],
                 graph_tag = config["graph_tag"],
                 jet_class = config["jet_class"],
                 kT_cut = config["kT_cut"],

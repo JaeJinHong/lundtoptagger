@@ -2,7 +2,13 @@
 # =====================
 data:
   # path_to_trainfiles: "/data/ravinascos/LundNet/2024_graphs/graphs_NewDataset_LundNet_R22_No_ln_kT_Cut_LRJ_NewData_Primary"
-  mass_window: [40, 800]
+
+  do_pt_range_override: False # True or False. If True, overrides the pT range written on config_signal_path
+  pt_range_override: [1500, 2500] # [min_pt, max_pt] in GeV. [350, 1500] and [1500, 2500]
+  
+  do_mass_range_override: True # True or False. If True, overrides the mass range written on config_signal_path
+  mass_window: [40, 600] # Try to keep balance between the HWW* and SWW, test on HWW*
+
   path_to_trainfiles:
     # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_250_350/graphs_SS4W_Train__part2_10.00percent_ln_kT_cut_None_with_pt" # can also be a list of paths
     # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_250_350/graphs_SS4W_Train__part3_10.00percent_ln_kT_cut_None_with_pt"
@@ -23,7 +29,7 @@ data:
     # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_450_550/graphs_SS4W_Train__part9_10.00percent_ln_kT_cut_None_with_pt"
     # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_450_550/graphs_SS4W_Train__part10_10.00percent_ln_kT_cut_None_with_pt"
     # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_SS4W_Train__part1_5.00percent_ln_kT_cut_None_with_pt"
-    - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_SS4W_Train__part2_10.00percent_ln_kT_cut_None_with_pt"
+    # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_SS4W_Train__part2_10.00percent_ln_kT_cut_None_with_pt"
     # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_SS4W_Train__part3_10.00percent_ln_kT_cut_None_with_pt"
     # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_SS4W_Train__part4_10.00percent_ln_kT_cut_None_with_pt"
     # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_SS4W_Train__part5_10.00percent_ln_kT_cut_None_with_pt"
@@ -32,6 +38,28 @@ data:
     # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_SS4W_Train__part8_10.00percent_ln_kT_cut_None_with_pt"
     # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_SS4W_Train__part9_10.00percent_ln_kT_cut_None_with_pt"
     # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_SS4W_Train__part10_10.00percent_ln_kT_cut_None_with_pt"
+    - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_HWW_Train__part0_5.00percent_ln_kT_cut_None_with_pt"
+    - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_HWW_Train__part1_5.00percent_ln_kT_cut_None_with_pt"
+    - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_HWW_Train__part2_10.00percent_ln_kT_cut_None_with_pt"
+    - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_HWW_Train__part3_10.00percent_ln_kT_cut_None_with_pt"
+    - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_HWW_Train__part4_10.00percent_ln_kT_cut_None_with_pt"
+    - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_HWW_Train__part5_10.00percent_ln_kT_cut_None_with_pt"
+    - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_HWW_Train__part6_10.00percent_ln_kT_cut_None_with_pt"
+    - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_HWW_Train__part7_10.00percent_ln_kT_cut_None_with_pt"
+    - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_HWW_Train__part8_10.00percent_ln_kT_cut_None_with_pt"
+    - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_HWW_Train__part9_10.00percent_ln_kT_cut_None_with_pt"
+    - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_HWW_Train__part10_10.00percent_ln_kT_cut_None_with_pt"
+    # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_S300WW_Train__part0_5.00percent_ln_kT_cut_None_with_pt"
+    # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_S300WW_Train__part1_5.00percent_ln_kT_cut_None_with_pt"
+    # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_S300WW_Train__part2_10.00percent_ln_kT_cut_None_with_pt"
+    # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_S300WW_Train__part3_10.00percent_ln_kT_cut_None_with_pt"
+    # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_S300WW_Train__part4_10.00percent_ln_kT_cut_None_with_pt"
+    # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_S300WW_Train__part5_10.00percent_ln_kT_cut_None_with_pt"
+    # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_S300WW_Train__part6_10.00percent_ln_kT_cut_None_with_pt"
+    # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_S300WW_Train__part7_10.00percent_ln_kT_cut_None_with_pt"
+    # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_S300WW_Train__part8_10.00percent_ln_kT_cut_None_with_pt"
+    # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_S300WW_Train__part9_10.00percent_ln_kT_cut_None_with_pt"
+    # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_S300WW_Train__part10_10.00percent_ln_kT_cut_None_with_pt"
     # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_QCD_Train__part1_0.10percent_ln_kT_cut_None_with_pt"
     - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_QCD_Train__part2_0.20percent_ln_kT_cut_None_with_pt"
     # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_QCD_Train__part3_0.20percent_ln_kT_cut_None_with_pt"
@@ -43,13 +71,20 @@ data:
     # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_QCD_Train__part9_0.20percent_ln_kT_cut_None_with_pt"
     # - "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_QCD_Train__part10_0.20percent_ln_kT_cut_None_with_pt"
   # path_to_save: "/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS4W_{mass_low}_{mass_high}/"
+  path_to_save: "/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/HH4W_{mass_low}_{mass_high}/"
+  # path_to_save: "/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS300_4W_{mass_low}_{mass_high}/"
   # path_to_save: "/data/jjhong96/LundNet_Model/QCD_SS4W_MassWindow/SS4W_{mass_low}_{mass_high}/"
   # path_to_save: "/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_{mass_low}_{mass_high}_50percent/"
-  path_to_save: "/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_{mass_low}_{mass_high}_10percent_flatmass/"
+  # path_to_save: "/data/jjhong96/LundNet_Model/QCD_SS4W_JetNStudy/SS4W_{mass_low}_{mass_high}_10percent_flatmass/"
+  # path_to_save: "/data/jjhong96/LundNet_Model/QCD_SS4W_FlatMass/SS4W_{mass_low}_{mass_high}_flatmass"
+  # path_to_save: "/data/jjhong96/LundNet_Model/QCD_SS4W_FlatMass/HH4W_{mass_low}_{mass_high}_flatmass"
+  # path_to_save: "/data/jjhong96/LundNet_Model/QCD_SS4W_FlatMass/SS300_4W_{mass_low}_{mass_high}_flatmass"
+  # path_to_save: "/data/jjhong96/LundNet_Model/QCD_SS4W_pTWindow/SS4W_1500_2500/"
   # model_name: "LundNet_R22_ExtraNode_No_ln_kT_Cut_LRJ_NewData_Primary"
-  # model_name: "LundNet_R22_QCD_SS4W_SingleMass_{mass_low}_{mass_high}"
-  # model_name: "LundNet_R22_QCD_SS4W_MassWindow_{mass_low}_{mass_high}"
-  model_name: "LundNet_R22_QCD_SS4W_JetN_{mass_low}_{mass_high}"
+  model_name: "LundNet_R22_QCD_SS4W_SingleMass_{mass_low}_{mass_high}"
+  # model_name: "LundNet_R22_QCD_SS4W_FlatMassWindow_{mass_low}_{mass_high}"
+  # model_name: "LundNet_R22_QCD_SS4W_JetN_{mass_low}_{mass_high}"
+  # model_name: "LundNet_R22_QCD_SS4W_pT_1500_2500"
   # adv_model_name: "adversarial"
   # ln_kT_cut: null # null, -0.5, 0.0, 0.5, 1.0, 2.0, 2.8
   # if {ln_kT_cut} is present in path_to_trainfiles, path_to_save or model_name, it will be replaced by the value of ln_kT_cut (by None if ln_kT_cut is null)
@@ -71,7 +106,7 @@ flatten_pt: True
 # if applying cuts which were not used for the pT spectrum that was used for reweighting in Make_data.py,
 # then flatten_pt should be set to True, so that the pT spectrum is flattened again
 
-flatten_mass: True
+flatten_mass: False
 # should only be used with a wide-mass sample, which has a significant number of jets across the entire mass range used for training
 num_iters: 4         # number of iterations for the iterative reweighting procedure
 # number of mass and pT bins for the iterative reweighting procedure
@@ -86,11 +121,11 @@ n_bins_mass: 100
 architecture:
   batch_size: 1024 #4500, 2600
   test_size: 0.1
-  learning_rate: 0.0004
+  learning_rate: 0.00005 # Previously, 0.0005
   save_every_epoch: True
 
   # classifier
-  n_epochs: 100
+  n_epochs: 50
   choose_model: LundNet # LundNet, LundNet_plus_GN2X, GATNet, GINNet, EdgeGinNet, PNANet
   # if you want to use LundNet_plus_GN2X, make sure that the graphs have GN2X scores!
 

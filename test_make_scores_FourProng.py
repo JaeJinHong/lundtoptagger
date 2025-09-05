@@ -44,6 +44,7 @@ def main():
         file_path = file_path.format(**filepath_placeholder_vals)
         files_root.extend(glob.glob(file_path))
     print ("paths_to_test_file_root:", paths_to_test_file_root)
+    files_root = sorted(files_root)  # ensure the order is the same as files_graphs
     print ("files:", files_root)
 
     paths_to_test_file_graphs = config['data']['paths_to_test_file_graphs']
@@ -56,6 +57,7 @@ def main():
         file_path = file_path.format(**filepath_placeholder_vals)
         files_graphs.extend(glob.glob(file_path))
     print ("paths_to_test_file_graphs:", paths_to_test_file_graphs)
+    files_graphs = sorted(files_graphs)  # ensure the order is the same as files_root
     print ("files:", files_graphs)
 
     path_to_outdir = config['data']['path_to_outdir'].format(**filepath_placeholder_vals)
@@ -63,8 +65,9 @@ def main():
     print("The output files will be saved to")
     print(path_to_outdir)
 
-    path_to_combined_ckpt = config['test']['path_to_combined_ckpt'][kT_selection]
-    print("ckpt used:", path_to_combined_ckpt )
+    # path_to_combined_ckpt = config['test']['path_to_combined_ckpt'][kT_selection]
+    # print("ckpt used:", path_to_combined_ckpt )
+    path_to_weights_dict = config['test']['path_to_combined_ckpt'] # I want to loop through the models, calculate scores, and save them
 
     output_suffix = config['data']['output_suffix'].format(**filepath_placeholder_vals)
 
@@ -95,9 +98,10 @@ def main():
         model = LundNet_plus_GN2X()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') # Usually gpu 4 worked best, it had the most memory available
-    model.load_state_dict(torch.load(path_to_combined_ckpt, map_location=device))
     print(f'\nUsing device: {device}')
-    model.to(device)
+
+    # model.load_state_dict(torch.load(path_to_combined_ckpt, map_location=device))
+    # model.to(device)
 
     # Evaluation
     for file_number, (file_graphs, file_root) in enumerate(zip(files_graphs,files_root), start=1):
@@ -116,23 +120,9 @@ def main():
 
         test_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
-        # Predict scores
-        print("\nCalculating scores...")
-        y_pred = get_scores(test_loader, model, device)
-        tagger_scores = np.array(y_pred[:,0])
-
-        delta_t_pred = time.time() - t_start - delta_t_fileax
-        minutes, seconds = divmod(round(delta_t_pred), 60)
-        print(f"Time taken to calculate predictions: {minutes:d} min {seconds:d} s")
-
-        # Free up memory
-        del dataset, test_loader, y_pred
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-
         # Get the tree from the existing ROOT file,
         # either the file created by the Make_data.py script or from the scores file if it already exists
-        print("Getting the tree from the existing ROOT file...")
+        print(f"Getting the tree from the existing ROOT file: {file_root}")
         filename_no_ext = os.path.splitext(os.path.basename(file_root))[0]  # get the input file name without the .root extension
         outfile_path = os.path.join(path_to_outdir, filename_no_ext) + output_suffix + ".root"
         outfile_path = outfile_path.format(**filepath_placeholder_vals)
@@ -141,8 +131,32 @@ def main():
         with uproot.open(infile) as f:
             arrays = f[intreename].arrays()
 
-        # Add a new branch for the scores or overwrite the existing one
-        arrays[config["test"]["scores_branch_name"].format(model=choose_model)] = tagger_scores
+        
+
+        # Predict scores
+        print("\nCalculating scores...")
+        for model_name, path_to_weights in path_to_weights_dict.items():
+            model.load_state_dict(torch.load(path_to_weights, map_location=device))
+            model.to(device)
+            print(f'Using weights: {model_name} from {path_to_weights}')
+            y_pred = get_scores(test_loader, model, device)
+            tagger_scores = np.array(y_pred[:,0])
+
+
+            # Add a new branch for the scores or overwrite the existing one
+            arrays[config["test"]["scores_branch_name"].format(model=model_name)] = tagger_scores
+            del tagger_scores, y_pred
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
+        delta_t_pred = time.time() - t_start - delta_t_fileax
+        minutes, seconds = divmod(round(delta_t_pred), 60)
+        print(f"Time taken to calculate predictions: {minutes:d} min {seconds:d} s")
+
+        # Free up memory
+        del dataset, test_loader
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
         # Save the new scores to file
         # TODO: maybe this could be done more efficiently with PyROOT, without reading the whole tree and writing it again
@@ -152,7 +166,7 @@ def main():
         print("Scores saved to:", outfile_path)
 
         # Free up memory
-        del arrays, tagger_scores
+        del arrays
         gc.collect()
 
         # Time statistics
