@@ -29,7 +29,8 @@ SS4W:
   mass_range: [40, 800]  # jet mass selection in GeV, for no upper limit use .inf
   eta_max: 2                      # maximum absolute value of jet pseudorapidity, for no upper limit use .inf
   min_splits: 3          # minimum number of splittings, or emissions, that jets must have
-  skip_dsids: []
+  # skip_dsids: []
+  skip_dsids: [560083] # Include 560083 if we want to skip HWW* samples
 
 HHbbWW:
   pt_hist_files_bkg:

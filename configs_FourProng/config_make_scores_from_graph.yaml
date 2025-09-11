@@ -2,12 +2,14 @@ data:
   # The ROOT and graphs files should be the output of Make_data.py
   # paths_to_test_file_root: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/data_HHbbWW_Val_mc23d__ln_kT_cut_None.root"  # can also be a list of glob patterns
   # paths_to_test_file_graphs: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/graphs_HHbbWW_Val_mc23d__ln_kT_cut_None_with_pt"                  
-  paths_to_test_file_root: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/data_HSbbWW*TeV_HSbbWW_Val_mc23d__ln_kT_cut_None.root"  # can also be a list of glob patterns
-  paths_to_test_file_graphs: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/graphs_HSbbWW*TeV_HSbbWW_Val_mc23d__ln_kT_cut_None_with_pt"                 
+  # paths_to_test_file_root: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/data_HHbbWW*TeV_HHbbWW_Val_mc23d__ln_kT_cut_None.root"  # can also be a list of glob patterns
+  # paths_to_test_file_graphs: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/graphs_HHbbWW*TeV_HHbbWW_Val_mc23d__ln_kT_cut_None_with_pt"                                   
+  # paths_to_test_file_root: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/data_HSbbWW*TeV_HSbbWW_Val_mc23d__ln_kT_cut_None.root"  # can also be a list of glob patterns
+  # paths_to_test_file_graphs: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/graphs_HSbbWW*TeV_HSbbWW_Val_mc23d__ln_kT_cut_None_with_pt"                 
   # paths_to_test_file_root: "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/data_SS4W_Train__part*_5.00percent_ln_kT_cut_None.root"  # can also be a list of glob patterns
   # paths_to_test_file_graphs: "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_SS4W_Train__part*_5.00percent_ln_kT_cut_None_with_pt"                                                     # can also be a list of glob patterns
-  # paths_to_test_file_root: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/data_QCD_Val__part*_20.00percent_ln_kT_cut_None.root"  # can also be a list of glob patterns
-  # paths_to_test_file_graphs: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/graphs_QCD_Val__part*_20.00percent_ln_kT_cut_None_with_pt"                                                     # can also be a list of glob patterns
+  paths_to_test_file_root: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/data_QCD_Val__part*_20.00percent_ln_kT_cut_None.root"  # can also be a list of glob patterns
+  paths_to_test_file_graphs: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/graphs_QCD_Val__part*_20.00percent_ln_kT_cut_None_with_pt"                                                     # can also be a list of glob patterns
   path_to_outdir: "/data/jjhong96/LundNet_Test/QCD_SS4W_MassStudy/"
 
   # the name of the output file will be the same as the name of the input ROOT file, with this suffix added (but in a different directory)
@@ -42,6 +44,8 @@ test:
     SS300_4W_40_600_Flatmass: "/data/jjhong96/LundNet_Model/QCD_SS4W_FlatMass/SS300_4W_40_600_flatmass/LundNet_R22_QCD_SS4W_FlatMassWindow_40_600_e012_5.72654.pt"
     HH4W_40_600: "/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/HH4W_40_600/LundNet_R22_QCD_SS4W_SingleMass_40_600_e015_0.31864.pt"
     SS300_4W_40_600: "/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS300_4W_40_600/LundNet_R22_QCD_SS4W_SingleMass_40_600_e018_0.13165.pt"
+    Even_HH_SS_40_600: "/data/jjhong96/LundNet_Model/QCD_SS4W_MassWindow/Even_HH_SS_40_600/LundNet_R22_QCD_Even_HH_SS_40_600_e012_0.27477.pt"
+    Even_HH_SS_40_600_Flatmass: "/data/jjhong96/LundNet_Model/QCD_SS4W_FlatMass/Even_HH_SS_40_600_flatmass/LundNet_R22_QCD_Even_HH_SS_FlatMass_40_600_e010_6.25795.pt"
 
   choose_model: LundNet                   # choices: LundNet, LundNet_plus_GN2X, GATNet, GINNet, EdgeGinNet, PNANet
   scores_branch_name: fjet_{model}_LundNetScore  # {model} will be replaced by the value of path_to_combined_ckpt dictionary key
