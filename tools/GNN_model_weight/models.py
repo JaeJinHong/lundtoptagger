@@ -82,7 +82,7 @@ class Net(torch.nn.Module):
 
 class LundNet4Class(torch.nn.Module):
     def __init__(self):
-        super(LundNet, self).__init__()
+        super(LundNet4Class, self).__init__()
         self.conv1 = EdgeConv(nn.Sequential(nn.Linear(6, 32), nn.BatchNorm1d(num_features=32), nn.ReLU(),
                                             nn.Linear(32, 32), nn.BatchNorm1d(num_features=32), nn.ReLU()),aggr='add')
         self.conv2 = EdgeConv(nn.Sequential(nn.Linear(64, 32), nn.BatchNorm1d(num_features=32), nn.ReLU(),
@@ -123,7 +123,10 @@ class LundNet4Class(torch.nn.Module):
         x = F.dropout(x, p=0.1)
         x = self.lin(x)
         #print(x.shape)
+        # print('x:', x)
+        # print('log_softmax:', F.log_softmax(x, dim=1))
         return F.log_softmax(x, dim=1) # For multiclass classification
+        # return x # Return length 4 output vector for use with nn.CrossEntropyLoss()
 
 
 class LundNet(torch.nn.Module):

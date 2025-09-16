@@ -366,6 +366,7 @@ def main():
             print(f"  Number of jets: {len(part)}")
 
             graphs_out = []
+            graph_class_counts = {label: 0 for label in config["labels"]}
 
             # Group by file_id so we load each graph file only once
             for fid, group in part.groupby("_file_id"):
@@ -382,14 +383,25 @@ def main():
                     g = graphs[int(loc)]
                     g.weight = torch.tensor([float(w)], dtype=torch.float32)
                     graphs_out.append(g)
+                    graph_class_counts[int(g.y)] += 1
 
                 # Free memory from this file
                 del graphs
                 # gc.collect()
 
             out_path = os.path.join(out_dir, f"{name}_part{i:03d}.pt")
+
+            # Shuffle the graphs before saving
+            np.random.seed(config["random_seed"])
+            graph_classes = [int(g.y) for g in graphs_out]
+            print("Classes before shuffling:", graph_classes[:30])
+            np.random.shuffle(graphs_out)
+            graph_classes = [int(g.y) for g in graphs_out]
+            print("Classes after shuffling:", graph_classes[:30])
             torch.save(graphs_out, out_path)
             print(f"Saved {len(graphs_out)} graphs to {out_path}")
+
+            print(f"Class distribution in this part: {graph_class_counts}")
 
     save_split(train_df, "train")
     # save_split_histograms(train_df, "train", config, weighted=False)

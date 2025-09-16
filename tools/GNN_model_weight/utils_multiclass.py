@@ -11,26 +11,70 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 from torch_geometric.data import Data
+from torch.utils.data import IterableDataset, get_worker_info
 from scipy.stats import entropy, gaussian_kde
 
 from ..GNN_model_weight.models import mdn_loss, mdn_loss_new
 
-class MyDataset(torch.utils.data.Dataset): # Lazyload the shuffled training set
-    def __init__(self, data_dir='data_dir'):
+class GraphIterableDataset(IterableDataset):
+    def __init__(self, data_dir, limit_files=None):
+        super().__init__()
         self.data_dir = data_dir
-        self.data_files = sorted(os.listdir(self.data_dir))
+        self.files = sorted(
+            [os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith(".pt")]
+        )
+        if limit_files is not None:
+            self.files = self.files[:limit_files]
 
-    def __getitem__(self, idx):
-        # Construct the full path to the file
-        file_path = os.path.join(self.data_dir, self.data_files[idx])
-        
-        # Load the graph data from the file
-        data = load_file(file_path)
-        
-        return data
+        self.num_files = len(self.files)
+        self.num_graphs = 0  # Will be set when iterating
+        self.class_counts = None  # Will be set when iterating
+        self.class_weights = None  # Will be set when iterating
 
     def __len__(self):
-        return len(self.data_files)
+        if self.num_graphs != 0:
+            return self.num_graphs
+        else:
+            self.class_counts = {} # Initialize the dictionary
+            self.class_weights = {}
+            for file in self.files:
+                dataset = torch.load(file, weights_only=False)
+                self.num_graphs += len(dataset)
+                for graph in dataset:
+                    label = int(graph.y)
+                    self.class_counts[label] = self.class_counts.get(label, 0) + 1
+                    self.class_weights[label] = self.class_weights.get(label, 0.0) + float(graph.weight)
+                del dataset
+        return self.num_graphs # Return number of files
+    
+    def get_class_counts(self):
+        if self.class_counts is None:
+            self.__len__()  # This will populate class_counts
+        return self.class_counts
+    
+    def get_class_weights(self):
+        if self.class_weights is None:
+            self.__len__()  # This will populate class_weights
+        return self.class_weights
+
+    def __iter__(self):
+        worker_info = torch.utils.data.get_worker_info()
+        if worker_info is None:
+            # Single-process data loading, return full iterator
+            files = self.files
+        else:
+            # Split workload between workers
+            per_worker = int(math.ceil(len(self.files) / worker_info.num_workers))
+            worker_id = worker_info.id
+            start = worker_id * per_worker
+            end = min(start + per_worker, len(self.files))
+            files = self.files[start:end]
+
+        for file in files:
+            # print(f"Worker loading file: {file}")
+            dataset = torch.load(file, weights_only=False)  # list of Data objects
+            for graph in dataset:
+                yield graph
 
 def to_categorical(y, num_classes=None, dtype='float32'):
     y = np.array(y, dtype='int')
@@ -47,37 +91,48 @@ def to_categorical(y, num_classes=None, dtype='float32'):
     categorical = np.reshape(categorical, output_shape)
     return categorical
 
-
-def 
-
 def train_multi(loader, model, device, optimizer, epoch):
-    print ("dataset size:",len(loader.dataset))
+    # print("dataset files:", len(dataset.files))
     model.train()
     loss_all = 0
     batch_counter = 0
-    for data in loader:
-        batch_counter+=1
-        #print("batch_counter: ",batch_counter, end="\r")
-        if len(data)<1024:
-            continue
+
+    for data in loader:  # now directly over the iterable dataset
+        batch_counter += 1
+        # print("batch_counter:", batch_counter, end="\r")
+
+        # print(f'batch {batch_counter} length:', len(data))
+
         data = data.to(device)
-        optimizer1.zero_grad()
-        optimizer2.zero_grad()
-        optimizer3.zero_grad()
+        optimizer.zero_grad()
 
-        output = model(data)
-        # Change labels to shape (batch_size, 1) for cross_entropy
-        new_y = to_categorical(data.y, num_classes=4)
-        new_w = torch.reshape(data.weights, (int(list(data.weights.shape)[0]),1)) ## add weights
+        output = model(data)  # shape [batch_size, 4]
+        # Make sure labels are tensor and integer type
+        # print('data.y:', data.y)
+        targets = torch.as_tensor(data.y, dtype=torch.long, device=device) - 1  
 
-        loss = F.cross_entropy(output, new_y, weight = new_w)
-        loss.backward()
-        loss_all += data.num_graphs * loss.item()
+        # Make sure weights are tensor float type
+        sample_weights = torch.as_tensor(data.weight, dtype=torch.float, device=device)
 
-        optimizer.step()
+        # log_probs = F.log_softmax(output, dim=1)
+        # print('output:', output)
+        # print('output shape:', output.shape)
+        # print('targets:', targets)
+        # print('targets shape:', targets.shape)
+        # print('sample_weights:', sample_weights)
+        loss_per_sample = F.nll_loss(output, targets, reduction='none')
+        # loss_per_sample = F.cross_entropy(output, targets, reduction='none') # I want to reweight them later, no reduction
 
-    del data
-    data = []
+        loss_scalar = (loss_per_sample * sample_weights).mean()
+        # print("loss_per_sample shape:", loss_per_sample.shape)
+        # print("sample_weights shape:", sample_weights.shape)
+        # print("loss_scalar shape:", loss_scalar.shape)
+        loss_scalar.backward() # Calculate gradients
+        # loss_per_sample.backward() # Calculate gradients
+        optimizer.step() # Update weights
+
+        loss_all += data.num_graphs * loss_scalar.item()
+
     torch.cuda.empty_cache()
     return loss_all / len(loader.dataset)
 
@@ -106,12 +161,35 @@ def test_multi(loader, model, device):
         batch_counter+=1
         #print("batch_counter: ",batch_counter, end="\r")
         data = data.to(device)
-        output = model(data)
-        # Change labels to shape (batch_size, 1) for cross_entropy
-        new_y = to_categorical(data.y, num_classes=4)
-        new_w = torch.reshape(data.weights, (int(list(data.weights.shape)[0]),1))
-        loss = F.binary_cross_entropy(output, new_y, weight=new_w)
-        loss_all += data.num_graphs * loss.item()
+        # output = model(data)
+        # # Change labels to shape (batch_size, 1) for cross_entropy
+        # new_y = to_categorical(data.y, num_classes=4)
+        # new_w = torch.reshape(data.weights, (int(list(data.weights.shape)[0]),1))
+        # loss = F.binary_cross_entropy(output, new_y, weight=new_w)
+        # loss_all += data.num_graphs * loss.item()
+
+        # optimizer.step()
+        output = model(data)  # shape [batch_size, 4]
+        # Make sure labels are tensor and integer type
+        # print('data.y:', data.y)
+        targets = torch.as_tensor(data.y, dtype=torch.long, device=device) - 1  
+
+        # Make sure weights are tensor float type
+        sample_weights = torch.as_tensor(data.weight, dtype=torch.float, device=device)
+
+        # log_probs = F.log_softmax(output, dim=1)
+        # print('output:', output)
+        # print('targets:', targets)
+        # print('sample_weights:', sample_weights)
+        loss_per_sample = F.nll_loss(output, targets, reduction='none')
+        # loss_per_sample = F.cross_entropy(output, targets, reduction='none') # I want to reweight them later, no reduction
+
+        # print("loss_per_sample shape:", loss_per_sample.shape)
+        # print("sample_weights shape:", sample_weights.shape)
+
+        loss_scalar = (loss_per_sample * sample_weights).mean()
+        loss_all += data.num_graphs * loss_scalar.item()
+
     del data
     data = []
     torch.cuda.empty_cache()
