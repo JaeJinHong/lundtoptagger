@@ -38,14 +38,10 @@ def main():
     test_size = config['architecture']['test_size']
 
     # define custom dataset
-    # train_ds = LazyDataset(data_dir=path_to_trainfiles)
-    # validation_ds = LazyDataset(data_dir=path_to_validationfiles)
-    # train_ds = LazyGraphDataset(data_dir=path_to_trainfiles, limit_files=1)
-    # validation_ds = LazyGraphDataset(data_dir=path_to_validationfiles, limit_files=1)
     train_ds = GraphIterableDataset(data_dir=path_to_trainfiles, limit_files=20)
     validation_ds = GraphIterableDataset(data_dir=path_to_validationfiles, limit_files=20)
 
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=config['num_workers'])
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=False, num_workers=config['num_workers'])
     val_loader = DataLoader(validation_ds, batch_size=batch_size, shuffle=False, num_workers=config['num_workers'])
 
 
@@ -109,10 +105,7 @@ def main():
 
     for epoch in range(n_epochs):
         train_loss.append(train_multi(train_loader, model, device, optimizer, epoch))
-        # print('Train_loss:', train_loss[epoch])
         val_loss.append(test_multi(val_loader, model, device))
-        # train_loss.append(train_multi(train_ds, model, device, optimizer, epoch))
-        # val_loss.append(test_multi(val_ds, model, device))
 
         print('Epoch: {:03d}, Train Loss: {:.5f}, Val Loss: {:.5f}'.format(epoch, train_loss[epoch], val_loss[epoch]))
         if save_every_epoch or epoch == n_epochs-1:

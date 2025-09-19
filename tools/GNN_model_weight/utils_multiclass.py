@@ -108,27 +108,15 @@ def train_multi(loader, model, device, optimizer, epoch):
 
         output = model(data)  # shape [batch_size, 4]
         # Make sure labels are tensor and integer type
-        # print('data.y:', data.y)
         targets = torch.as_tensor(data.y, dtype=torch.long, device=device) - 1  
 
         # Make sure weights are tensor float type
         sample_weights = torch.as_tensor(data.weight, dtype=torch.float, device=device)
 
-        # log_probs = F.log_softmax(output, dim=1)
-        # print('output:', output)
-        # print('output shape:', output.shape)
-        # print('targets:', targets)
-        # print('targets shape:', targets.shape)
-        # print('sample_weights:', sample_weights)
-        loss_per_sample = F.nll_loss(output, targets, reduction='none')
-        # loss_per_sample = F.cross_entropy(output, targets, reduction='none') # I want to reweight them later, no reduction
+        loss_per_sample = F.nll_loss(output, targets, reduction='none') # softmax_loss = log_softmax + nll_loss
 
         loss_scalar = (loss_per_sample * sample_weights).mean()
-        # print("loss_per_sample shape:", loss_per_sample.shape)
-        # print("sample_weights shape:", sample_weights.shape)
-        # print("loss_scalar shape:", loss_scalar.shape)
         loss_scalar.backward() # Calculate gradients
-        # loss_per_sample.backward() # Calculate gradients
         optimizer.step() # Update weights
 
         loss_all += data.num_graphs * loss_scalar.item()
@@ -161,14 +149,6 @@ def test_multi(loader, model, device):
         batch_counter+=1
         #print("batch_counter: ",batch_counter, end="\r")
         data = data.to(device)
-        # output = model(data)
-        # # Change labels to shape (batch_size, 1) for cross_entropy
-        # new_y = to_categorical(data.y, num_classes=4)
-        # new_w = torch.reshape(data.weights, (int(list(data.weights.shape)[0]),1))
-        # loss = F.binary_cross_entropy(output, new_y, weight=new_w)
-        # loss_all += data.num_graphs * loss.item()
-
-        # optimizer.step()
         output = model(data)  # shape [batch_size, 4]
         # Make sure labels are tensor and integer type
         # print('data.y:', data.y)
@@ -176,17 +156,7 @@ def test_multi(loader, model, device):
 
         # Make sure weights are tensor float type
         sample_weights = torch.as_tensor(data.weight, dtype=torch.float, device=device)
-
-        # log_probs = F.log_softmax(output, dim=1)
-        # print('output:', output)
-        # print('targets:', targets)
-        # print('sample_weights:', sample_weights)
         loss_per_sample = F.nll_loss(output, targets, reduction='none')
-        # loss_per_sample = F.cross_entropy(output, targets, reduction='none') # I want to reweight them later, no reduction
-
-        # print("loss_per_sample shape:", loss_per_sample.shape)
-        # print("sample_weights shape:", sample_weights.shape)
-
         loss_scalar = (loss_per_sample * sample_weights).mean()
         loss_all += data.num_graphs * loss_scalar.item()
 
@@ -195,3 +165,17 @@ def test_multi(loader, model, device):
     torch.cuda.empty_cache()
     return loss_all/len(loader.dataset)
 
+@torch.no_grad()
+def get_scores_multi(loader, model, device, class_n = 4):
+    model.eval()
+    total_output = np.zeros((1, class_n)) # Initialize the 2d array
+    # total_output = np.array([[1]])
+    batch_counter = 0
+    for data in loader:
+        batch_counter+=1
+        # print ("Processing batch", batch_counter, "of",len(loader))
+        data = data.to(device)
+        pred = model(data)
+        total_output = np.append(total_output, pred.cpu().detach().numpy(), axis=0)
+
+    return total_output[1:]

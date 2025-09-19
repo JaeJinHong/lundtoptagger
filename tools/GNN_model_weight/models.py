@@ -122,9 +122,6 @@ class LundNet4Class(torch.nn.Module):
         x = self.seq2(x)
         x = F.dropout(x, p=0.1)
         x = self.lin(x)
-        #print(x.shape)
-        # print('x:', x)
-        # print('log_softmax:', F.log_softmax(x, dim=1))
         return F.log_softmax(x, dim=1) # For multiclass classification
         # return x # Return length 4 output vector for use with nn.CrossEntropyLoss()
 

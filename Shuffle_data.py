@@ -24,11 +24,6 @@ from tools.utils_config import recursive_update, parse_dot_args
 
 print("Libraries loaded!")
 
-# def collect_torch_files_graphs(torch_dir: str, pattern: str) -> List[str]:
-#     paths = sorted(glob.glob(os.path.join(torch_dir, pattern)))
-#     if len(paths) == 0:
-#         raise RuntimeError(f"No torch graph files found in {torch_dir} matching {pattern}")
-#     return paths
 
 def read_flat_root_arrays(root_files: List[str],
                           tree: str,
@@ -56,17 +51,6 @@ def ensure_label_values(df: pd.DataFrame, label_branch: str, labels: List[int], 
     df = df.reset_index(drop=True)
     return df
 
-def prune_per_class(df, label_col: str, n_jets_per_class: int):
-    """
-    Prune dataframe so each class has at most n_jets_per_class entries.
-    This is to use correct number of jets when calculating weights.
-    """
-    pruned = (
-        df.groupby(label_col, group_keys=False)
-          .apply(lambda x: x.head(n_jets_per_class))
-          .reset_index(drop=True)
-    )
-    return pruned
 
 # ---------------------- Weighting ----------------------
 def compute_1d_flat_weights(values: np.ndarray, range_min: float, range_max: float, n_bins: int):
@@ -207,8 +191,6 @@ def main():
     small_df = read_flat_root_arrays(files_root, config["tree_name"],
                                      [config["branch_pt"], config["branch_mass"], config["branch_label"]])
     small_df = ensure_label_values(small_df, config["branch_label"], config["labels"], config["label_map"])
-    # Prune per class
-    # small_df = prune_per_class(small_df, config["branch_label"], int(float(config["n_jets_per_class"])))
 
     hist = {}
     for label in config["labels"]:
@@ -347,7 +329,6 @@ def main():
 
     # Shuffle & split
     sel_df = sel_df.assign(weights=weights)
-    # sel_df = sel_df.sample(frac=1.0, random_state=config["random_seed"]).reset_index(drop=True)
     train_df, test_df = train_test_split(sel_df, test_size=config["test_fraction"],
                                          random_state=config["random_seed"], shuffle=True)
 
@@ -394,10 +375,10 @@ def main():
             # Shuffle the graphs before saving
             np.random.seed(config["random_seed"])
             graph_classes = [int(g.y) for g in graphs_out]
-            print("Classes before shuffling:", graph_classes[:30])
+            # print("Classes before shuffling:", graph_classes[:30])
             np.random.shuffle(graphs_out)
             graph_classes = [int(g.y) for g in graphs_out]
-            print("Classes after shuffling:", graph_classes[:30])
+            # print("Classes after shuffling:", graph_classes[:30])
             torch.save(graphs_out, out_path)
             print(f"Saved {len(graphs_out)} graphs to {out_path}")
 
