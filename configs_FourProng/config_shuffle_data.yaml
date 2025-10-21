@@ -25,7 +25,7 @@ mass_range: [40, 600] # [min, max] in GeV
 mass_binN: 100
 
 # Output
-output_dir: "/data/jjhong96/LundNet_Graph/FourProngV1_MultiClassTrain/Shuffled_Graphs_flat_2d/"
+output_dir: "/data/jjhong96/LundNet_Graph/FourProngV1_MultiClassTrain/Shuffled_Graphs_NoHWW_flat_2d/"
 histogram_filename: "reweight_histograms.npz"
 
 # Class balancing

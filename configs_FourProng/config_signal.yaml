@@ -31,6 +31,30 @@ SS4W:
   min_splits: 3          # minimum number of splittings, or emissions, that jets must have
   skip_dsids: []
 
+SS4W_NoHWW:
+  pt_hist_files_bkg:
+    dir_path: *bkg_histos_dir
+    files: *bkg_histos_files
+  pt_hist_files_signal: 
+    560083: "./histos/FourProngV1/SS4W.root" # TODO: make sure to use histograms with matching mass cutor change the mass cut here
+    560084: "./histos/FourProngV1/SS4W.root"
+    560085: "./histos/FourProngV1/SS4W.root"
+    560086: "./histos/FourProngV1/SS4W.root"
+    560087: "./histos/FourProngV1/SS4W.root"
+    560088: "./histos/FourProngV1/SS4W.root"
+    560089: "./histos/FourProngV1/SS4W.root"
+    560090: "./histos/FourProngV1/SS4W.root"
+    560091: "./histos/FourProngV1/SS4W.root"
+    560092: "./histos/FourProngV1/SS4W.root"
+  # signal_jet_label: [3, 4]
+  signal_jet_label: [4]
+  dsids: [560084, 560085, 560086, 560087, 560088, 560089, 560090, 560091, 560092] # DSIDs for SS4W jets,  keep only jets with nprong label 4
+  pt_range: [350, 3100]   # jet pT selection in GeV, upper limit not really necessary, in testing jets with pt > 3k are not included
+  mass_range: [40, 800]  # jet mass selection in GeV, for no upper limit use .inf
+  eta_max: 2                      # maximum absolute value of jet pseudorapidity, for no upper limit use .inf
+  min_splits: 3          # minimum number of splittings, or emissions, that jets must have
+  skip_dsids: [560083] # Skip the HWW* DSID
+
 HHbbWW:
   pt_hist_files_bkg:
     dir_path: *bkg_histos_dir

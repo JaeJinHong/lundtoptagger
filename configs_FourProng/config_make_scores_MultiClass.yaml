@@ -28,8 +28,11 @@ data:
 
 test:
   path_to_combined_ckpt:  # checkpoints for different kT cuts
+    MultiClass_Ver1: "/data/jjhong96/LundNet_Model/MultiClass_Ver1/LundNet_R22_FourClass_FlatPt_Ver1_e042_0.90269.pt"
     MultiClass_Ver1_Light: "/data/jjhong96/LundNet_Model/MultiClass_Ver1_Light/LundNet_R22_FourClass_FlatPt_Ver1_e042_1.02011.pt"
     MultiClass_FlatMass_Ver1: "/data/jjhong96/LundNet_Model/MultiClass_FlatMass_Ver1/LundNet_R22_FourClass_2dFlat_Ver1_e055_14.48529.pt"
+    MultiClass_NoHWW_Ver1: "/data/jjhong96/LundNet_Model/MultiClass_NoHWW_Ver1/LundNet_R22_FourClass_NoHWW_FlatPt_Ver1_e060_0.84827.pt"
+    MultiClass_NoHWW_FlatMass_Ver1: "/data/jjhong96/LundNet_Model/MultiClass_NoHWW_FlatMass_Ver1/LundNet_R22_FourClass_NoHWW_2dFlat_Ver1_e053_14.46694.pt"
 
   choose_model: LundNet4Class                   # choices: LundNet, LundNet_plus_GN2X, GATNet, GINNet, EdgeGinNet, PNANet
   scores_branch_name: fjet_{model}_LNet4ClassScore  # {model} will be replaced by the value of path_to_combined_ckpt dictionary key
