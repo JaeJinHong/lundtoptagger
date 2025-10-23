@@ -232,12 +232,18 @@ def main():
     for fid, root_file in enumerate(files_root):
         with uproot.open(root_file) as rf:
             arrs = rf[config["tree_name"]].arrays(
-                [config["branch_pt"], config["branch_mass"], config["branch_label"]],
+                [config["branch_pt"], config["branch_mass"], config["branch_label"], "fjet_nProng_labels"],
                 library='np'
             )
             df = pd.DataFrame(arrs)
             df["_file_id"] = fid
             df["_local_index"] = np.arange(len(df))
+
+            target_class = df["fjet_nProng_labels"][0] # Just need a int index
+
+            target_class_mask = df[config["branch_label"]] == target_class
+            # Apply target class mask
+            df = df[target_class_mask]
 
             # Only keep jets that still need to reach n_jets_per_class
             keep_mask = df[config["branch_label"]].apply(
@@ -355,14 +361,16 @@ def main():
                 print(f"    Number of jets in this file: {len(group)}")
                 locs = group["_local_index"].to_numpy()
                 weights = group["weights"].to_numpy()
+                labels = group[config["branch_label"]].to_numpy()
 
                 # Load the graph file once
                 graphs = torch.load(files_graphs[fid], map_location="cpu", weights_only=False)
 
                 # Collect only the needed graphs
-                for loc, w in zip(locs, weights):
+                for loc, w, label in zip(locs, weights, labels):
                     g = graphs[int(loc)]
                     g.weight = torch.tensor([float(w)], dtype=torch.float32)
+                    g.y = torch.tensor([label], dtype=torch.long)
                     graphs_out.append(g)
                     graph_class_counts[int(g.y)] += 1
 

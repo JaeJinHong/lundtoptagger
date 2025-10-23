@@ -60,6 +60,8 @@ def main():
 
     if choose_model == "LundNet4Class":
         model = LundNet4Class()
+    if choose_model == "LundNet_plus_GN2X_4Class":
+        model = LundNet_plus_GN2X_4Class()
     if choose_model == "LundNet":
         model = LundNet()
     if choose_model == "GATNet":

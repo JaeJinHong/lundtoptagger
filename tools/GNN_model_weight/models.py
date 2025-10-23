@@ -79,6 +79,59 @@ class Net(torch.nn.Module):
 #         x = self.lin(x)
 #         #print(x.shape)
 #         return F.sigmoid(x)
+class LundNet_plus_GN2X_4Class(torch.nn.Module):
+    def __init__(self):
+        super(LundNet_plus_GN2X_4Class, self).__init__()
+        self.conv1 = EdgeConv(nn.Sequential(nn.Linear(6, 32), nn.BatchNorm1d(num_features=32), nn.ReLU(),
+                                            nn.Linear(32, 32), nn.BatchNorm1d(num_features=32), nn.ReLU()),aggr='add')
+        self.conv2 = EdgeConv(nn.Sequential(nn.Linear(64, 32), nn.BatchNorm1d(num_features=32), nn.ReLU(),
+                                            nn.Linear(32, 32), nn.BatchNorm1d(num_features=32), nn.ReLU()),aggr='add')
+        self.conv3 = EdgeConv(nn.Sequential(nn.Linear(64,64), nn.BatchNorm1d(num_features=64), nn.ReLU(),
+                                            nn.Linear(64, 64), nn.BatchNorm1d(num_features=64), nn.ReLU()),aggr='add')
+        self.conv4 = EdgeConv(nn.Sequential(nn.Linear(128, 64), nn.BatchNorm1d(num_features=64), nn.ReLU(),
+                                            nn.Linear(64, 64), nn.BatchNorm1d(num_features=64), nn.ReLU()),aggr='add')
+        self.conv5 = EdgeConv(nn.Sequential(nn.Linear(128, 128), nn.BatchNorm1d(num_features=128), nn.ReLU(),
+                                            nn.Linear(128, 128), nn.BatchNorm1d(num_features=128), nn.ReLU()),aggr='add')
+        self.conv6 = EdgeConv(nn.Sequential(nn.Linear(256, 128), nn.BatchNorm1d(num_features=128), nn.ReLU(),
+                                            nn.Linear(128, 128), nn.BatchNorm1d(num_features=128), nn.ReLU()),aggr='add')
+
+        self.seq1 = nn.Sequential(nn.Linear(448, 384),
+                                nn.BatchNorm1d(num_features=384),
+                                nn.ReLU())
+        self.seq2 = nn.Sequential(nn.Linear(389, 256),
+                                  nn.ReLU())
+        self.lin = nn.Linear(256, 4)
+
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+        Ntrk = data.Ntrk
+        Ntrk = torch.unsqueeze(Ntrk, 1)
+        
+        GN2X_pqcd = data.GN2X_pqcd
+        GN2X_pqcd = torch.unsqueeze(GN2X_pqcd, 1)
+        GN2X_phbb = data.GN2X_phbb
+        GN2X_phbb = torch.unsqueeze(GN2X_phbb, 1)
+        GN2X_ptop = data.GN2X_ptop
+        GN2X_ptop = torch.unsqueeze(GN2X_ptop, 1)
+        GN2X_phcc = data.GN2X_phcc
+        GN2X_phcc = torch.unsqueeze(GN2X_phcc, 1)
+
+        x1 = self.conv1(x, edge_index)
+        x2 = self.conv2(x1, edge_index)
+        x3 = self.conv3(x2, edge_index)
+        x4 = self.conv4(x3, edge_index)
+        x5 = self.conv5(x4, edge_index)
+        x6 = self.conv6(x5, edge_index)
+        x = torch.cat((x1, x2, x3, x4, x5, x6), dim=1)
+        x = self.seq1(x)
+        x = global_mean_pool(x, batch)
+        # x = torch.cat( (x, Ntrk) ,dim=1)
+        x = torch.cat( (x, Ntrk, GN2X_phbb, GN2X_phcc, GN2X_ptop, GN2X_pqcd) ,dim=1)
+        x = self.seq2(x)
+        x = F.dropout(x, p=0.1)
+        x = self.lin(x)
+        return F.log_softmax(x, dim=1) # For multiclass classification
+
 
 class LundNet4Class(torch.nn.Module):
     def __init__(self):

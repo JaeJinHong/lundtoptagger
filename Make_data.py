@@ -77,8 +77,12 @@ def main():
         "fjet_phi":            "LRJ_phi",
         "fjet_truth_label":    "LRJ_truthLabel",
         "fjet_nProng_labels":  "LRJ_nprong", # Four-Prong labels
-        "fjet_nQuark_labels":  "LRJ_CapturedQuarkCount",
-        "fjet_Nconst_Charged": "LRJ_Nconst_Charged", # LRJ_Ntrk500, LRJ_Nconst?
+        "fjet_nQuark10_labels":  "LRJ_nquark10",
+        "fjet_nQuark8_labels":  "LRJ_nquark8",
+        "fjet_nQuark8_loose_iso_labels":  "LRJ_nquark8_loose_iso",
+        "fjet_nQuark8_medium_iso_labels":  "LRJ_nquark8_medium_iso",
+        "fjet_nQuark8_tight_iso_labels":  "LRJ_nquark8_tight_iso",
+        "fjet_Nconst_Charged": "LRJ_Nconst_Charged", # Count number of LRJet charged UFO objects
         "GN2X_pqcd":           "GN2Xv01_pqcd",
         "GN2X_phbb":           "GN2Xv01_phbb",
         "GN2X_ptop":           "GN2Xv01_ptop",
