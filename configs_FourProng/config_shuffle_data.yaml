@@ -6,7 +6,7 @@ data:
 tree_name: "FlatSubstructureJetTree"
 branch_pt: "fjet_pt"
 branch_mass: "fjet_m"
-branch_label: "fjet_nQuark10_labels" # fjet_truth_label, fjet_nProng_labels, fjet_nQuark_labels, fjet_nQuark10_labels, fjet_nQuark8_labels, fjet_nQuark8_loose_iso_labels, fjet_nQuark8_medium_iso_labels, fjet_nQuark8_tight_iso_labels
+branch_label: "fjet_nQuark8_medium_iso_labels" # fjet_truth_label, fjet_nProng_labels, fjet_nQuark_labels, fjet_nQuark10_labels, fjet_nQuark8_labels, fjet_nQuark8_loose_iso_labels, fjet_nQuark8_medium_iso_labels, fjet_nQuark8_tight_iso_labels
 
 # Labels
 labels: [1, 2, 3, 4] # This label will be saved in the graphs
@@ -25,7 +25,7 @@ mass_range: [40, 600] # [min, max] in GeV
 mass_binN: 100
 
 # Output
-output_dir: "/data/jjhong96/LundNet_Graph/FourProngV2_MultiClassTrain/Shuffled_Graphs_NQuark10_FlatPt/"
+output_dir: "/data/jjhong96/LundNet_Graph/FourProngV2_MultiClassTrain/Shuffled_Graphs_NQuark8_Medium_Iso_FlatPt/"
 histogram_filename: "reweight_histograms.npz"
 
 # Class balancing

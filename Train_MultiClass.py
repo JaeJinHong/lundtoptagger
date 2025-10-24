@@ -81,6 +81,7 @@ def main():
         device_id = 'cpu'
     device = torch.device(device_id)
     print(f'\nUsing device: {device}')
+    print(f'Model architecture: {choose_model}\n')
 
     #model = torch.nn.DataParallel(model)
     model.to(device)
