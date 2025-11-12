@@ -229,7 +229,7 @@ TTbar_allhad:
     files: *bkg_histos_files
   pt_hist_files_signal:
     601237: "./histos/FourProngV2/TTbar.root" # TODO: make sure to use histograms with matching mass cutor change the mass cut here
-  signal_jet_label: [3]
+  signal_jet_label: [-99, 1, 2, 3, 4] # Include all labels to account for SM ttbar production
   dsids: [601237] # for this DSID, keep only jets with nprong label 3
   pt_range: [350, 3100]   # jet pT selection in GeV, upper limit not really necessary, in testing jets with pt > 3k are not included
   mass_range: [40, 800]  # jet mass selection in GeV, for no upper limit use .inf
@@ -245,7 +245,7 @@ V+jets:
     700843: "./histos/FourProngV2/WZ.root" # TODO: make sure to use histograms with matching mass cutor change the mass cut here
     700849: "./histos/FourProngV2/WZ.root"
     700855: "./histos/FourProngV2/WZ.root"
-  signal_jet_label: [2]
+  signal_jet_label: [-99, 1, 2, 3, 4] # Include all labels to account for SM V+jets production
   dsids: [700843, 700849, 700855] # for this DSID, keep only jets with nprong label 3
   pt_range: [350, 3100]   # jet pT selection in GeV, upper limit not really necessary, in testing jets with pt > 3k are not included
   mass_range: [40, 800]  # jet mass selection in GeV, for no upper limit use .inf

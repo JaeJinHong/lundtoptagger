@@ -27,7 +27,8 @@ print("Libraries loaded!")
 
 def read_flat_root_arrays(root_files: List[str],
                           tree: str,
-                          branches: List[str]) -> pd.DataFrame:
+                          branches: List[str],
+                          target_branch: str) -> pd.DataFrame:
     """
     Read the root files and return a pandas DataFrame
     """
@@ -37,6 +38,12 @@ def read_flat_root_arrays(root_files: List[str],
         with uproot.open(f) as rf:
             arrs = rf[tree].arrays(branches, library='np')
             df = pd.DataFrame({b: arrs[b] for b in branches})
+
+            target_class = df["fjet_nProng_labels"][0] # Just need a int index
+            target_branch_mask = df[target_branch] == target_class
+            df = df[target_branch_mask] # Filter to only target class
+            # E.g) I want to use NQuark8_Medium_Iso == 3 from NProng_label=3 for boosted top
+
             frames.append(df)
     return pd.concat(frames, ignore_index=True)
 
@@ -189,7 +196,8 @@ def main():
 
     # Small files for histogramming
     small_df = read_flat_root_arrays(files_root, config["tree_name"],
-                                     [config["branch_pt"], config["branch_mass"], config["branch_label"]])
+                                     [config["branch_pt"], config["branch_mass"], config["branch_label"], "fjet_nProng_labels"],
+                                     target_branch=config["branch_label"])
     small_df = ensure_label_values(small_df, config["branch_label"], config["labels"], config["label_map"])
 
     hist = {}
@@ -392,10 +400,10 @@ def main():
 
             print(f"Class distribution in this part: {graph_class_counts}")
 
-    save_split(train_df, "train")
-    # save_split_histograms(train_df, "train", config, weighted=False)
     save_split_histograms(train_df, "train", config, weighted=True)
     save_split_histograms(sel_df, "all", config, weighted=True)
+    save_split(train_df, "train")
+    # save_split_histograms(train_df, "train", config, weighted=False)
     save_split(test_df, "test")
 
     print("Preprocessing done.")

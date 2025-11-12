@@ -1,7 +1,7 @@
 data:
   # The ROOT and graphs files should be the output of Make_data.py                            
-  paths_to_test_file_root: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/data_*.root"  # can also be a list of glob patterns
-  paths_to_test_file_graphs: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/graphs_*"       
+  paths_to_test_file_root: "/data/jjhong96/LundNet_Graph/FourProngV2_Valid/data_*.root"  # can also be a list of glob patterns
+  paths_to_test_file_graphs: "/data/jjhong96/LundNet_Graph/FourProngV2_Valid/graphs_*"       
   # paths_to_test_file_root: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/data_HHbbWW_Val_mc23d__ln_kT_cut_None.root"  # can also be a list of glob patterns
   # paths_to_test_file_graphs: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/graphs_HHbbWW_Val_mc23d__ln_kT_cut_None_with_pt"                  
   # paths_to_test_file_root: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/data_HHbbWW*TeV_HHbbWW_Val_mc23d__ln_kT_cut_None.root"  # can also be a list of glob patterns
@@ -16,7 +16,7 @@ data:
   # paths_to_test_file_graphs: "/data/jjhong96/LundNet_Graph/FourProngV1_Split/mass_40_800/graphs_SS4W_Train__part*_5.00percent_ln_kT_cut_None_with_pt"                                                     # can also be a list of glob patterns
   # paths_to_test_file_root: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/data_QCD_Val__part*_20.00percent_ln_kT_cut_None.root"  # can also be a list of glob patterns
   # paths_to_test_file_graphs: "/data/jjhong96/LundNet_Graph/FourProngV1_Valid/mass_40_800/graphs_QCD_Val__part*_20.00percent_ln_kT_cut_None_with_pt"                                                     # can also be a list of glob patterns
-  path_to_outdir: "/data/jjhong96/LundNet_Test/MultiClass/"
+  path_to_outdir: "/data/jjhong96/LundNet_Test/FourProngV2/"
 
   # the name of the output file will be the same as the name of the input ROOT file, with this suffix added (but in a different directory)
   # TODO: get the epoch automatically from the checkpoint file name
@@ -33,7 +33,14 @@ test:
     MultiClass_FlatMass_Ver1: "/data/jjhong96/LundNet_Model/MultiClass_FlatMass_Ver1/LundNet_R22_FourClass_2dFlat_Ver1_e055_14.48529.pt"
     MultiClass_NoHWW_Ver1: "/data/jjhong96/LundNet_Model/MultiClass_NoHWW_Ver1/LundNet_R22_FourClass_NoHWW_FlatPt_Ver1_e060_0.84827.pt"
     MultiClass_NoHWW_FlatMass_Ver1: "/data/jjhong96/LundNet_Model/MultiClass_NoHWW_FlatMass_Ver1/LundNet_R22_FourClass_NoHWW_2dFlat_Ver1_e053_14.46694.pt"
+    MultiClass_NProng_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NProng/LundNet_R22_FourClass_NProng_FlatPt_Ver2_e051_0.90880.pt"
+    MultiClass_NQuark10_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark10/LundNet_R22_FourClass_NQuark10_FlatPt_Ver2_e059_0.91974.pt"
+    MultiClass_NQuark8_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark8/LundNet_R22_FourClass_NQuark8_FlatPt_Ver2_e054_0.86671.pt"
+    MultiClass_NQuark8_Loose_Iso_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark8_Loose_Iso/LundNet_R22_FourClass_NQuark8_Loose_Iso_FlatPt_Ver2_e046_0.85655.pt"
+    MultiClass_NQuark8_Medium_Iso_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark8_Medium_Iso/LundNet_R22_FourClass_NQuark8_Medium_Iso_FlatPt_Ver2_e054_0.82370.pt"
+    MultiClass_NQuark8_Tight_Iso_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark8_Tight_Iso/LundNet_R22_FourClass_NQuark8_Tight_Iso_FlatPt_Ver2_e052_0.83598.pt"
+    
 
   choose_model: LundNet4Class                   # choices: LundNet, LundNet_plus_GN2X, GATNet, GINNet, EdgeGinNet, PNANet
   scores_branch_name: fjet_{model}_LNet4ClassScore  # {model} will be replaced by the value of path_to_combined_ckpt dictionary key
-  batch_size: 2048
+  batch_size: 4096 # 2048
