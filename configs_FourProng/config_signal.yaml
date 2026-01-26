@@ -1,6 +1,8 @@
 # Allow to use different label branches, other than the truthLabel
-jet_label_branch: 'LRJ_nquark10' # LRJ_truthLabel, LRJ_nprong, LRJ_nquark10, LRJ_nquark8, LRJ_nquark8_loose_iso, LRJ_nquark8_medium_iso, LRJ_nquark8_tight_iso
+jet_label_branch: 'LRJ_nprong' # LRJ_truthLabel, LRJ_nprong, LRJ_nquark10, LRJ_nquark8, LRJ_nquark8_loose_iso, LRJ_nquark8_medium_iso, LRJ_nquark8_tight_iso
 binary_label: false  # if true, use binary classification (signal=1 vs background=0), if false, use multiclass classification(Dump raw signal_jet_label values)
+
+signal: 'SS4W'
 
 bkg_histos:
   dir_path: &bkg_histos_dir "./histos"
@@ -54,6 +56,30 @@ SS4W_NoHWW:
   eta_max: 2                      # maximum absolute value of jet pseudorapidity, for no upper limit use .inf
   min_splits: 3          # minimum number of splittings, or emissions, that jets must have
   skip_dsids: [560083] # Skip the HWW* DSID
+
+SS4W_S300:
+  pt_hist_files_bkg:
+    dir_path: *bkg_histos_dir
+    files: *bkg_histos_files
+  pt_hist_files_signal: 
+    560083: "./histos/FourProngV2/SS4W.root" # TODO: make sure to use histograms with matching mass cutor change the mass cut here
+    560084: "./histos/FourProngV2/SS4W.root"
+    560085: "./histos/FourProngV2/SS4W.root"
+    560086: "./histos/FourProngV2/SS4W.root"
+    560087: "./histos/FourProngV2/SS4W.root"
+    560088: "./histos/FourProngV2/SS4W.root"
+    560089: "./histos/FourProngV2/SS4W.root"
+    560090: "./histos/FourProngV2/SS4W.root"
+    560091: "./histos/FourProngV2/SS4W.root"
+    560092: "./histos/FourProngV2/SS4W.root"
+  # signal_jet_label: [3, 4]
+  signal_jet_label: [4]
+  dsids: [560089] # DSIDs for SS4W jets,  keep only jets with nprong label 4
+  pt_range: [350, 3100]   # jet pT selection in GeV, upper limit not really necessary, in testing jets with pt > 3k are not included
+  mass_range: [40, 800]  # jet mass selection in GeV, for no upper limit use .inf
+  eta_max: 2                      # maximum absolute value of jet pseudorapidity, for no upper limit use .inf
+  min_splits: 3          # minimum number of splittings, or emissions, that jets must have
+  skip_dsids: [560083, 560084, 560085, 560086, 560087, 560088, 560090, 560091, 560092]
 
 HHbbWW:
   pt_hist_files_bkg:
@@ -230,6 +256,20 @@ TTbar_allhad:
   pt_hist_files_signal:
     601237: "./histos/FourProngV2/TTbar.root" # TODO: make sure to use histograms with matching mass cutor change the mass cut here
   signal_jet_label: [-99, 1, 2, 3, 4] # Include all labels to account for SM ttbar production
+  dsids: [601237] # for this DSID, keep only jets with nprong label 3
+  pt_range: [350, 3100]   # jet pT selection in GeV, upper limit not really necessary, in testing jets with pt > 3k are not included
+  mass_range: [40, 800]  # jet mass selection in GeV, for no upper limit use .inf
+  eta_max: 2                      # maximum absolute value of jet pseudorapidity, for no upper limit use .inf
+  min_splits: 3          # minimum number of splittings, or emissions, that jets must have
+  skip_dsids: []
+
+TTbar_allhad_top_only:
+  pt_hist_files_bkg:
+    dir_path: *bkg_histos_dir
+    files: *bkg_histos_files
+  pt_hist_files_signal:
+    601237: "./histos/FourProngV2/TTbar.root" # TODO: make sure to use histograms with matching mass cutor change the mass cut here
+  signal_jet_label: [3] # Include tbW to prevent top vs V+Jets confusion
   dsids: [601237] # for this DSID, keep only jets with nprong label 3
   pt_range: [350, 3100]   # jet pT selection in GeV, upper limit not really necessary, in testing jets with pt > 3k are not included
   mass_range: [40, 800]  # jet mass selection in GeV, for no upper limit use .inf

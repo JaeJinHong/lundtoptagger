@@ -132,6 +132,95 @@ class LundNet_plus_GN2X_4Class(torch.nn.Module):
         x = self.lin(x)
         return F.log_softmax(x, dim=1) # For multiclass classification
 
+class GlobalAvgPoolGNN_ONNX(nn.Module):
+    """
+    ONNX-exportable versión de global mean pooling sobre 'batch'.
+    Compatible con grafos múltiples y sin dependencias externas.
+    """
+    def __init__(self, eps: float = 1e-8):
+        super().__init__()
+        self.eps = eps
+
+    def forward(self, x, batch):
+        # batch: [num_nodes], valores entre 0 y num_graphs - 1
+        num_graphs = int(batch.max().item() + 1)
+
+        # one_hot: [num_nodes, num_graphs]
+        one_hot = F.one_hot(batch, num_classes=num_graphs).float()
+
+        # sum features por grafo → [num_graphs, feat_dim]
+        summed = torch.matmul(one_hot.T, x)
+
+        # número de nodos por grafo → [num_graphs, 1]
+        count = one_hot.sum(dim=0, keepdim=True).T
+
+        # mean
+        out = summed / (count + self.eps)
+        return out
+
+class ManualLundNet(torch.nn.Module):
+    def __init__(self, aggr='add'):
+        super().__init__()
+        
+        self.conv1 = EdgeConv(nn.Sequential(nn.Linear(6, 32), nn.BatchNorm1d(num_features=32), nn.ReLU(),
+                                            nn.Linear(32, 32), nn.BatchNorm1d(num_features=32), nn.ReLU()),aggr='add')
+        self.conv2 = EdgeConv(nn.Sequential(nn.Linear(64, 32), nn.BatchNorm1d(num_features=32), nn.ReLU(),
+                                            nn.Linear(32, 32), nn.BatchNorm1d(num_features=32), nn.ReLU()),aggr='add')
+        self.conv3 = EdgeConv(nn.Sequential(nn.Linear(64,64), nn.BatchNorm1d(num_features=64), nn.ReLU(),
+                                            nn.Linear(64, 64), nn.BatchNorm1d(num_features=64), nn.ReLU()),aggr='add')
+        self.conv4 = EdgeConv(nn.Sequential(nn.Linear(128, 64), nn.BatchNorm1d(num_features=64), nn.ReLU(),
+                                            nn.Linear(64, 64), nn.BatchNorm1d(num_features=64), nn.ReLU()),aggr='add')
+        self.conv5 = EdgeConv(nn.Sequential(nn.Linear(128, 128), nn.BatchNorm1d(num_features=128), nn.ReLU(),
+                                            nn.Linear(128, 128), nn.BatchNorm1d(num_features=128), nn.ReLU()),aggr='add')
+        self.conv6 = EdgeConv(nn.Sequential(nn.Linear(256, 128), nn.BatchNorm1d(num_features=128), nn.ReLU(),
+                                            nn.Linear(128, 128), nn.BatchNorm1d(num_features=128), nn.ReLU()),aggr='add')
+
+        self.seq1 = nn.Sequential(
+            nn.Linear(448, 384),
+            nn.BatchNorm1d(384),
+            nn.ReLU()
+        )
+        self.pool = GlobalAvgPoolGNN_ONNX()
+        
+        self.seq2 = nn.Sequential(
+            nn.Linear(385, 256),
+            nn.ReLU()
+        )
+        self.lin = nn.Linear(256, 1)
+
+        
+    def forward(self,x, edge_index, batch, Ntrk ,counts):
+
+        Ntrk = Ntrk.unsqueeze(1)
+        x1 = self.conv1(x, edge_index).view(-1, 32)
+        x2 = self.conv2(x1, edge_index).view(-1, 32)
+        x3 = self.conv3(x2, edge_index).view(-1, 64)
+        x4 = self.conv4(x3, edge_index).view(-1, 64)
+        x5 = self.conv5(x4, edge_index).view(-1, 128)
+        x6 = self.conv6(x5, edge_index).view(-1, 128)
+    
+        x_cat = torch.cat([x1, x2, x3,x4, x5,x6], dim=1)
+        
+        
+        x = self.seq1(x_cat)
+        xseq1=x
+
+        if not torch.onnx.is_in_onnx_export():
+            x_global = global_mean_pool(x, batch)
+        else:
+            x_global = self.pool(x, batch)
+
+        x= x_global
+
+        x = torch.cat([x, Ntrk], dim=1)
+        x = self.seq2(x)
+
+        x = F.dropout(x, p=0.1, training=self.training)
+        x = self.lin(x)
+        out = torch.sigmoid(x)
+        if torch.onnx.is_in_onnx_export():
+            return out
+        return out
 
 class LundNet4Class(torch.nn.Module):
     def __init__(self):
@@ -170,7 +259,12 @@ class LundNet4Class(torch.nn.Module):
         x6 = self.conv6(x5, edge_index)
         x = torch.cat((x1, x2, x3, x4, x5, x6), dim=1)
         x = self.seq1(x)
-        x = global_mean_pool(x, batch)
+
+        if not torch.onnx.is_in_onnx_export():
+            x = global_mean_pool(x, batch)
+        else:
+            x = self.pool(x, batch)
+            
         x = torch.cat( (x, Ntrk) ,dim=1)
         x = self.seq2(x)
         x = F.dropout(x, p=0.1)
@@ -216,7 +310,12 @@ class LundNet(torch.nn.Module):
         x6 = self.conv6(x5, edge_index)
         x = torch.cat((x1, x2, x3, x4, x5, x6), dim=1)
         x = self.seq1(x)
-        x = global_mean_pool(x, batch)
+
+        if not torch.onnx.is_in_onnx_export():
+            x = global_mean_pool(x, batch)
+        else:
+            x = self.pool(x, batch)
+
         x = torch.cat( (x, Ntrk) ,dim=1)
         x = self.seq2(x)
         x = F.dropout(x, p=0.1)

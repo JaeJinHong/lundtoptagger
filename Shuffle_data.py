@@ -40,9 +40,40 @@ def read_flat_root_arrays(root_files: List[str],
             df = pd.DataFrame({b: arrs[b] for b in branches})
 
             target_class = df["fjet_nProng_labels"][0] # Just need a int index
+            print("target_class: ", target_class)
             target_branch_mask = df[target_branch] == target_class
             df = df[target_branch_mask] # Filter to only target class
             # E.g) I want to use NQuark8_Medium_Iso == 3 from NProng_label=3 for boosted top
+
+            frames.append(df)
+    return pd.concat(frames, ignore_index=True)
+
+
+def read_flat_root_arrays_dsid_label(root_files: List[str],
+                          tree: str,
+                          branches: List[str],
+                          target_branch: str,
+                          label_dsid_map: map) -> pd.DataFrame:
+    """
+    Read the root files and return a pandas DataFrame
+    Use event DSID to determine the target label
+    Must be run before the small_df for weight determination
+    """
+    frames = []
+    for f in root_files:
+        print(f"Reading {f}...")
+        with uproot.open(f) as rf:
+            arrs = rf[tree].arrays(branches, library='np')
+            df = pd.DataFrame({b: arrs[b] for b in branches})
+
+            dsid = df["EventInfo_mcChannelNumber"][0]
+
+            if dsid not in label_dsid_map:
+                raise RuntimeError(f"DSID {dsid} not found in label_dsid_map!") # Skip missing DSIDs
+            target_label = label_dsid_map[dsid]
+            print(f"  DSID {dsid} mapped to label {target_label}")
+            print(f"  Overwriting {target_branch} to {target_label}...")
+            df[target_branch] = target_label # e.g) Overwrite the fjet_nProng_labels 
 
             frames.append(df)
     return pd.concat(frames, ignore_index=True)
@@ -83,6 +114,16 @@ def compute_2d_flat_weights(x: np.ndarray, y: np.ndarray,
     weights2d = 1.0 / counts_safe
     weights2d *= np.max(counts)
     return xedges, yedges, weights2d
+
+def compute_1d_event_weights(values: np.ndarray,
+                             event_weights: np.ndarray,
+                             range_min: float, range_max: float, n_bins: int):
+    """Compute weights for 1D in given range."""
+    bins = np.linspace(range_min, range_max, n_bins + 1)
+    counts, edges = np.histogram(values, bins=bins, weights=event_weights)
+    counts_safe = counts.astype(float)
+    counts_safe[counts_safe == 0] = 1.0
+    return edges, counts_safe
 
 def assign_weights(values, edges, weights):
     idx = np.digitize(values, edges) - 1
@@ -157,7 +198,9 @@ def main():
     args = parser.parse_args()
     config_file = args.config
     config = load_yaml(config_file)
-
+    
+    do_label_per_dsid = config['label_per_dsid']['do_label_per_dsid']
+    label_dsid_map = config['label_per_dsid']['label_dsid_map']
 
     filepath_placeholder_vals = dict( # Dummy values for formatting
         # sample = config['data']['sample'],
@@ -195,8 +238,14 @@ def main():
     print(f"Matched {len(files_graphs)} ROOT ↔ graph file pairs.")
 
     # Small files for histogramming
-    small_df = read_flat_root_arrays(files_root, config["tree_name"],
-                                     [config["branch_pt"], config["branch_mass"], config["branch_label"], "fjet_nProng_labels"],
+    if do_label_per_dsid: # Labels are determined by their dsid
+        small_df = read_flat_root_arrays_dsid_label(files_root, config["tree_name"],
+                                     [config["branch_pt"], config["branch_mass"], config["branch_label"], "fjet_nProng_labels", "EventInfo_mcChannelNumber", "EventInfo_mcEventWeight"],
+                                     target_branch=config["branch_label"], label_dsid_map=label_dsid_map)
+    else: # Default labelling
+        small_df = read_flat_root_arrays(files_root, config["tree_name"],
+                                     [config["branch_pt"], config["branch_mass"], config["branch_label"], "fjet_nProng_labels", 
+                                     "EventInfo_mcEventWeight"],
                                      target_branch=config["branch_label"])
     small_df = ensure_label_values(small_df, config["branch_label"], config["labels"], config["label_map"])
 
@@ -229,6 +278,30 @@ def main():
                 config["mass_range"], config["mass_binN"]
             )
             hist[label] = {"pt_edges": xedges, "mass_edges": yedges, "pt_mass_weights2d": w2d}
+        elif config["reweight_mode"] == "event_weight":
+            print("Using event weights as it is...")
+            edges, w = compute_1d_event_weights(
+                df_label[config["branch_pt"]],
+                df_label["EventInfo_mcEventWeight"],
+                config["pt_range"][0], config["pt_range"][1], config["pt_binN"]
+            )
+            hist[label] = {"pt_edges": edges, "pt_weights": w}
+        elif config["reweight_mode"] == "event_weight_signal_flat_pT":
+            if label == config["signal_label"]:
+                print("Using flat pt weights for signal...")
+                edges, w = compute_1d_flat_weights(
+                    df_label[config["branch_pt"]],
+                    config["pt_range"][0], config["pt_range"][1], config["pt_binN"]
+                )
+                hist[label] = {"pt_edges": edges, "pt_weights": w}
+            else:
+                print("Using event weights as for bkg, flat pt for signal...")
+                edges, w = compute_1d_event_weights(
+                    df_label[config["branch_pt"]],
+                    df_label["EventInfo_mcEventWeight"],
+                    config["pt_range"][0], config["pt_range"][1], config["pt_binN"]
+                )
+                hist[label] = {"pt_edges": edges, "pt_weights": w}
 
     # np.savez_compressed(os.path.join(config["output_dir"], config["histogram_filename"]), **hist)
 
@@ -240,14 +313,25 @@ def main():
     for fid, root_file in enumerate(files_root):
         with uproot.open(root_file) as rf:
             arrs = rf[config["tree_name"]].arrays(
-                [config["branch_pt"], config["branch_mass"], config["branch_label"], "fjet_nProng_labels"],
+                [config["branch_pt"], config["branch_mass"], config["branch_label"], "fjet_nProng_labels", "EventInfo_mcChannelNumber", "EventInfo_mcEventWeight"],
                 library='np'
             )
             df = pd.DataFrame(arrs)
             df["_file_id"] = fid
             df["_local_index"] = np.arange(len(df))
 
+            if do_label_per_dsid: # Do the same label override as above
+                dsid = df["EventInfo_mcChannelNumber"][0]
+
+                target_label = label_dsid_map[dsid]
+                target_branch = config["branch_label"]
+                print(f"  DSID {dsid} mapped to label {target_label}")
+                print(f"  Overwriting {target_branch} to {target_label}...")
+                df[target_branch] = target_label
+
             target_class = df["fjet_nProng_labels"][0] # Just need a int index
+
+            print("Processing file_id", fid, "with target class", target_class)
 
             target_class_mask = df[config["branch_label"]] == target_class
             # Apply target class mask
@@ -323,6 +407,26 @@ def main():
                     hist[label]["mass_edges"],
                     hist[label]["pt_mass_weights2d"]
                 )
+
+    elif config["reweight_mode"] == "event_weight":
+        for label in config["labels"]:
+            mask = sel_df[config["branch_label"]] == label
+            if mask.sum() > 0: # EventInfo_mcEventWeight
+                weights[mask] = sel_df.loc[mask, "EventInfo_mcEventWeight"] * 1.0e-5 # Scale down the weights
+    elif config["reweight_mode"] == "event_weight_signal_flat_pT":
+        for label in config["labels"]:
+            if label == config["signal_label"]: # Do flat-pt weighting for signal
+                mask = sel_df[config["branch_label"]] == label
+                if mask.sum() > 0:
+                    weights[mask] = assign_weights(
+                        sel_df.loc[mask, config["branch_pt"]],
+                        hist[label]["pt_edges"],
+                        hist[label]["pt_weights"]
+                    )
+            else:
+                mask = sel_df[config["branch_label"]] == label
+                if mask.sum() > 0: # EventInfo_mcEventWeight
+                    weights[mask] = sel_df.loc[mask, "EventInfo_mcEventWeight"] * 1.0e-5 # Scale down the weights
     
     print("Weighting done...")
 

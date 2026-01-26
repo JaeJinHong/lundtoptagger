@@ -8,29 +8,52 @@ branch_pt: "fjet_pt"
 branch_mass: "fjet_m"
 branch_label: "fjet_nProng_labels" # fjet_truth_label, fjet_nProng_labels, fjet_nQuark_labels, fjet_nQuark10_labels, fjet_nQuark8_labels, fjet_nQuark8_loose_iso_labels, fjet_nQuark8_medium_iso_labels, fjet_nQuark8_tight_iso_labels
 
+label_per_dsid:
+  do_label_per_dsid: true # Only for SM background training
+  label_dsid_map:
+    801169: 1 # These are QCD samples, use label=1
+    801170: 1
+    801171: 1
+    801172: 1
+    801173: 1
+    700843: 2 # Wqq
+    700849: 2 # Zqq
+    700855: 2 # Zbb
+    601237: 3 # ttbar_allhad
+    # 560083: 4 # HH4W
+    560088: 4 # SS4W 200
+    560089: 4 # SS4W 300
+    560090: 4 # SS4W 400
+    560091: 4 # SS4W 500
+    560092: 4 # SS4W 600
+
 # Labels
 labels: [1, 2, 3, 4] # This label will be saved in the graphs
+signal_label: 4 # If event_weight_signal_flat_pT is used, this label will be treated as signal for flat-pT weighting
 label_map: null  # optional mapping, e.g. {1:3, 10:1, 2:2, 12:4} # Move truth_labels to {1,2,3,4} and QCD (10) to 1
 # Label mapping happens before the filtering of labels
 # label_map: null for no mapping
 
 # Jets per class
-n_jets_per_class: 971255 # Number of jets per class to use (None for all), minimum 971255, maximum 1.5e+6
-# n_jets_per_class: 100000 # Number of jets per class to use (None for all), minimum 971255, maximum 1.5e+6
+# n_jets_per_class: 1198551 # Number of jets per class to use (None for all), minimum 971255, maximum 1.5e+6
+
+# n_jets_per_class: 971255 # Number of jets per class to use (None for all), minimum 971255, maximum 1.5e+6
+n_jets_per_class: 345015 # Number of jets per class to use (None for all), minimum 971255, maximum 1.5e+6. For S300 signal
+# n_jets_per_class: 10000 # Number of jets per class to use (None for all), minimum 971255, maximum 1.5e+6
 
 # Reweighting
-reweight_mode: "flat_pt"  # "none", "flat_pt", "flat_mass", "flat_pt_mass_2d"
+reweight_mode: "flat_pt_mass_2d"  # "none", "flat_pt", "flat_mass", "flat_pt_mass_2d", "event_weight", "event_weight_signal_flat_pT"
 pt_range: [350, 2500] # [min, max] in GeV
 pt_binN: 100
 mass_range: [40, 600] # [min, max] in GeV
 mass_binN: 100
 
 # Output
-output_dir: "/data/jjhong96/LundNet_Graph/FourProngV2_MultiClassTrain/Shuffled_Graphs_NProng_FlatPt/"
+output_dir: "/data/jjhong96/LundNet_Graph/FourProngV2_MultiClassTrain/Shuffled_Graphs_S300_NProng_SM_2dFlat/"
 histogram_filename: "reweight_histograms.npz"
 
 # Class balancing
-reference_label: 1 # Label to use as a reference class for balancing. E.g) I'll scale class 2 sum of weight to match class 1 sum of weight
+reference_label: 4 # Label to use as a reference class for balancing. E.g) I'll scale class 2 sum of weight to match class 1 sum of weight
 
 # Split
 test_fraction: 0.1

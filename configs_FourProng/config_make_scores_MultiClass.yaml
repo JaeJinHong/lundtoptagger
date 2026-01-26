@@ -39,6 +39,15 @@ test:
     MultiClass_NQuark8_Loose_Iso_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark8_Loose_Iso/LundNet_R22_FourClass_NQuark8_Loose_Iso_FlatPt_Ver2_e046_0.85655.pt"
     MultiClass_NQuark8_Medium_Iso_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark8_Medium_Iso/LundNet_R22_FourClass_NQuark8_Medium_Iso_FlatPt_Ver2_e054_0.82370.pt"
     MultiClass_NQuark8_Tight_Iso_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark8_Tight_Iso/LundNet_R22_FourClass_NQuark8_Tight_Iso_FlatPt_Ver2_e052_0.83598.pt"
+    MultiClass_SM_Bkg_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_SM_Bkg_Ver2/LundNet_R22_FourClass_SMBkg_MCWeight_Ver2_e016_0.12283.pt"
+    MultiClass_NProng_S300_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NProng_S300/LundNet_R22_FourClass_NProng_S300_FlatPt_Ver2_e081_1.74151.pt"
+    MultiClass_NProng_S300_FlatMass_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NProng_S300/LundNet_R22_FourClass_NProng_S300_2dFlat_Ver2_e045_22.75139.pt"
+    MultiClass_NProng_S300_SM_FlatPt_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_NProng_S300_SM_FlatPt_Ver2/LundNet_R22_FourClass_NProng_S300_SM_FlatPt_Ver2_e034_3.35325.pt" # SM_FlatPt: Used V+Jets, ttbar_allhad sample, but flat-pt applied on all four classes
+    MultiClass_NProng_S300_SM_FlatMass_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_NProng_S300_SM_2dFlat_Ver2/LundNet_R22_FourClass_NProng_S300_SM_2dFlat_Ver2_e022_29.83640.pt" # SM_FlatPt: Used V+Jets, ttbar_allhad sample, but 2d-Flat applied on all four classes
+    MultiClass_NProng_S300_SM_Bkg_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_NProng_S300_SM_Bkg_Ver2/LundNet_R22_FourClass_NProng_S300_SMBkg_MCWeight_Ver2_e017_0.00496.pt"
+    MultiClass_NProng_S300_SM_Bkg_FlatPt_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_NProng_S300_SM_Bkg_FlatPt_Ver2/LundNet_R22_FourClass_NProng_S300_SMBkg_MCWeight_FlatPt_Ver2_e020_2.98365.pt" # SM_Bkg_FlatPt: Used V+Jets, ttbar_allhad sample, but flat-pt applied on signal class only
+    MultiClass_NProng_S300_SM_Bkg_ttbar_top_only_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_NProng_S300_SM_Bkg_ttbar_top_only_Ver2/LundNet_R22_FourClass_NProng_S300_SMBkg_MCWeight_ttbar_top_only_Ver2_e020_0.00403.pt"
+    MultiClass_NProng_S300_SM_Bkg_ttbar_top_only_FlatPt_Ver2: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_NProng_S300_SM_Bkg_ttbar_top_only_FlatPt_Ver2/LundNet_R22_FourClass_NProng_S300_SMBkg_MCWeight_ttbar_top_only_FlatPt_Ver2_e026_2.48231.pt"
     
 
   choose_model: LundNet4Class                   # choices: LundNet, LundNet_plus_GN2X, GATNet, GINNet, EdgeGinNet, PNANet
