@@ -175,7 +175,10 @@ def get_scores_multi(loader, model, device, class_n = 4):
         batch_counter+=1
         # print ("Processing batch", batch_counter, "of",len(loader))
         data = data.to(device)
-        pred = model(data)
+        # pred = model(data) # Original
+        counts = torch.bincount(data.batch) # For LundONNX export
+        pred = model(data.x, data.edge_index, data.batch, data.Ntrk, counts) # For LundONNX export
+        # pred = model(data.x, data.edge_index, data.batch, data.Ntrk) # For LundONNX export
         total_output = np.append(total_output, pred.cpu().detach().numpy(), axis=0)
 
     return total_output[1:]

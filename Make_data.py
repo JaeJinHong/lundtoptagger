@@ -88,9 +88,14 @@ def main():
         "GN2X_ptop":           "GN2Xv01_ptop",
         "GN2X_phcc":           "GN2Xv01_phcc",
         "fjet_tau42_wta":      "Tau42_wta", # Four-prong cut-based discriminant
+        "fjet_ExKt_subJ_pt":   "LRJ_ExKt_subJ_pt",
+        "fjet_ExKt_subJ_eta":  "LRJ_ExKt_subJ_eta",
+        "fjet_ExKt_subJ_phi":  "LRJ_ExKt_subJ_phi",
+        "fjet_ChildQuark_pt":  "LRJ_ChildQuark_pt",
+        "fjet_ChildQuark_eta": "LRJ_ChildQuark_eta",
+        "fjet_ChildQuark_phi": "LRJ_ChildQuark_phi",
     }
     # TODO: change this to just use the same names in the output file (requires modifying plotting code as well)
-    
     # Additional variables which require some manipulation before they can be saved
     # because they need to be calculated or they have one value per event rather than per jet
     additional_output_vars = [
@@ -195,6 +200,8 @@ def main():
 
                 for jet_property_out, jet_propety_in in jet_property_names.items():
                     if jet_propety_in in jet_properties:
+                        # print("jet_property_in: ", jet_propety_in)
+                        # print("jet_properties[jet_propety_in] size: ", len(jet_properties[jet_propety_in]))
                         out_tree_dict[jet_property_out] = ak.concatenate([out_tree_dict[jet_property_out], jet_properties[jet_propety_in][passed_selection]])
                     else:
                         print(f"Warning: {jet_propety_in} not found in file {file}, skipping")

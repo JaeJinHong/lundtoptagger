@@ -24,6 +24,16 @@ from tools.utils_config import recursive_update, parse_dot_args
 
 print("Libraries loaded!")
 
+def dphi_MPi_Pi(phi1, phi2):
+    # Source - https://stackoverflow.com/a/15927914
+    # Posted by segasai, modified by community. See post 'Timeline' for change history
+    # Retrieved 2026-02-15, License - CC BY-SA 4.0
+
+    phases = phi1 - phi2
+    phases = (phases + np.pi) % (2 * np.pi) - np.pi
+    return phases
+
+
 
 def read_flat_root_arrays(root_files: List[str],
                           tree: str,
@@ -198,6 +208,8 @@ def main():
     args = parser.parse_args()
     config_file = args.config
     config = load_yaml(config_file)
+
+    do_subJ_regression = config['do_subJ_Regression'] # Get the boolean
     
     do_label_per_dsid = config['label_per_dsid']['do_label_per_dsid']
     label_dsid_map = config['label_per_dsid']['label_dsid_map']
@@ -312,10 +324,19 @@ def main():
 
     for fid, root_file in enumerate(files_root):
         with uproot.open(root_file) as rf:
-            arrs = rf[config["tree_name"]].arrays(
-                [config["branch_pt"], config["branch_mass"], config["branch_label"], "fjet_nProng_labels", "EventInfo_mcChannelNumber", "EventInfo_mcEventWeight"],
-                library='np'
-            )
+            if do_subJ_regression:
+                arrs = rf[config["tree_name"]].arrays(
+                    [config["branch_pt"], config["branch_mass"], config["branch_label"],
+                     "fjet_eta", "fjet_phi", # Need jet kinematics
+                     config["branch_subJ_pt"], config["branch_subJ_eta"], config["branch_subJ_phi"], # Also include the SubJ info
+                     "fjet_nProng_labels", "EventInfo_mcChannelNumber", "EventInfo_mcEventWeight"],
+                    library='np'
+                )
+            else:
+                arrs = rf[config["tree_name"]].arrays(
+                    [config["branch_pt"], config["branch_mass"], config["branch_label"], "fjet_nProng_labels", "EventInfo_mcChannelNumber", "EventInfo_mcEventWeight"],
+                    library='np'
+                )
             df = pd.DataFrame(arrs)
             df["_file_id"] = fid
             df["_local_index"] = np.arange(len(df))
@@ -475,16 +496,58 @@ def main():
                 weights = group["weights"].to_numpy()
                 labels = group[config["branch_label"]].to_numpy()
 
+                if do_subJ_regression:
+                    J_pt = group[config["branch_pt"]].to_numpy()
+                    J_eta = group["fjet_eta"].to_numpy()
+                    J_phi = group["fjet_phi"].to_numpy()
+
+                    subJ_pt = group[config["branch_subJ_pt"]].to_numpy()
+                    subJ_eta = group[config["branch_subJ_eta"]].to_numpy()
+                    subJ_phi = group[config["branch_subJ_phi"]].to_numpy()
+
+                    print("First ten J_pt: ", J_pt[:10])
+                    print("First ten subJ_pt: ", subJ_pt[:10])
+
                 # Load the graph file once
                 graphs = torch.load(files_graphs[fid], map_location="cpu", weights_only=False)
 
                 # Collect only the needed graphs
+                tmp = 0 # Iterator
+
                 for loc, w, label in zip(locs, weights, labels):
                     g = graphs[int(loc)]
                     g.weight = torch.tensor([float(w)], dtype=torch.float32)
                     g.y = torch.tensor([label], dtype=torch.long)
+
+                    if do_subJ_regression:
+                        subjet_pt_ratio = subJ_pt[int(tmp)] / J_pt[int(tmp)]
+                        subjet_d_eta = subJ_eta[int(tmp)] - J_eta[int(tmp)]
+                        subjet_d_phi = dphi_MPi_Pi(subJ_phi[int(tmp)], J_phi[int(tmp)])
+
+                        mask = np.zeros(4)
+                        mask[:len(subjet_pt_ratio)] = 1
+                        mask *= (1.0 / np.sum(mask)) # Do a normalization
+
+                        subjet_pt_ratio = np.pad(subjet_pt_ratio, (0, 4 - len(subjet_pt_ratio)), 'constant', constant_values=(4, -99.9))
+                        subjet_d_eta = np.pad(subjet_d_eta, (0, 4 - len(subjet_d_eta)), 'constant', constant_values=(4, -99.9))
+                        subjet_d_phi = np.pad(subjet_d_phi, (0, 4 - len(subjet_d_phi)), 'constant', constant_values=(4, -99.9))
+
+                        if tmp < 10:
+                            print("Print first some subjet info")
+                            print("subjet_pt_ratio:", subjet_pt_ratio)
+                            print("subjet_d_eta:", subjet_d_eta)
+                            print("subjet_d_phi:", subjet_d_phi)
+                            print("mask: ", mask)
+
+                        g.subjet_pt_ratio = torch.tensor(subjet_pt_ratio, dtype=torch.float32)
+                        g.subjet_d_eta = torch.tensor(subjet_d_eta, dtype=torch.float32)
+                        g.subjet_d_phi = torch.tensor(subjet_d_phi, dtype=torch.float32)
+                        g.mask = torch.tensor(mask, dtype=torch.float32)
+
                     graphs_out.append(g)
                     graph_class_counts[int(g.y)] += 1
+
+                    tmp += 1
 
                 # Free memory from this file
                 del graphs

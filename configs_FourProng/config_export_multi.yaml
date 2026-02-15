@@ -1,0 +1,30 @@
+data: 
+  #path_to_test_file: "/data/bcifuentes/MAY_outp/2025_DATA/2025_DATA_10TOP_2QCD/Pythia*/*test.root"  025_DATA_5TOP_1QCD_MIX
+  #path_to_test_file: "/data/bcifuentes/SEP_outp/2025_DATA/2025_DATA_5TOP_1QCD_MIX/Pythia_*/*test.root"
+  # path_to_test_file: "/data/bcifuentes/SEP_outp/2025_DATA/2025_DATA_5TOP_1QCD_MIX/Pythia_*/*000001*test.root"
+  path_to_test_file: "/data/jjhong96/LundNet_Ntuple/FourProngV2/HSbbWW_Val_mc23d/user.jjhong.*.FourProngV2_*/user.jjhong.*.root"
+  path_to_outdir: "/data/jjhong96/LundNet_Test/ONNX_Test/"
+  weights_file: ""
+  scale_factor: 1
+  kT_cut: -500 ## indeed this is a cut in ln(kT)
+
+test:
+  # path_to_combined_ckpt: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NProng/LundNet_R22_FourClass_NProng_FlatPt_Ver2_e051_0.90880.pt" # For wide-S, Flat-pT
+  # path_to_combined_ckpt: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NProng_S300/LundNet_R22_FourClass_NProng_S300_FlatPt_Ver2_e067_1.75258.pt" # For S300, pT decorrelated
+  # path_to_combined_ckpt: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NProng_S300/LundNet_R22_FourClass_NProng_S300_2dFlat_Ver2_e045_22.75139.pt" # For S300, pT/Mass decorrelated
+  path_to_combined_ckpt: "/data/jjhong96/Share/LundNet_R22_FourClass_NoHWW_2dFlat_Ver1_e053_14.46694.pt" # Exact same version as JP used
+  # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Multi_FourClass_NProng_FlatPt_Ver2.onnx"
+  # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Multi_FourClass_NProng_FlatPt_Ver2_batch1.onnx"
+  # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Multi_FourClass_NProng_FlatPt_Ver2_batch1_running_stats.onnx"
+  # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Multi_FourClass_NProng_FlatPt_Ver2_dynamic_output.onnx"
+  # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Multi_FourClass_NProng_FlatPt_Ver2_dynamic_output_NoCount.onnx"
+  # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Multi_FourClass_NProng_S300_FlatPt_Ver2.onnx"
+  # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Multi_FourClass_NProng_2dFlat_Ver2.onnx"
+  path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Multi_FourClass_NProng_NoHWW_2dFlat_Ver1.onnx"
+  output_name: "LundNet_R22"
+  choose_model: "LundNet"
+  learning_rate: 0.001
+  batch_size: 2000
+  # batch_size: 1
+
+do_validation: true

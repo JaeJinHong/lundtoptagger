@@ -222,13 +222,14 @@ QCD:
     dir_path: *bkg_histos_dir
     files: *bkg_histos_files
   pt_hist_files_signal:
+    801168: "./histos/FourProngV2/QCD.root"
     801169: "./histos/FourProngV2/QCD.root" # TODO: make sure to use histograms with matching mass cutor change the mass cut here
     801170: "./histos/FourProngV2/QCD.root"
     801171: "./histos/FourProngV2/QCD.root"
     801172: "./histos/FourProngV2/QCD.root"
     801173: "./histos/FourProngV2/QCD.root"
   signal_jet_label: [1]
-  dsids: [801169, 801170, 801171, 801172, 801173] # DSIDs for QCD jets, keep only jets with nprong label 1
+  dsids: [801168, 801169, 801170, 801171, 801172, 801173] # DSIDs for QCD jets, keep only jets with nprong label 1
   pt_range: [350, 3100]   # jet pT selection in GeV, upper limit not really necessary, in testing jets with pt > 3k are not included
   mass_range: [40, 800]  # jet mass selection in GeV, for no upper limit use .inf
   eta_max: 2                      # maximum absolute value of jet pseudorapidity, for no upper limit use .inf

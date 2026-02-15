@@ -157,6 +157,49 @@ class GlobalAvgPoolGNN_ONNX(nn.Module):
         # mean
         out = summed / (count + self.eps)
         return out
+    
+# class GlobalAvgPoolGNN_ONNX(nn.Module):
+#     """
+#     ONNX friendly GlobalAveragePooling
+#     """
+#     def __init__(self, eps: float = 1e-8):
+#         super().__init__()
+#         self.eps = eps
+
+#     def forward(self, x, batch):
+#         # x:     [num_nodes, feat_dim]
+#         # batch: [num_nodes] int64
+
+#         num_graphs = torch.max(batch) + 1
+#         feat_dim = x.size(1)
+
+#         # Expand batch to match feature dim
+#         batch_exp = batch.unsqueeze(1).expand(-1, feat_dim)
+
+#         # Sum features per graph
+#         summed = torch.zeros(
+#             (num_graphs, feat_dim),
+#             device=x.device,
+#             dtype=x.dtype,
+#         )
+#         summed = summed.scatter_add(0, batch_exp, x)
+
+#         # Count nodes per graph
+#         ones = torch.ones(
+#             (x.size(0), 1),
+#             device=x.device,
+#             dtype=x.dtype,
+#         )
+#         batch_count = batch.unsqueeze(1)
+
+#         count = torch.zeros(
+#             (num_graphs, 1),
+#             device=x.device,
+#             dtype=x.dtype,
+#         )
+#         count = count.scatter_add(0, batch_count, ones)
+
+#         return summed / (count + self.eps)
 
 class ManualLundNet(torch.nn.Module):
     def __init__(self, aggr='add'):
@@ -245,29 +288,31 @@ class LundNet4Class(torch.nn.Module):
         #                           nn.ReLU())
         self.seq2 = nn.Sequential(nn.Linear(385, 256),
                                   nn.ReLU())
+        self.pool = GlobalAvgPoolGNN_ONNX()
         self.lin = nn.Linear(256, 4)
 
-    def forward(self, data):
-        x, edge_index, batch = data.x, data.edge_index, data.batch
-        Ntrk = data.Ntrk
-        Ntrk = torch.unsqueeze(Ntrk, 1)
-        x1 = self.conv1(x, edge_index)
-        x2 = self.conv2(x1, edge_index)
-        x3 = self.conv3(x2, edge_index)
-        x4 = self.conv4(x3, edge_index)
-        x5 = self.conv5(x4, edge_index)
-        x6 = self.conv6(x5, edge_index)
+    def forward(self,x, edge_index, batch, Ntrk ,counts):
+    # def forward(self,x, edge_index, batch, Ntrk):
+        #x, edge_index, batch = data.x, data.edge_index, data.batch
+        Ntrk = Ntrk.unsqueeze(1)
+        x1 = self.conv1(x, edge_index).view(-1, 32)
+        x2 = self.conv2(x1, edge_index).view(-1, 32)
+        x3 = self.conv3(x2, edge_index).view(-1, 64)
+        x4 = self.conv4(x3, edge_index).view(-1, 64)
+        x5 = self.conv5(x4, edge_index).view(-1, 128)
+        x6 = self.conv6(x5, edge_index).view(-1, 128)
         x = torch.cat((x1, x2, x3, x4, x5, x6), dim=1)
         x = self.seq1(x)
-
+        
         if not torch.onnx.is_in_onnx_export():
             x = global_mean_pool(x, batch)
         else:
             x = self.pool(x, batch)
-            
+
         x = torch.cat( (x, Ntrk) ,dim=1)
         x = self.seq2(x)
-        x = F.dropout(x, p=0.1)
+        # x = F.dropout(x, p=0.1)
+        x = F.dropout(x, p=0.1,training=self.training) # JJ: Test, dropout error?
         x = self.lin(x)
         return F.log_softmax(x, dim=1) # For multiclass classification
         # return x # Return length 4 output vector for use with nn.CrossEntropyLoss()

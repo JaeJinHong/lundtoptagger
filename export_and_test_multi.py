@@ -27,10 +27,10 @@ import pandas as pd
 
 from tools.GNN_model_weight.models import *
 from tools.GNN_model_weight.utils_newdata import *
+from tools.GNN_model_weight.utils_multiclass import *
 
 import gc
 print("Libraries loaded!")
-
 
         
 def flatten_small_branch(ref, vec): ## ref and vec same len()
@@ -116,7 +116,7 @@ if __name__ == "__main__":
 
             jet_pts_truth = ak.to_numpy(ak.flatten(tree["LRJ_pt"].array(library="ak")) )
             ptweights = np.ones_like( ak.to_numpy(ak.flatten(tree["LRJ_pt"].array(library="ak")) ))
-            labels = ak.to_numpy(ak.flatten(tree[label_branch].array(library="ak")) )
+            labels = ak.to_numpy(ak.flatten(tree["LRJ_truthLabel"].array(library="ak")) )
             dsids = dsids_test[0]*np.ones_like(ak.to_numpy(ak.flatten(tree["LRJ_pt"].array(library="ak")) ))
             LRJ_pt_ref = tree["LRJ_pt"].array(library="np") 
             mcweights = tree["mcEventWeight"].array(library="np")  
@@ -134,7 +134,7 @@ if __name__ == "__main__":
             all_lund_drs = ak.flatten(tree["jetLundDeltaR"].array(library="ak"))
             N_tracks = ak.to_numpy(ak.flatten(tree["LRJ_Nconst_Charged"].array(library="ak")) )
  
-            # flat_weights = GetPtWeight_all_MC( labels, signal, dsids_test,  jet_pts, 5, Pythia_or_All=True)
+            # flat_weights = GetPtWeight_all_MC( labels, dsids_test,  jet_pts, 5, Pythia_or_All=True)
             flat_weights = GetPtWeight(
                         jet_pts,
                         labels,
@@ -182,7 +182,7 @@ if __name__ == "__main__":
                 signal["signal_jet_label"]
             )
 
-            # labels = labels==signal["signal_jet_label"] # JJ: Commented out for non-binary labels
+            # labels = labels==config_signal[signal]["signal_jet_truth_label"]
             # labels = 1*labels
             
             if count_files==0:
@@ -202,23 +202,22 @@ if __name__ == "__main__":
         print ("dataset_onnx size", len (dataset_onnx))
 
         # === Load model ===
-        model = ManualLundNet()
+        model = LundNet4Class()
         model.load_state_dict(torch.load(path_to_combined_ckpt, map_location=torch.device('cpu')))
         device = torch.device('cpu')
         model.to(device)
         model.eval()
 
-        # === Get one real batch for ONNX export ===
         if first == True:
-            model_for_export = ManualLundNet() # JJ: Big discrepancy?
-            # model_for_export = LundNet() # JJ: Test
+            model_for_export = LundNet4Class()
             model_for_export.load_state_dict(torch.load(path_to_combined_ckpt, map_location="cpu"))
             model_for_export.eval()
+            
 
             # for m in model_for_export.modules():
             #     if isinstance(m, torch.nn.BatchNorm1d):
             #         m.track_running_stats = True # JJ: Test, use the batchnorm condition used during the training
-
+ 
             def print_batchnorm_stats(model):
                 print("\n🔎 BatchNorm stats en PyTorch (antes de exportar):")
                 for name, m in model.named_modules():
@@ -238,10 +237,18 @@ if __name__ == "__main__":
             print("batch_ex:",      type(batch_ex),      "dtype:", batch_ex.dtype,      "shape:", batch_ex.shape)
             print("Ntrk_ex:",       type(Ntrk_ex),       "dtype:", Ntrk_ex.dtype,       "shape:", Ntrk_ex.shape)
             print("counts_ex:",     type(counts_ex),     "dtype:", counts_ex.dtype,     "shape:", counts_ex.shape)
-            #counts_ex = torch.bincount(batch_ex).to(torch.float32)
-            #Ntrk_ex = Ntrk_ex.to(torch.float32)
+
+            # print all vectors for debugging
+            if batch_size == 1:
+                print("raw x_ex: ", x_ex)
+                print("raw edge_index_ex: ", edge_index_ex)
+                print("raw batch_ex: ", batch_ex)
+                print("raw Ntrk_ex: ", Ntrk_ex)
+                print("raw counts_ex: ", counts_ex)
+
             with torch.no_grad():
-                _ = model_for_export(x_ex, edge_index_ex, batch_ex, Ntrk_ex, counts_ex) # ManualLundNet
+                _ = model_for_export(x_ex, edge_index_ex, batch_ex, Ntrk_ex, counts_ex)
+                # _ = model_for_export(x_ex, edge_index_ex, batch_ex, Ntrk_ex)
         
             # Imprimir stats de BatchNorm
             print("DEBERIA SER AQUI")
@@ -252,30 +259,29 @@ if __name__ == "__main__":
             torch.onnx.export(
                 model_for_export,
                 (x_ex, edge_index_ex, batch_ex, Ntrk_ex,counts_ex),
+                # (x_ex, edge_index_ex, batch_ex, Ntrk_ex),
                 path_to_onnx,
-                input_names=["x", "edge_index", "batch", "Ntrk","counts"],
+                input_names=["x", "edge_index", "batch", "Ntrk"],
                 output_names=["output"],
                 dynamic_axes={
                     "x": {0: "num_nodes"},
                     "edge_index": {1: "num_edges"},
                     "batch": {0: "num_nodes"},
                     "Ntrk": {0: "batch_size"},
-                    "counts": {0: "batch_size"},
-                    "output": {0: "batch_size"} # JJ: Test dynamic output node
+                    "counts": {0: "batch_size"}
+                    # "output": {0: "batch_size"} # JJ: Test dynamic output node
                 },
                 opset_version=17,
-                do_constant_folding=False,
+                do_constant_folding=False,  
                 #do_constant_folding=True,
                 # training=torch.onnx.TrainingMode.EVAL, # JJ: Test
-                keep_initializers_as_inputs=False
+                keep_initializers_as_inputs=False,
             )
-            print(f" Model exported to {path_to_onnx}")
+            print(f"Model exported to {path_to_onnx}")
             import onnx
             onnx_model = onnx.load(path_to_onnx)
             nodes = [n.op_type for n in onnx_model.graph.node]
             div_nodes = [n for n in onnx_model.graph.node if n.op_type == "Div"]
-            print(f"nodes: {len(nodes)}")
-            print(f"div 0: {len(div_nodes)}")
             
             for i, div in enumerate(div_nodes):
                 print(f"\n--- Div #{i} ---")
@@ -285,43 +291,81 @@ if __name__ == "__main__":
         first=False
 
         if do_validation:
-            # === Evaluate PyTorch ===
-            y_pred = get_scores_manual(test_loader, model, device)
-            tagger_scores = y_pred[:,0]
-
-            # === Evaluate ONNX ===
-            onnx_model = ort.InferenceSession(path_to_onnx)
-            tagger_scores_onnx = evaluate_onnx(test_loader_onnx, onnx_model, batch_size, len(dataset))
-
+            # ============================================================
+            # === Evaluate PyTorch (multiclass)
+            # ============================================================
+            y_pred = get_scores_multi(test_loader, model, device)
             
+            # ============================================================
+            # === Evaluate ONNX (multiclass)
+            # ============================================================
+            onnx_model = ort.InferenceSession(path_to_onnx)
+            y_pred_onnx = evaluate_onnx_multi(test_loader_onnx, onnx_model)
+            # shape: (N_jets, n_classes)
+            
+            # ============================================================
+            # === Sanity checks
+            # ============================================================
+            print("PyTorch scores shape:", y_pred.shape)
+            print("ONNX scores shape:", y_pred_onnx.shape)
+            print("dsids:", len(dsids))
+            print("mcweights_out:", len(mcweights_out))
+            
+    
+            n_jets = y_pred.shape[0]
+            y_pred_onnx = y_pred_onnx[:n_jets]
+            assert y_pred.shape == y_pred_onnx.shape
+            assert y_pred.shape[0] == len(dsids)
+            
+            # ============================================================
+            # === Output file
+            # ============================================================
             filename = file.split("/")[-1]
             outfile_path = os.path.join(path_to_outdir, filename)
             outfile = f"{outfile_path}_score_{output_name}.root"
             treename = "FlatSubstructureJetTree"
+            
+            # ============================================================
+            # === Define class names 
+            # ============================================================
+            class_names = ["cat1", "cat2", "cat3", "cat4"]  # ejemplo
+            n_classes = y_pred.shape[1]
+            assert n_classes == len(class_names)
+            
+            # ============================================================
+            # === Build branches
+            # ============================================================
+            branches = {
+                "EventInfo_mcChannelNumber": np.array(dsids, dtype="int32"),
+                "EventInfo_mcEventWeight":   np.array(mcweights_out, dtype="float32"),
+                "fjet_pt":                   np.array(jet_pts, dtype="float32"),
+                "fjet_eta":                  np.array(jet_etas, dtype="float32"),
+                "fjet_phi":                  np.array(jet_phis, dtype="float32"),
+                "fjet_m":                    np.array(jet_ms, dtype="float32"),
+                "fjet_weight_pt":            np.array(ptweights, dtype="float32"),
+                "labels":                    np.array(labels, dtype="float32"),
+                "Good_jets":                 np.array(Good_jets, dtype="float32"),
+            }
+            
+            # === one branch per class (PyTorch + ONNX)
+            for i, cname in enumerate(class_names):
+                branches[f"fjet_nnscore_{cname}"] = y_pred[:, i].astype("float32")
+                branches[f"fjet_nnscore_onnx_{cname}"] = y_pred_onnx[:, i].astype("float32")
+            
 
             with uproot.recreate(outfile) as f:
-                f[treename] = {
-                    "EventInfo_mcChannelNumber": np.array(dsids, dtype="int32"),
-                    "EventInfo_mcEventWeight":   np.array(mcweights_out, dtype="float32"),
-                    "fjet_nnscore":              np.array(tagger_scores, dtype="float32"),
-                    "fjet_nnscore_onnx":         np.array(tagger_scores_onnx, dtype="float32"),
-                    "fjet_pt":                   np.array(jet_pts, dtype="float32"),
-                    "fjet_eta":                  np.array(jet_etas, dtype="float32"),
-                    "fjet_phi":                  np.array(jet_phis, dtype="float32"),
-                    "fjet_m":                    np.array(jet_ms, dtype="float32"),
-                    "fjet_weight_pt":            np.array(ptweights, dtype="float32"),
-                    "labels":                    np.array(labels, dtype="float32"),
-                    "Good_jets":                 np.array(Good_jets, dtype="float32"),
-                }
+                f[treename] = branches
+            
 
             delta_t_save = time.time() - t_start - delta_t_fileax
             print("Saved data in {:.4f} seconds.".format(delta_t_save))
-
+            
             nentries_done += nentries_file
-            time_per_entry = (time.time() - t_start)/(nentries_done+1)
+            time_per_entry = (time.time() - t_start) / (nentries_done + 1)
             eta = time_per_entry * (nentries_total - nentries_done)
-
+            
             print("Evaluated on {} out of {} events".format(nentries_done, nentries_total))
             print("Estimated time until completion: {}".format(str(timedelta(seconds=eta))))
 
-    print("Total evaluation time: {:.4f} seconds.".format(time.time()-t_filestart))
+        print("Total evaluation time: {:.4f} seconds.".format(time.time() - t_filestart))
+
