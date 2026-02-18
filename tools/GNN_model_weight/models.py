@@ -265,6 +265,65 @@ class ManualLundNet(torch.nn.Module):
             return out
         return out
 
+class LundNet4ClassSubJReg(torch.nn.Module):
+    def __init__(self):
+        super(LundNet4ClassSubJReg, self).__init__()
+        self.conv1 = EdgeConv(nn.Sequential(nn.Linear(6, 32), nn.BatchNorm1d(num_features=32), nn.ReLU(),
+                                            nn.Linear(32, 32), nn.BatchNorm1d(num_features=32), nn.ReLU()),aggr='add')
+        self.conv2 = EdgeConv(nn.Sequential(nn.Linear(64, 32), nn.BatchNorm1d(num_features=32), nn.ReLU(),
+                                            nn.Linear(32, 32), nn.BatchNorm1d(num_features=32), nn.ReLU()),aggr='add')
+        self.conv3 = EdgeConv(nn.Sequential(nn.Linear(64,64), nn.BatchNorm1d(num_features=64), nn.ReLU(),
+                                            nn.Linear(64, 64), nn.BatchNorm1d(num_features=64), nn.ReLU()),aggr='add')
+        self.conv4 = EdgeConv(nn.Sequential(nn.Linear(128, 64), nn.BatchNorm1d(num_features=64), nn.ReLU(),
+                                            nn.Linear(64, 64), nn.BatchNorm1d(num_features=64), nn.ReLU()),aggr='add')
+        self.conv5 = EdgeConv(nn.Sequential(nn.Linear(128, 128), nn.BatchNorm1d(num_features=128), nn.ReLU(),
+                                            nn.Linear(128, 128), nn.BatchNorm1d(num_features=128), nn.ReLU()),aggr='add')
+        self.conv6 = EdgeConv(nn.Sequential(nn.Linear(256, 128), nn.BatchNorm1d(num_features=128), nn.ReLU(),
+                                            nn.Linear(128, 128), nn.BatchNorm1d(num_features=128), nn.ReLU()),aggr='add')
+
+        self.seq1 = nn.Sequential(nn.Linear(448, 384),
+                                nn.BatchNorm1d(num_features=384),
+                                nn.ReLU())
+        # self.seq2 = nn.Sequential(nn.Linear(384, 256),
+        #                           nn.ReLU())
+        self.seq2 = nn.Sequential(nn.Linear(385, 256),
+                                  nn.ReLU())
+        self.pool = GlobalAvgPoolGNN_ONNX()
+        self.lin = nn.Linear(256, 16) # 4 class prob + 4 SubJ (pT Ratio/d_eta/dPhi)
+
+    # def forward(self,x, edge_index, batch, Ntrk ,counts):
+    # def forward(self,x, edge_index, batch, Ntrk):
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+        Ntrk = data.Ntrk
+        Ntrk = Ntrk.unsqueeze(1)
+        x1 = self.conv1(x, edge_index).view(-1, 32)
+        x2 = self.conv2(x1, edge_index).view(-1, 32)
+        x3 = self.conv3(x2, edge_index).view(-1, 64)
+        x4 = self.conv4(x3, edge_index).view(-1, 64)
+        x5 = self.conv5(x4, edge_index).view(-1, 128)
+        x6 = self.conv6(x5, edge_index).view(-1, 128)
+        x = torch.cat((x1, x2, x3, x4, x5, x6), dim=1)
+        x = self.seq1(x)
+        
+        if not torch.onnx.is_in_onnx_export():
+            x = global_mean_pool(x, batch)
+        else:
+            x = self.pool(x, batch)
+
+        x = torch.cat( (x, Ntrk) ,dim=1)
+        x = self.seq2(x)
+        # x = F.dropout(x, p=0.1)
+        x = F.dropout(x, p=0.1, training=self.training) # JJ: Test, dropout error?
+        x = self.lin(x)
+
+        class_prob = x[:, 0:4]      # All samples, first 4 features
+        regress_result = x[:, 4:]   # All samples, remaining features
+        class_score = F.log_softmax(class_prob, dim=1)
+        output_tensor = torch.cat( (class_score, regress_result) , dim=1)
+        # return F.log_softmax(x, dim=1) # For multiclass classification
+        return output_tensor # Return length 16 output vector
+
 class LundNet4Class(torch.nn.Module):
     def __init__(self):
         super(LundNet4Class, self).__init__()
@@ -291,9 +350,11 @@ class LundNet4Class(torch.nn.Module):
         self.pool = GlobalAvgPoolGNN_ONNX()
         self.lin = nn.Linear(256, 4)
 
-    def forward(self,x, edge_index, batch, Ntrk ,counts):
+    # def forward(self,x, edge_index, batch, Ntrk ,counts):
     # def forward(self,x, edge_index, batch, Ntrk):
-        #x, edge_index, batch = data.x, data.edge_index, data.batch
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+        Ntrk = data.Ntrk
         Ntrk = Ntrk.unsqueeze(1)
         x1 = self.conv1(x, edge_index).view(-1, 32)
         x2 = self.conv2(x1, edge_index).view(-1, 32)

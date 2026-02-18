@@ -87,6 +87,11 @@ def main():
     # TODO: test multiple models, so there is no need to re-load the data for each model
     if choose_model == "LundNet4Class":
         model = LundNet4Class()
+        num_classes = 4
+    if choose_model == "LundNet4ClassSubJReg":
+        model = LundNet4ClassSubJReg()
+        num_classes = 16
+        # 4 class + 4*3 auxiliary nodes = 16 nodes
     if choose_model == "LundNet":
         model = LundNet()
         # model = LundNet_old()
@@ -139,17 +144,25 @@ def main():
 
         # Predict scores
         print("\nCalculating scores...")
-        for model_name, path_to_weights in path_to_weights_dict.items():
-            model.load_state_dict(torch.load(path_to_weights, map_location=device))
+        # for model_name, path_to_file, choose_model in path_to_weights_dict.items():
+        for model_name in path_to_weights_dict:
+            path_to_file = path_to_weights_dict[model_name].get('path_to_file')
+            choose_model = path_to_weights_dict[model_name].get('choose_model')
+
+            if choose_model == "LundNet4Class":
+                model = LundNet4Class()
+                num_classes = 4
+            if choose_model == "LundNet4ClassSubJReg":
+                model = LundNet4ClassSubJReg()
+                num_classes = 16
+            model.load_state_dict(torch.load(path_to_file, map_location=device))
             model.to(device)
-            print(f'Using weights: {model_name} from {path_to_weights}')
-            y_pred = get_scores_multi(test_loader, model, device)
+            print(f'Using model: {choose_model}')
+            print(f'Using weights: {model_name} from {path_to_file}')
+            y_pred = get_scores_multi(test_loader, model, device, num_classes)
             # Get the tagger_scores, scipping the first dummy entry
 
             tagger_scores = np.array(y_pred)  # for multi-class, the scores are in columns 0,1,2,3
-
-            # Get number of classes
-            num_classes = tagger_scores.shape[1]
             print(f"Number of classes: {num_classes}")
 
             # Store each class score in a separate branch

@@ -505,8 +505,8 @@ def main():
                     subJ_eta = group[config["branch_subJ_eta"]].to_numpy()
                     subJ_phi = group[config["branch_subJ_phi"]].to_numpy()
 
-                    print("First ten J_pt: ", J_pt[:10])
-                    print("First ten subJ_pt: ", subJ_pt[:10])
+                    # print("First ten J_pt: ", J_pt[:10])
+                    # print("First ten subJ_pt: ", subJ_pt[:10])
 
                 # Load the graph file once
                 graphs = torch.load(files_graphs[fid], map_location="cpu", weights_only=False)
@@ -532,12 +532,12 @@ def main():
                         subjet_d_eta = np.pad(subjet_d_eta, (0, 4 - len(subjet_d_eta)), 'constant', constant_values=(4, -99.9))
                         subjet_d_phi = np.pad(subjet_d_phi, (0, 4 - len(subjet_d_phi)), 'constant', constant_values=(4, -99.9))
 
-                        if tmp < 10:
-                            print("Print first some subjet info")
-                            print("subjet_pt_ratio:", subjet_pt_ratio)
-                            print("subjet_d_eta:", subjet_d_eta)
-                            print("subjet_d_phi:", subjet_d_phi)
-                            print("mask: ", mask)
+                        # if tmp < 10:
+                        #     print("Print first some subjet info")
+                        #     print("subjet_pt_ratio:", subjet_pt_ratio)
+                        #     print("subjet_d_eta:", subjet_d_eta)
+                        #     print("subjet_d_phi:", subjet_d_phi)
+                        #     print("mask: ", mask)
 
                         g.subjet_pt_ratio = torch.tensor(subjet_pt_ratio, dtype=torch.float32)
                         g.subjet_d_eta = torch.tensor(subjet_d_eta, dtype=torch.float32)

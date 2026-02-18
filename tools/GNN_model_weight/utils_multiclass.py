@@ -175,10 +175,117 @@ def get_scores_multi(loader, model, device, class_n = 4):
         batch_counter+=1
         # print ("Processing batch", batch_counter, "of",len(loader))
         data = data.to(device)
-        # pred = model(data) # Original
-        counts = torch.bincount(data.batch) # For LundONNX export
-        pred = model(data.x, data.edge_index, data.batch, data.Ntrk, counts) # For LundONNX export
+        pred = model(data) # Original
+        # counts = torch.bincount(data.batch) # For LundONNX export
+        # pred = model(data.x, data.edge_index, data.batch, data.Ntrk, counts) # For LundONNX export
         # pred = model(data.x, data.edge_index, data.batch, data.Ntrk) # For LundONNX export
         total_output = np.append(total_output, pred.cpu().detach().numpy(), axis=0)
 
     return total_output[1:]
+
+def train_multi_SubJReg(loader, model, device, optimizer, epoch):
+    # print("dataset files:", len(dataset.files))
+    model.train()
+    loss_all = 0
+    batch_counter = 0
+
+    for data in loader:  # now directly over the iterable dataset
+        batch_counter += 1
+        # print("batch_counter:", batch_counter, end="\r")
+
+        # print(f'batch {batch_counter} length:', len(data))
+
+        data = data.to(device)
+        optimizer.zero_grad()
+
+        output = model(data)  # shape [batch_size, 16]
+        # Make sure labels are tensor and integer type
+        targets = torch.as_tensor(data.y, dtype=torch.long, device=device) - 1
+        
+        # Fix 1: Reshape targets from [8192] -> [2048, 4]
+        target_subjet_pt_ratio = torch.as_tensor(data.subjet_pt_ratio, dtype=torch.float32, device=device).view(-1, 4)
+        target_subjet_d_eta = torch.as_tensor(data.subjet_d_eta, dtype=torch.float32, device=device).view(-1, 4)
+        target_subjet_d_phi = torch.as_tensor(data.subjet_d_phi, dtype=torch.float32, device=device).view(-1, 4)
+        
+        # Fix 2: Same reshape to the mask as well
+        target_mask = torch.as_tensor(data.mask, dtype=torch.float32, device=device).view(-1, 4)
+        # target_mask is one out of four
+        # [1, 0, 0, 0]/[0.5, 0.5, 0, 0]/[0.33, 0.33, 0.33, 0]/[0.25, 0.25, 0.25, 0.25]
+
+        # split output
+        # p0, p1, p2, p3, pt0, pt1, pt2, pt3, eta0, eta1, eta2, eta3, phi0, phi1, phi2, phi3
+        # [0:4],          [4:8],              [8:12],                 [12:16]
+        output_class, output_pt, output_eta, output_phi = torch.tensor_split(output, (4, 8, 12), dim=1)
+
+
+        classification_loss_per_sample = F.nll_loss(output_class, targets, reduction='none') # softmax_loss = log_softmax + nll_loss
+        pt_loss = ((output_pt - target_subjet_pt_ratio) ** 2) * target_mask
+        eta_loss = ((output_eta - target_subjet_d_eta) ** 2) * target_mask
+        phi_loss = ((output_phi - target_subjet_d_phi) ** 2) * target_mask
+
+        regression_loss_per_sample = (pt_loss + eta_loss + phi_loss).sum(dim=1)
+
+        # Make sure weights are tensor float type
+        sample_weights = torch.as_tensor(data.weight, dtype=torch.float, device=device)
+        final_loss_per_sample = classification_loss_per_sample + 0.1*regression_loss_per_sample
+
+        loss_scalar = (final_loss_per_sample * sample_weights).mean()
+        loss_scalar.backward() # Calculate gradients
+        optimizer.step() # Update weights
+
+        loss_all += data.num_graphs * loss_scalar.item()
+
+    torch.cuda.empty_cache()
+    return loss_all / len(loader.dataset)
+
+@torch.no_grad()
+def test_multi_SubJReg(loader, model, device):
+    model.eval()
+    #print("init my_test()")
+    #time.sleep(600)
+    loss_all = 0
+    batch_counter = 0
+    for data in loader:
+        batch_counter+=1
+        #print("batch_counter: ",batch_counter, end="\r")
+        data = data.to(device)
+        output = model(data)  # shape [batch_size, 16]
+        # Make sure labels are tensor and integer type
+        targets = torch.as_tensor(data.y, dtype=torch.long, device=device) - 1
+        
+        # Fix 1: Reshape targets from [batch * 4] -> [batch, 4]
+        target_subjet_pt_ratio = torch.as_tensor(data.subjet_pt_ratio, dtype=torch.float32, device=device).view(-1, 4)
+        target_subjet_d_eta = torch.as_tensor(data.subjet_d_eta, dtype=torch.float32, device=device).view(-1, 4)
+        target_subjet_d_phi = torch.as_tensor(data.subjet_d_phi, dtype=torch.float32, device=device).view(-1, 4)
+        
+        # Fix 2: Same reshape to the mask as well
+        target_mask = torch.as_tensor(data.mask, dtype=torch.float32, device=device).view(-1, 4)
+        # target_mask is one out of four
+        # [1, 0, 0, 0]/[0.5, 0.5, 0, 0]/[0.33, 0.33, 0.33, 0]/[0.25, 0.25, 0.25, 0.25]
+
+        # split output accordingly
+        # p0, p1, p2, p3, pt0, pt1, pt2, pt3, eta0, eta1, eta2, eta3, phi0, phi1, phi2, phi3
+        # [0:4],          [4:8],              [8:12],                 [12:16]
+        output_class, output_pt, output_eta, output_phi = torch.tensor_split(output, (4, 8, 12), dim=1)
+        # First dimension: Batch
+        # Makesure to sum along the second dimension
+
+
+        classification_loss_per_sample = F.nll_loss(output_class, targets, reduction='none') # softmax_loss = log_softmax + nll_loss
+        pt_loss = ((output_pt - target_subjet_pt_ratio) ** 2) * target_mask
+        eta_loss = ((output_eta - target_subjet_d_eta) ** 2) * target_mask
+        phi_loss = ((output_phi - target_subjet_d_phi) ** 2) * target_mask
+
+        regression_loss_per_sample = (pt_loss + eta_loss + phi_loss).sum(dim=1)
+
+        # Make sure weights are tensor float type
+        sample_weights = torch.as_tensor(data.weight, dtype=torch.float, device=device)
+        final_loss_per_sample = classification_loss_per_sample + 0.1*regression_loss_per_sample
+
+        loss_scalar = (final_loss_per_sample * sample_weights).mean()
+        loss_all += data.num_graphs * loss_scalar.item()
+
+    del data
+    data = []
+    torch.cuda.empty_cache()
+    return loss_all/len(loader.dataset)
