@@ -91,6 +91,9 @@ test:
     MultiClassSubJReg_NProng_NoHWW_FlatMass_Ver2:
       path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4SubJReg_NProng_NoHWW_2dFlat_Ver2/LundNet_R22_FourClass4SubJReg_NoHWW_NProng_2dFlat_Ver2_e066_8.68608.pt"
       choose_model: "LundNet4ClassSubJReg"
+    MultiClassSubJReg_34Weight_NProng_NoHWW_FlatMass_Ver2:
+      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4SubJReg_34Weight_NProng_NoHWW_2dFlat_Ver2/LundNet_R22_FourClass4SubJReg_34Weight_NoHWW_NProng_2dFlat_Ver2_e071_8.73441.pt"
+      choose_model: "LundNet4ClassSubJReg"
 
     
 

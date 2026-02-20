@@ -291,6 +291,9 @@ class LundNet4ClassSubJReg(torch.nn.Module):
         self.pool = GlobalAvgPoolGNN_ONNX()
         self.lin = nn.Linear(256, 16) # 4 class prob + 4 SubJ (pT Ratio/d_eta/dPhi)
 
+        self.log_vars = nn.Parameter(torch.zeros(2)) # For auxiliary loss optimization
+        # SOTA approach
+
     # def forward(self,x, edge_index, batch, Ntrk ,counts):
     # def forward(self,x, edge_index, batch, Ntrk):
     def forward(self, data):

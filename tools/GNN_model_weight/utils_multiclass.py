@@ -217,9 +217,22 @@ def train_multi_SubJReg(loader, model, device, optimizer, epoch):
         # [0:4],          [4:8],              [8:12],                 [12:16]
         output_class, output_pt, output_eta, output_phi = torch.tensor_split(output, (4, 8, 12), dim=1)
 
+        # --- DYNAMIC TARGET CLEANING FOR pT ---
+        # Create a strict 1/0 binary mask from your fractional mask
+        binary_mask = (target_mask > 0).float()
+
+        # Safely overwrite -99.9 with 0.0 ONLY for pT, based on the binary mask
+        target_pt_clean = torch.where(
+            binary_mask == 1, 
+            target_subjet_pt_ratio, 
+            torch.zeros_like(target_subjet_pt_ratio)
+        )
+
 
         classification_loss_per_sample = F.nll_loss(output_class, targets, reduction='none') # softmax_loss = log_softmax + nll_loss
-        pt_loss = ((output_pt - target_subjet_pt_ratio) ** 2) * target_mask
+        # pt_loss = ((output_pt - target_subjet_pt_ratio) ** 2) * target_mask
+        # UNMASKED pT loss: Network is actively penalized if output_pt > 0 for empty subjets
+        pt_loss = (output_pt - target_pt_clean) ** 2
         eta_loss = ((output_eta - target_subjet_d_eta) ** 2) * target_mask
         phi_loss = ((output_phi - target_subjet_d_phi) ** 2) * target_mask
 
@@ -227,13 +240,24 @@ def train_multi_SubJReg(loader, model, device, optimizer, epoch):
 
         # Make sure weights are tensor float type
         sample_weights = torch.as_tensor(data.weight, dtype=torch.float, device=device)
-        final_loss_per_sample = classification_loss_per_sample + 0.1*regression_loss_per_sample
+        # final_loss_per_sample = classification_loss_per_sample + 0.1*regression_loss_per_sample # Original: 0.1
+        # final_loss_per_sample = classification_loss_per_sample + 0.34*regression_loss_per_sample # New: Try 0.34
 
-        loss_scalar = (final_loss_per_sample * sample_weights).mean()
-        loss_scalar.backward() # Calculate gradients
+        loss_class_mean = (classification_loss_per_sample * sample_weights).mean()
+        loss_reg_mean = (regression_loss_per_sample * sample_weights).mean()
+
+        # Extract the learnable parameters
+        s1, s2 = model.log_vars[0], model.log_vars[1]
+
+        # Apply Uncertainty Weighting
+        # torch.exp(-s) acts as the dynamic multiplier
+        final_loss = (torch.exp(-s1) * loss_class_mean + s1) + \
+                     (torch.exp(-s2) * loss_reg_mean + s2)
+
+        final_loss.backward()
         optimizer.step() # Update weights
 
-        loss_all += data.num_graphs * loss_scalar.item()
+        loss_all += data.num_graphs * final_loss.item()
 
     torch.cuda.empty_cache()
     return loss_all / len(loader.dataset)
@@ -267,12 +291,23 @@ def test_multi_SubJReg(loader, model, device):
         # p0, p1, p2, p3, pt0, pt1, pt2, pt3, eta0, eta1, eta2, eta3, phi0, phi1, phi2, phi3
         # [0:4],          [4:8],              [8:12],                 [12:16]
         output_class, output_pt, output_eta, output_phi = torch.tensor_split(output, (4, 8, 12), dim=1)
-        # First dimension: Batch
-        # Makesure to sum along the second dimension
+
+        # --- DYNAMIC TARGET CLEANING FOR pT ---
+        # Create a strict 1/0 binary mask from your fractional mask
+        binary_mask = (target_mask > 0).float()
+
+        # Safely overwrite -99.9 with 0.0 ONLY for pT, based on the binary mask
+        target_pt_clean = torch.where(
+            binary_mask == 1, 
+            target_subjet_pt_ratio, 
+            torch.zeros_like(target_subjet_pt_ratio)
+        )
 
 
         classification_loss_per_sample = F.nll_loss(output_class, targets, reduction='none') # softmax_loss = log_softmax + nll_loss
-        pt_loss = ((output_pt - target_subjet_pt_ratio) ** 2) * target_mask
+        # pt_loss = ((output_pt - target_subjet_pt_ratio) ** 2) * target_mask
+        # UNMASKED pT loss: Network is actively penalized if output_pt > 0 for empty subjets
+        pt_loss = (output_pt - target_pt_clean) ** 2
         eta_loss = ((output_eta - target_subjet_d_eta) ** 2) * target_mask
         phi_loss = ((output_phi - target_subjet_d_phi) ** 2) * target_mask
 
@@ -280,10 +315,20 @@ def test_multi_SubJReg(loader, model, device):
 
         # Make sure weights are tensor float type
         sample_weights = torch.as_tensor(data.weight, dtype=torch.float, device=device)
-        final_loss_per_sample = classification_loss_per_sample + 0.1*regression_loss_per_sample
+        # final_loss_per_sample = classification_loss_per_sample + 0.1*regression_loss_per_sample # Original: 0.1
+        # final_loss_per_sample = classification_loss_per_sample + 0.34*regression_loss_per_sample # New: Try 0.34
 
-        loss_scalar = (final_loss_per_sample * sample_weights).mean()
-        loss_all += data.num_graphs * loss_scalar.item()
+        loss_class_mean = (classification_loss_per_sample * sample_weights).mean()
+        loss_reg_mean = (regression_loss_per_sample * sample_weights).mean()
+
+        # Extract the learnable parameters
+        s1, s2 = model.log_vars[0], model.log_vars[1]
+
+        # Apply Uncertainty Weighting
+        # torch.exp(-s) acts as the dynamic multiplier
+        final_loss = (torch.exp(-s1) * loss_class_mean + s1) + \
+                     (torch.exp(-s2) * loss_reg_mean + s2)
+        loss_all += data.num_graphs * final_loss.item()
 
     del data
     data = []
