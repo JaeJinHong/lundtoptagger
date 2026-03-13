@@ -14,12 +14,15 @@ test:
   # path_to_combined_ckpt: "/data/jjhong96/Share/LundNet_R22_FourClass_NoHWW_2dFlat_Ver1_e053_14.46694.pt"
   #path_to_combined_ckpt: "/home/bcifuentes/SEPT_ONNX/Models8/LundNet_TOP_R22e002_0.90510.pt"
   # path_to_combined_ckpt: "/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/SS300_4W_40_600/LundNet_R22_QCD_SS4W_SingleMass_40_600_e018_0.13165.pt" # For S300 signal flat-pT
-  path_to_combined_ckpt: "/data/jjhong96/LundNet_Model/QCD_SS4W_FlatMass/SS300_4W_40_600_flatmass/LundNet_R22_QCD_SS4W_FlatMassWindow_40_600_e009_5.27136.pt" # For S300 signal flat-mass
-  # path_to_combined_ckpt: "/data/jjhong96/LundNet_Model/QCD_SS4W_FlatMass/HH4W_40_600_flatmass/LundNet_R22_QCD_SS4W_FlatMassWindow_40_600_e011_15.07262.pt" # For H>WW* signal flat-mass
+  # path_to_combined_ckpt: "/data/jjhong96/LundNet_Model/QCD_SS4W_FlatMass/SS300_4W_40_600_flatmass/LundNet_R22_QCD_SS4W_FlatMassWindow_40_600_e009_5.27136.pt" # For S300 signal flat-mass
+  # path_to_combined_ckpt: "/data/jjhong96/LundNet_Model/QCD_SS4W_SingleMass/HH4W_40_600/LundNet_R22_QCD_SS4W_SingleMass_40_600_e015_0.31864.pt" # For H>WW* signal flat-pt
+  path_to_combined_ckpt: "/data/jjhong96/LundNet_Model/QCD_SS4W_FlatMass/HH4W_40_600_flatmass/LundNet_R22_QCD_SS4W_FlatMassWindow_40_600_e011_15.07262.pt" # For H>WW* signal flat-mass
   # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Binary_QCD_SSS4W_S300_40_600_flatpt.onnx"
   # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Binary_QCD_SSS4W_S300_40_600_flatmass_batch1.onnx"
   # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Binary_QCD_SSS4W_S300_40_600_flatmass_batch1_running_stats.onnx"
-  path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Binary_QCD_SSS4W_S300_40_600_flatmass_batch1_running_stats_GlobalAvgPool.onnx"
+  # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Binary_QCD_SSS4W_S300_40_600_flatmass_batch1_running_stats_GlobalAvgPool.onnx"
+  # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Binary_QCD_HH4W_40_600_flatpt_batch1.onnx"
+  path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Binary_QCD_HH4W_40_600_flatmass_batch1.onnx"
   output_name: "LundNet_R22"
   choose_model: "LundNet"
   learning_rate: 0.001

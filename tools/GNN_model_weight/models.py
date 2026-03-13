@@ -289,9 +289,10 @@ class LundNet4ClassSubJReg(torch.nn.Module):
         self.seq2 = nn.Sequential(nn.Linear(385, 256),
                                   nn.ReLU())
         self.pool = GlobalAvgPoolGNN_ONNX()
-        self.lin = nn.Linear(256, 16) # 4 class prob + 4 SubJ (pT Ratio/d_eta/dPhi)
+        # self.lin = nn.Linear(256, 16) # 4 class prob + 4 SubJ (pT Ratio/d_eta/dPhi)
+        self.lin = nn.Linear(256, 8) # 4 class prob + 4 SubJ (pT Ratio only)
 
-        self.log_vars = nn.Parameter(torch.zeros(2)) # For auxiliary loss optimization
+        # self.log_vars = nn.Parameter(torch.zeros(2)) # For auxiliary loss optimization
         # SOTA approach
 
     # def forward(self,x, edge_index, batch, Ntrk ,counts):
@@ -353,11 +354,10 @@ class LundNet4Class(torch.nn.Module):
         self.pool = GlobalAvgPoolGNN_ONNX()
         self.lin = nn.Linear(256, 4)
 
-    # def forward(self,x, edge_index, batch, Ntrk ,counts):
-    # def forward(self,x, edge_index, batch, Ntrk):
-    def forward(self, data):
-        x, edge_index, batch = data.x, data.edge_index, data.batch
-        Ntrk = data.Ntrk
+    def forward(self,x, edge_index, batch, Ntrk ,counts): # For onnx export
+    # def forward(self, data): # For training
+    #     x, edge_index, batch = data.x, data.edge_index, data.batch
+    #     Ntrk = data.Ntrk
         Ntrk = Ntrk.unsqueeze(1)
         x1 = self.conv1(x, edge_index).view(-1, 32)
         x2 = self.conv2(x1, edge_index).view(-1, 32)
@@ -370,16 +370,20 @@ class LundNet4Class(torch.nn.Module):
         
         if not torch.onnx.is_in_onnx_export():
             x = global_mean_pool(x, batch)
-        else:
+        else: # For onnx export
             x = self.pool(x, batch)
 
         x = torch.cat( (x, Ntrk) ,dim=1)
         x = self.seq2(x)
         # x = F.dropout(x, p=0.1)
-        x = F.dropout(x, p=0.1,training=self.training) # JJ: Test, dropout error?
+        x = F.dropout(x, p=0.1,training=self.training)
         x = self.lin(x)
-        return F.log_softmax(x, dim=1) # For multiclass classification
-        # return x # Return length 4 output vector for use with nn.CrossEntropyLoss()
+        if not torch.onnx.is_in_onnx_export():
+            return F.log_softmax(x, dim=1) # For multiclass classification + nll loss, more stable
+        # return F.softmax(x, dim=1)
+        # return x # Return length 4 output vector[batch_size, 4] for use with nn.CrossEntropyLoss()
+        else: # For onnx export
+            return F.softmax(x, dim=1)
 
 
 class LundNet(torch.nn.Module):

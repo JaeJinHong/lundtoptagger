@@ -112,8 +112,9 @@ def train_multi(loader, model, device, optimizer, epoch):
 
         # Make sure weights are tensor float type
         sample_weights = torch.as_tensor(data.weight, dtype=torch.float, device=device)
-
+        
         loss_per_sample = F.nll_loss(output, targets, reduction='none') # softmax_loss = log_softmax + nll_loss
+        # loss_per_sample = F.cross_entropy(output, targets, reduction='none') # should take raw logits
 
         loss_scalar = (loss_per_sample * sample_weights).mean()
         loss_scalar.backward() # Calculate gradients
@@ -156,7 +157,8 @@ def test_multi(loader, model, device):
 
         # Make sure weights are tensor float type
         sample_weights = torch.as_tensor(data.weight, dtype=torch.float, device=device)
-        loss_per_sample = F.nll_loss(output, targets, reduction='none')
+        loss_per_sample = F.nll_loss(output, targets, reduction='none') # softmax_loss = log_softmax + nll_loss
+        # loss_per_sample = F.cross_entropy(output, targets, reduction='none') # should take raw logits
         loss_scalar = (loss_per_sample * sample_weights).mean()
         loss_all += data.num_graphs * loss_scalar.item()
 
@@ -189,33 +191,34 @@ def train_multi_SubJReg(loader, model, device, optimizer, epoch):
     loss_all = 0
     batch_counter = 0
 
-    for data in loader:  # now directly over the iterable dataset
-        batch_counter += 1
-        # print("batch_counter:", batch_counter, end="\r")
+    loss_class = 0
+    loss_reg = 0
 
-        # print(f'batch {batch_counter} length:', len(data))
-
+    for data in loader:
+        batch_counter+=1
+        #print("batch_counter: ",batch_counter, end="\r")
         data = data.to(device)
-        optimizer.zero_grad()
-
         output = model(data)  # shape [batch_size, 16]
         # Make sure labels are tensor and integer type
         targets = torch.as_tensor(data.y, dtype=torch.long, device=device) - 1
         
-        # Fix 1: Reshape targets from [8192] -> [2048, 4]
+        # Fix 1: Reshape targets from [batch * 4] -> [batch, 4]
         target_subjet_pt_ratio = torch.as_tensor(data.subjet_pt_ratio, dtype=torch.float32, device=device).view(-1, 4)
-        target_subjet_d_eta = torch.as_tensor(data.subjet_d_eta, dtype=torch.float32, device=device).view(-1, 4)
-        target_subjet_d_phi = torch.as_tensor(data.subjet_d_phi, dtype=torch.float32, device=device).view(-1, 4)
+        # target_subjet_d_eta = torch.as_tensor(data.subjet_d_eta, dtype=torch.float32, device=device).view(-1, 4)
+        # target_subjet_d_phi = torch.as_tensor(data.subjet_d_phi, dtype=torch.float32, device=device).view(-1, 4)
         
         # Fix 2: Same reshape to the mask as well
         target_mask = torch.as_tensor(data.mask, dtype=torch.float32, device=device).view(-1, 4)
         # target_mask is one out of four
         # [1, 0, 0, 0]/[0.5, 0.5, 0, 0]/[0.33, 0.33, 0.33, 0]/[0.25, 0.25, 0.25, 0.25]
 
-        # split output
+        # split output accordingly
         # p0, p1, p2, p3, pt0, pt1, pt2, pt3, eta0, eta1, eta2, eta3, phi0, phi1, phi2, phi3
         # [0:4],          [4:8],              [8:12],                 [12:16]
-        output_class, output_pt, output_eta, output_phi = torch.tensor_split(output, (4, 8, 12), dim=1)
+        # output_class, output_pt, output_eta, output_phi = torch.tensor_split(output, (4, 8, 12), dim=1)
+        
+        output_class, output_pt = torch.tensor_split(output, [4], dim=1)
+        # output_pt_sorted, _ = torch.sort(output_pt, descending=True, dim=1)
 
         # --- DYNAMIC TARGET CLEANING FOR pT ---
         # Create a strict 1/0 binary mask from your fractional mask
@@ -230,34 +233,52 @@ def train_multi_SubJReg(loader, model, device, optimizer, epoch):
 
 
         classification_loss_per_sample = F.nll_loss(output_class, targets, reduction='none') # softmax_loss = log_softmax + nll_loss
-        # pt_loss = ((output_pt - target_subjet_pt_ratio) ** 2) * target_mask
+        # pt_loss = ((output_pt - target_subjet_pt_ratio) ** 2) * target_mask # Original
         # UNMASKED pT loss: Network is actively penalized if output_pt > 0 for empty subjets
-        pt_loss = (output_pt - target_pt_clean) ** 2
-        eta_loss = ((output_eta - target_subjet_d_eta) ** 2) * target_mask
-        phi_loss = ((output_phi - target_subjet_d_phi) ** 2) * target_mask
+        # pt_loss = (output_pt_sorted - target_pt_clean) ** 2 # Order agnostic pT regression
+        pt_loss = (output_pt - target_pt_clean) ** 2 # Pad 0 to non-existing prong pt
+        # eta_loss = ((output_eta - target_subjet_d_eta) ** 2) * target_mask
+        # phi_loss = ((output_phi - target_subjet_d_phi) ** 2) * target_mask
 
-        regression_loss_per_sample = (pt_loss + eta_loss + phi_loss).sum(dim=1)
+        # regression_loss_per_sample = (pt_loss + eta_loss + phi_loss).sum(dim=1)
+        regression_loss_per_sample = (pt_loss).sum(dim=1)
+
+        # --- THE CONDITIONAL MASK ---
+        # 1.0 for Class 3 and Class 4. 0.0 for Class 1 and Class 2.
+        # Shape: [Batch]
+        conditional_mask = (targets >= 2).float()
+        regression_loss_per_sample = regression_loss_per_sample * conditional_mask
 
         # Make sure weights are tensor float type
         sample_weights = torch.as_tensor(data.weight, dtype=torch.float, device=device)
-        # final_loss_per_sample = classification_loss_per_sample + 0.1*regression_loss_per_sample # Original: 0.1
-        # final_loss_per_sample = classification_loss_per_sample + 0.34*regression_loss_per_sample # New: Try 0.34
 
         loss_class_mean = (classification_loss_per_sample * sample_weights).mean()
         loss_reg_mean = (regression_loss_per_sample * sample_weights).mean()
+        # loss_reg_mean = (pt_loss.sum(dim=1) * sample_weights).mean()
 
-        # Extract the learnable parameters
-        s1, s2 = model.log_vars[0], model.log_vars[1]
+        loss_class += data.num_graphs * loss_class_mean.item() # For printout
+        loss_reg += data.num_graphs * loss_reg_mean.item()
 
-        # Apply Uncertainty Weighting
-        # torch.exp(-s) acts as the dynamic multiplier
-        final_loss = (torch.exp(-s1) * loss_class_mean + s1) + \
-                     (torch.exp(-s2) * loss_reg_mean + s2)
+        # final_loss_per_sample = loss_class_mean + 0.1*loss_reg_mean # Original: 0.1
+        # final_loss_per_sample = classification_loss_per_sample + 0.34*regression_loss_per_sample # New: Try 0.34
+        # final_loss_per_sample = loss_class_mean + 10.0*loss_reg_mean # New: Try 10.0 to balance two losses
+        final_loss_per_sample = loss_class_mean + 100.0*loss_reg_mean # New: Try 100.0 to balance two losses
 
-        final_loss.backward()
+        # # Extract the learnable parameters
+        # s1, s2 = model.log_vars[0], model.log_vars[1]
+
+        # # Apply Uncertainty Weighting
+        # # torch.exp(-s) acts as the dynamic multiplier
+        # final_loss = (torch.exp(-s1) * loss_class_mean + s1) + \
+        #              (torch.exp(-s2) * loss_reg_mean + s2)
+        
+
+        final_loss_per_sample.backward()
         optimizer.step() # Update weights
 
-        loss_all += data.num_graphs * final_loss.item()
+        loss_all += data.num_graphs * final_loss_per_sample.item()
+        
+    print(f"Train epoch loss_class: {loss_class / len(loader.dataset):.5f}, loss_reg: {loss_reg / len(loader.dataset):.5f}")
 
     torch.cuda.empty_cache()
     return loss_all / len(loader.dataset)
@@ -269,6 +290,8 @@ def test_multi_SubJReg(loader, model, device):
     #time.sleep(600)
     loss_all = 0
     batch_counter = 0
+    loss_class = 0
+    loss_reg = 0
     for data in loader:
         batch_counter+=1
         #print("batch_counter: ",batch_counter, end="\r")
@@ -279,8 +302,8 @@ def test_multi_SubJReg(loader, model, device):
         
         # Fix 1: Reshape targets from [batch * 4] -> [batch, 4]
         target_subjet_pt_ratio = torch.as_tensor(data.subjet_pt_ratio, dtype=torch.float32, device=device).view(-1, 4)
-        target_subjet_d_eta = torch.as_tensor(data.subjet_d_eta, dtype=torch.float32, device=device).view(-1, 4)
-        target_subjet_d_phi = torch.as_tensor(data.subjet_d_phi, dtype=torch.float32, device=device).view(-1, 4)
+        # target_subjet_d_eta = torch.as_tensor(data.subjet_d_eta, dtype=torch.float32, device=device).view(-1, 4)
+        # target_subjet_d_phi = torch.as_tensor(data.subjet_d_phi, dtype=torch.float32, device=device).view(-1, 4)
         
         # Fix 2: Same reshape to the mask as well
         target_mask = torch.as_tensor(data.mask, dtype=torch.float32, device=device).view(-1, 4)
@@ -290,7 +313,10 @@ def test_multi_SubJReg(loader, model, device):
         # split output accordingly
         # p0, p1, p2, p3, pt0, pt1, pt2, pt3, eta0, eta1, eta2, eta3, phi0, phi1, phi2, phi3
         # [0:4],          [4:8],              [8:12],                 [12:16]
-        output_class, output_pt, output_eta, output_phi = torch.tensor_split(output, (4, 8, 12), dim=1)
+        # output_class, output_pt, output_eta, output_phi = torch.tensor_split(output, (4, 8, 12), dim=1)
+        
+        output_class, output_pt = torch.tensor_split(output, [4], dim=1)
+        # output_pt_sorted, _ = torch.sort(output_pt, descending=True, dim=1)
 
         # --- DYNAMIC TARGET CLEANING FOR pT ---
         # Create a strict 1/0 binary mask from your fractional mask
@@ -305,32 +331,49 @@ def test_multi_SubJReg(loader, model, device):
 
 
         classification_loss_per_sample = F.nll_loss(output_class, targets, reduction='none') # softmax_loss = log_softmax + nll_loss
-        # pt_loss = ((output_pt - target_subjet_pt_ratio) ** 2) * target_mask
+        # pt_loss = ((output_pt - target_subjet_pt_ratio) ** 2) * target_mask # Original
         # UNMASKED pT loss: Network is actively penalized if output_pt > 0 for empty subjets
-        pt_loss = (output_pt - target_pt_clean) ** 2
-        eta_loss = ((output_eta - target_subjet_d_eta) ** 2) * target_mask
-        phi_loss = ((output_phi - target_subjet_d_phi) ** 2) * target_mask
+        # pt_loss = (output_pt_sorted - target_pt_clean) ** 2 # Order agnostic pT regression
+        pt_loss = (output_pt - target_pt_clean) ** 2 # Pad 0 to non-existing prong pt
+        # eta_loss = ((output_eta - target_subjet_d_eta) ** 2) * target_mask
+        # phi_loss = ((output_phi - target_subjet_d_phi) ** 2) * target_mask
 
-        regression_loss_per_sample = (pt_loss + eta_loss + phi_loss).sum(dim=1)
+        # regression_loss_per_sample = (pt_loss + eta_loss + phi_loss).sum(dim=1)
+        regression_loss_per_sample = (pt_loss).sum(dim=1)
+
+        # --- THE CONDITIONAL MASK ---
+        # 1.0 for Class 3 and Class 4. 0.0 for Class 1 and Class 2.
+        # Shape: [Batch]
+        conditional_mask = (targets >= 2).float()
+        regression_loss_per_sample = regression_loss_per_sample * conditional_mask
 
         # Make sure weights are tensor float type
         sample_weights = torch.as_tensor(data.weight, dtype=torch.float, device=device)
-        # final_loss_per_sample = classification_loss_per_sample + 0.1*regression_loss_per_sample # Original: 0.1
-        # final_loss_per_sample = classification_loss_per_sample + 0.34*regression_loss_per_sample # New: Try 0.34
 
         loss_class_mean = (classification_loss_per_sample * sample_weights).mean()
         loss_reg_mean = (regression_loss_per_sample * sample_weights).mean()
+        # loss_reg_mean = (pt_loss.sum(dim=1) * sample_weights).mean()
 
-        # Extract the learnable parameters
-        s1, s2 = model.log_vars[0], model.log_vars[1]
+        loss_class += data.num_graphs * loss_class_mean.item() # For printout
+        loss_reg += data.num_graphs * loss_reg_mean.item()
 
-        # Apply Uncertainty Weighting
-        # torch.exp(-s) acts as the dynamic multiplier
-        final_loss = (torch.exp(-s1) * loss_class_mean + s1) + \
-                     (torch.exp(-s2) * loss_reg_mean + s2)
-        loss_all += data.num_graphs * final_loss.item()
+        # final_loss_per_sample = loss_class_mean + 0.1*loss_reg_mean # Original: 0.1
+        # final_loss_per_sample = classification_loss_per_sample + 0.34*regression_loss_per_sample # New: Try 0.34
+        # final_loss_per_sample = loss_class_mean + 10.0*loss_reg_mean # New: Try 10.0 to balance two losses
+        final_loss_per_sample = loss_class_mean + 100.0*loss_reg_mean # New: Try 100.0 to balance two losses
+
+        # # Extract the learnable parameters
+        # s1, s2 = model.log_vars[0], model.log_vars[1]
+
+        # # Apply Uncertainty Weighting
+        # # torch.exp(-s) acts as the dynamic multiplier
+        # final_loss = (torch.exp(-s1) * loss_class_mean + s1) + \
+        #              (torch.exp(-s2) * loss_reg_mean + s2)
+
+        loss_all += data.num_graphs * final_loss_per_sample.item()
 
     del data
     data = []
+    print(f"Test epoch loss_class: {loss_class / len(loader.dataset):.5f}, loss_reg: {loss_reg / len(loader.dataset):.5f}")
     torch.cuda.empty_cache()
     return loss_all/len(loader.dataset)

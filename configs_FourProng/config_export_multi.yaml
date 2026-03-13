@@ -18,13 +18,13 @@ test:
   # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Multi_FourClass_NProng_FlatPt_Ver2_batch1_running_stats.onnx"
   # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Multi_FourClass_NProng_FlatPt_Ver2_dynamic_output.onnx"
   # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Multi_FourClass_NProng_FlatPt_Ver2_dynamic_output_NoCount.onnx"
-  # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Multi_FourClass_NProng_S300_FlatPt_Ver2.onnx"
+  # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Multi_FourClass_NProng_S300_FlatPt_Ver2_batch1_softmax_output.onnx"
   # path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Multi_FourClass_NProng_2dFlat_Ver2.onnx"
-  path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Multi_FourClass_NProng_NoHWW_2dFlat_Ver1.onnx"
+  path_to_onnx_ckpt: "/data/jjhong96/LundNet_Model/ONNX/LundNet_Multi_FourClass_NProng_NoHWW_2dFlat_Ver1_batch1_softmax_output.onnx"
   output_name: "LundNet_R22"
   choose_model: "LundNet"
   learning_rate: 0.001
-  batch_size: 2000
-  # batch_size: 1
+  # batch_size: 2000
+  batch_size: 1
 
-do_validation: true
+do_validation: false

@@ -90,7 +90,8 @@ def main():
         num_classes = 4
     if choose_model == "LundNet4ClassSubJReg":
         model = LundNet4ClassSubJReg()
-        num_classes = 16
+        # num_classes = 16
+        num_classes = 8
         # 4 class + 4*3 auxiliary nodes = 16 nodes
     if choose_model == "LundNet":
         model = LundNet()
@@ -154,7 +155,7 @@ def main():
                 num_classes = 4
             if choose_model == "LundNet4ClassSubJReg":
                 model = LundNet4ClassSubJReg()
-                num_classes = 16
+                num_classes = 8
             model.load_state_dict(torch.load(path_to_file, map_location=device))
             model.to(device)
             print(f'Using model: {choose_model}')
@@ -163,6 +164,7 @@ def main():
             # Get the tagger_scores, scipping the first dummy entry
 
             tagger_scores = np.array(y_pred)  # for multi-class, the scores are in columns 0,1,2,3
+            tagger_scores = np.exp(tagger_scores) # Apply exponent because of the final log_softmax layer
             print(f"Number of classes: {num_classes}")
 
             # Store each class score in a separate branch
