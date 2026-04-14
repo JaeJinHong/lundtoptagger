@@ -107,9 +107,19 @@ def compute_1d_flat_weights(values: np.ndarray, range_min: float, range_max: flo
     counts, edges = np.histogram(values, bins=bins)
     counts_safe = counts.astype(float)
     counts_safe[counts_safe == 0] = 1.0
+
+    print("preweight counts: ")
+    print(counts_safe)
+
     weights = 1.0 / counts_safe
-    # normalize such that the 1d spectrum becomes flat, match to the maximum count
-    weights *= np.max(counts)
+    # normalize such that the 1d spectrum becomes flat, match to the average count
+    print(f"Max: {np.max(counts_safe):.3f}")
+    print(f"Average: {np.average(counts_safe):.3f}")
+    print(f"Median: {np.median(counts_safe):.3f}")
+
+    weights *= np.average(counts_safe)
+    print("postweight counts: ")
+    print(weights * counts_safe)
     return edges, weights
 
 def compute_2d_flat_weights(x: np.ndarray, y: np.ndarray,
@@ -121,8 +131,18 @@ def compute_2d_flat_weights(x: np.ndarray, y: np.ndarray,
     counts, xedges, yedges = np.histogram2d(x, y, bins=[xbins, ybins])
     counts_safe = counts.astype(float)
     counts_safe[counts_safe == 0] = 1.0
+
+    print("preweight counts: ")
+    print(counts_safe)
+
     weights2d = 1.0 / counts_safe
-    weights2d *= np.max(counts)
+    print(f"Max: {np.max(counts_safe):.3f}")
+    print(f"Average: {np.average(counts_safe):.3f}")
+    print(f"Median: {np.median(counts_safe):.3f}")
+
+    weights2d *= np.average(counts_safe)
+    print("postweight counts: ")
+    print(weights2d * counts_safe)
     return xedges, yedges, weights2d
 
 def compute_1d_event_weights(values: np.ndarray,
@@ -136,15 +156,12 @@ def compute_1d_event_weights(values: np.ndarray,
     return edges, counts_safe
 
 def assign_weights(values, edges, weights):
-    idx = np.digitize(values, edges) - 1
-    idx = np.clip(idx, 0, len(weights)-1)
+    idx = np.digitize(values, edges) - 1 # Get the indices
     return weights[idx]
 
 def assign_2d_weights(x, y, xedges, yedges, weights2d):
     xi = np.digitize(x, xedges) - 1
     yi = np.digitize(y, yedges) - 1
-    xi = np.clip(xi, 0, weights2d.shape[0]-1)
-    yi = np.clip(yi, 0, weights2d.shape[1]-1)
     return weights2d[xi, yi]
 
 def save_split_histograms(df, name, config, weighted=True):
@@ -166,6 +183,9 @@ def save_split_histograms(df, name, config, weighted=True):
 
         # 1D pt histogram
         plt.figure()
+        # h_pt, edges_pt = np.histogram(sel_label[config["branch_pt"]], bins=pt_edges, weights=sel_label[weight_col] if weighted else None)
+        # bin_centers = 0.5 * (edges_pt[:-1] + edges_pt[1:])
+        # plt.step(bin_centers, h_pt, where='mid', label="Weighted" if weighted else "Unweighted")
         plt.hist(sel_label[config["branch_pt"]], bins=pt_edges, weights=sel_label[weight_col] if weighted else None,
                  histtype='step', lw=2)
         plt.title(f"Class {label} pt ({suffix})")
@@ -174,6 +194,8 @@ def save_split_histograms(df, name, config, weighted=True):
         plt.grid(True)
         plt.savefig(os.path.join(out_dir, f"{name}_class{label}_pt_{suffix}.png"))
         plt.close()
+        # print("SumOfWeights: ", np.sum(h_pt))
+        # print("h_pt: ", h_pt)
 
         # 1D mass histogram
         plt.figure()
@@ -249,21 +271,102 @@ def main():
         raise RuntimeError(f"Graph files ({len(files_graphs)}) != ROOT files ({len(files_root)})")
     print(f"Matched {len(files_graphs)} ROOT ↔ graph file pairs.")
 
+    # Full dataset with file_id/local_index, early stopper
+    full_dfs = []
+    class_counts = {label: 0 for label in config["labels"]}
+    total_needed = int(float(config["n_jets_per_class"]))
+
+    for fid, root_file in enumerate(files_root):
+        with uproot.open(root_file) as rf:
+            if do_subJ_regression:
+                arrs = rf[config["tree_name"]].arrays(
+                    [config["branch_pt"], config["branch_mass"], config["branch_label"],
+                     "fjet_eta", "fjet_phi", # Need jet kinematics
+                     config["branch_subJ_pt"], config["branch_subJ_eta"], config["branch_subJ_phi"], # Also include the SubJ info
+                     "fjet_nProng_labels", "EventInfo_mcChannelNumber", "EventInfo_mcEventWeight"],
+                    library='np'
+                )
+            else:
+                arrs = rf[config["tree_name"]].arrays(
+                    [config["branch_pt"], config["branch_mass"], config["branch_label"], "fjet_nProng_labels", "EventInfo_mcChannelNumber", "EventInfo_mcEventWeight"],
+                    library='np'
+                )
+            df = pd.DataFrame(arrs)
+            df["_file_id"] = fid
+            df["_local_index"] = np.arange(len(df))
+
+            if do_label_per_dsid: # Do the same label override as above
+                dsid = df["EventInfo_mcChannelNumber"][0]
+
+                target_label = label_dsid_map[dsid]
+                target_branch = config["branch_label"]
+                print(f"  DSID {dsid} mapped to label {target_label}")
+                print(f"  Overwriting {target_branch} to {target_label}...")
+                df[target_branch] = target_label
+
+            target_class = df["fjet_nProng_labels"][0] # Just need a int index
+
+            print("Processing file_id", fid, "with target class", target_class)
+
+            target_class_mask = df[config["branch_label"]] == target_class
+            pt_mask = (df[config["branch_pt"]] > config["pt_range"][0]) & (df[config["branch_pt"]] < config["pt_range"][1])
+            mass_mask = (df[config["branch_mass"]] > config["mass_range"][0]) & (df[config["branch_mass"]] < config["mass_range"][1])
+
+            target_mask = target_class_mask & pt_mask & mass_mask
+            # Apply target class mask
+            # df = df[target_class_mask]
+            df = df[target_mask]
+
+            # Only keep jets that still need to reach n_jets_per_class
+            keep_mask = df[config["branch_label"]].apply(
+                lambda lbl: class_counts[lbl] < total_needed
+            )
+            df = df[keep_mask]
+            if df.empty:
+                continue
+
+            # Update class counters
+            for lbl, count in df[config["branch_label"]].value_counts().items():
+                class_counts[lbl] += count
+
+            full_dfs.append(df)
+
+            # Check if all classes have enough jets
+            if all(cnt >= total_needed for cnt in class_counts.values()):
+                print("Reached required jets for all classes. Stopping early.")
+                break
+
+    full_df = pd.concat(full_dfs, ignore_index=True)
+    full_df = ensure_label_values(full_df, config["branch_label"], config["labels"], config["label_map"])
+
+    # Sample equal per class
+    n_target = int(float(config["n_jets_per_class"]))
+    selected = []
+    for label in config["labels"]:
+        df_lbl = full_df[full_df[config["branch_label"]] == label]
+        n_take = min(n_target, len(df_lbl))
+        print(f"Class {label}: taking {n_take} out of {len(df_lbl)} jets")
+        sel = df_lbl.sample(n=n_take, random_state=config["random_seed"])
+        selected.append(sel)
+    sel_df = pd.concat(selected, ignore_index=True)
+
+    ## Test sel_df for weight calculation
     # Small files for histogramming
-    if do_label_per_dsid: # Labels are determined by their dsid
-        small_df = read_flat_root_arrays_dsid_label(files_root, config["tree_name"],
-                                     [config["branch_pt"], config["branch_mass"], config["branch_label"], "fjet_nProng_labels", "EventInfo_mcChannelNumber", "EventInfo_mcEventWeight"],
-                                     target_branch=config["branch_label"], label_dsid_map=label_dsid_map)
-    else: # Default labelling
-        small_df = read_flat_root_arrays(files_root, config["tree_name"],
-                                     [config["branch_pt"], config["branch_mass"], config["branch_label"], "fjet_nProng_labels", 
-                                     "EventInfo_mcEventWeight"],
-                                     target_branch=config["branch_label"])
-    small_df = ensure_label_values(small_df, config["branch_label"], config["labels"], config["label_map"])
+    # if do_label_per_dsid: # Labels are determined by their dsid
+    #     small_df = read_flat_root_arrays_dsid_label(files_root, config["tree_name"],
+    #                                  [config["branch_pt"], config["branch_mass"], config["branch_label"], "fjet_nProng_labels", "EventInfo_mcChannelNumber", "EventInfo_mcEventWeight"],
+    #                                  target_branch=config["branch_label"], label_dsid_map=label_dsid_map)
+    # else: # Default labelling
+    #     small_df = read_flat_root_arrays(files_root, config["tree_name"],
+    #                                  [config["branch_pt"], config["branch_mass"], config["branch_label"], "fjet_nProng_labels", 
+    #                                  "EventInfo_mcEventWeight"],
+    #                                  target_branch=config["branch_label"])
+    # small_df = ensure_label_values(small_df, config["branch_label"], config["labels"], config["label_map"])
 
     hist = {}
     for label in config["labels"]:
-        df_label = small_df[small_df[config["branch_label"]] == label]
+        # df_label = small_df[small_df[config["branch_label"]] == label] # small_df: Includes all ntuples per class
+        df_label = sel_df[sel_df[config["branch_label"]] == label] # sel_df: pandas.df including only the selected entries per class
         print(f"Class {label}: {len(df_label)} jets for histogramming")
         if config["reweight_mode"] == "flat_pt":
             print("Computing pt flattening weights...")
@@ -316,80 +419,6 @@ def main():
                 hist[label] = {"pt_edges": edges, "pt_weights": w}
 
     # np.savez_compressed(os.path.join(config["output_dir"], config["histogram_filename"]), **hist)
-
-    # Full dataset with file_id/local_index, early stopper
-    full_dfs = []
-    class_counts = {label: 0 for label in config["labels"]}
-    total_needed = int(float(config["n_jets_per_class"]))
-
-    for fid, root_file in enumerate(files_root):
-        with uproot.open(root_file) as rf:
-            if do_subJ_regression:
-                arrs = rf[config["tree_name"]].arrays(
-                    [config["branch_pt"], config["branch_mass"], config["branch_label"],
-                     "fjet_eta", "fjet_phi", # Need jet kinematics
-                     config["branch_subJ_pt"], config["branch_subJ_eta"], config["branch_subJ_phi"], # Also include the SubJ info
-                     "fjet_nProng_labels", "EventInfo_mcChannelNumber", "EventInfo_mcEventWeight"],
-                    library='np'
-                )
-            else:
-                arrs = rf[config["tree_name"]].arrays(
-                    [config["branch_pt"], config["branch_mass"], config["branch_label"], "fjet_nProng_labels", "EventInfo_mcChannelNumber", "EventInfo_mcEventWeight"],
-                    library='np'
-                )
-            df = pd.DataFrame(arrs)
-            df["_file_id"] = fid
-            df["_local_index"] = np.arange(len(df))
-
-            if do_label_per_dsid: # Do the same label override as above
-                dsid = df["EventInfo_mcChannelNumber"][0]
-
-                target_label = label_dsid_map[dsid]
-                target_branch = config["branch_label"]
-                print(f"  DSID {dsid} mapped to label {target_label}")
-                print(f"  Overwriting {target_branch} to {target_label}...")
-                df[target_branch] = target_label
-
-            target_class = df["fjet_nProng_labels"][0] # Just need a int index
-
-            print("Processing file_id", fid, "with target class", target_class)
-
-            target_class_mask = df[config["branch_label"]] == target_class
-            # Apply target class mask
-            df = df[target_class_mask]
-
-            # Only keep jets that still need to reach n_jets_per_class
-            keep_mask = df[config["branch_label"]].apply(
-                lambda lbl: class_counts[lbl] < total_needed
-            )
-            df = df[keep_mask]
-            if df.empty:
-                continue
-
-            # Update class counters
-            for lbl, count in df[config["branch_label"]].value_counts().items():
-                class_counts[lbl] += count
-
-            full_dfs.append(df)
-
-            # Check if all classes have enough jets
-            if all(cnt >= total_needed for cnt in class_counts.values()):
-                print("Reached required jets for all classes. Stopping early.")
-                break
-
-    full_df = pd.concat(full_dfs, ignore_index=True)
-    full_df = ensure_label_values(full_df, config["branch_label"], config["labels"], config["label_map"])
-
-    # Sample equal per class
-    n_target = int(float(config["n_jets_per_class"]))
-    selected = []
-    for label in config["labels"]:
-        df_lbl = full_df[full_df[config["branch_label"]] == label]
-        n_take = min(n_target, len(df_lbl))
-        print(f"Class {label}: taking {n_take} out of {len(df_lbl)} jets")
-        sel = df_lbl.sample(n=n_take, random_state=config["random_seed"])
-        selected.append(sel)
-    sel_df = pd.concat(selected, ignore_index=True)
 
     # Per-jet reweights (per-class)
     weights = np.zeros(len(sel_df))
@@ -567,11 +596,12 @@ def main():
 
             print(f"Class distribution in this part: {graph_class_counts}")
 
-    save_split_histograms(train_df, "train", config, weighted=True)
     save_split_histograms(sel_df, "all", config, weighted=True)
-    save_split(train_df, "train")
-    # save_split_histograms(train_df, "train", config, weighted=False)
-    save_split(test_df, "test")
+    save_split_histograms(train_df, "train", config, weighted=True)
+    save_split_histograms(test_df, "test", config, weighted=True)
+    # save_split(train_df, "train")
+    # # save_split_histograms(train_df, "train", config, weighted=False)
+    # save_split(test_df, "test")
 
     print("Preprocessing done.")
 
