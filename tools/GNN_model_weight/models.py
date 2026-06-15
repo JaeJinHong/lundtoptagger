@@ -295,11 +295,10 @@ class LundNet4ClassSubJReg(torch.nn.Module):
         # self.log_vars = nn.Parameter(torch.zeros(2)) # For auxiliary loss optimization
         # SOTA approach
 
-    # def forward(self,x, edge_index, batch, Ntrk ,counts):
-    # def forward(self,x, edge_index, batch, Ntrk):
-    def forward(self, data):
-        x, edge_index, batch = data.x, data.edge_index, data.batch
-        Ntrk = data.Ntrk
+    def forward(self,x, edge_index, batch, Ntrk ,counts): # For onnx export
+    # def forward(self, data): # For training
+    #     x, edge_index, batch = data.x, data.edge_index, data.batch
+    #     Ntrk = data.Ntrk
         Ntrk = Ntrk.unsqueeze(1)
         x1 = self.conv1(x, edge_index).view(-1, 32)
         x2 = self.conv2(x1, edge_index).view(-1, 32)
@@ -323,9 +322,14 @@ class LundNet4ClassSubJReg(torch.nn.Module):
 
         class_prob = x[:, 0:4]      # All samples, first 4 features
         regress_result = x[:, 4:]   # All samples, remaining features
-        class_score = F.log_softmax(class_prob, dim=1)
+
+        if not torch.onnx.is_in_onnx_export():
+            # For training
+            class_score = F.log_softmax(class_prob, dim=1) # For multiclass classification + nll loss, more stable
+        else:
+            # For ONNX export: Drop log, let score range between [0, 1]
+            class_score = F.softmax(class_prob, dim=1)
         output_tensor = torch.cat( (class_score, regress_result) , dim=1)
-        # return F.log_softmax(x, dim=1) # For multiclass classification
         return output_tensor # Return length 16 output vector
 
 class LundNet4Class(torch.nn.Module):

@@ -111,16 +111,17 @@ def main():
     for epoch in range(n_epochs):
         train_loss.append(train_multi_SubJReg(train_loader, model, device, optimizer, epoch))
         val_loss.append(test_multi_SubJReg(val_loader, model, device))
+        val_acc.append(get_accuracy_multi_SubJReg(val_loader, model, device))
 
-        print('Epoch: {:03d}, Train Loss: {:.5f}, Val Loss: {:.5f}'.format(epoch, train_loss[epoch], val_loss[epoch]))
+        print('Epoch: {:03d}, Train Loss: {:.5f}, Val Loss: {:.5f}, Val Acc: {:.5f}'.format(epoch, train_loss[epoch], val_loss[epoch], val_acc[epoch]))
         if save_every_epoch or epoch == n_epochs-1:
-            model_filename = os.path.join(path_to_save, f"{model_name}_e{epoch+1:03d}_{val_loss[epoch]:.5f}.pt")
+            model_filename = os.path.join(path_to_save, f"{model_name}_e{epoch+1:03d}_Loss{val_loss[epoch]:.5f}_Acc{val_acc[epoch]:.5f}.pt")
             torch.save(model.state_dict(), model_filename)
 
-    metrics = zip(train_loss, val_loss)
+    metrics = zip(train_loss, val_loss, val_acc)
     with open(metrics_filename, mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["Train_Loss", "Val_Loss"])
+        writer.writerow(["Train_Loss", "Val_Loss", "Val_Acc"])
         writer.writerows(metrics)
 
 

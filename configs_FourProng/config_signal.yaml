@@ -210,6 +210,7 @@ TTbar:
   pt_hist_files_signal:
     802423: "./histos/FourProngV2/TTbar.root" # TODO: make sure to use histograms with matching mass cutor change the mass cut here
   signal_jet_label: [3]
+  # signal_jet_label: [1] # For truthlabel
   dsids: [802423] # for this DSID, keep only jets with nprong label 3
   pt_range: [350, 3100]   # jet pT selection in GeV, upper limit not really necessary, in testing jets with pt > 3k are not included
   mass_range: [40, 800]  # jet mass selection in GeV, for no upper limit use .inf

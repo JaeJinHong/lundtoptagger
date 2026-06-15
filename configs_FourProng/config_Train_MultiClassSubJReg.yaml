@@ -1,12 +1,12 @@
 # Data and output paths
 # =====================
 data:
-  path_to_trainfiles: "/data/jjhong96/LundNet_Graph/FourProngV2_ExKtSubJ_MultiClassTrain/Shuffled_Graphs_NProng_2dFlat/train/"  # can also be a list of paths
-  path_to_validationfiles: "/data/jjhong96/LundNet_Graph/FourProngV2_ExKtSubJ_MultiClassTrain/Shuffled_Graphs_NProng_2dFlat/test/"  # can also be a list of paths
+  path_to_trainfiles: "/data/jjhong96/LundNet_Graph/FourProngV2_MultiClassTrain_ReweightFix/Shuffled_Graphs_ExKtSubJ_NoHWW_NQuark10_2dFlat/train/"  # can also be a list of paths
+  path_to_validationfiles: "/data/jjhong96/LundNet_Graph/FourProngV2_MultiClassTrain_ReweightFix/Shuffled_Graphs_ExKtSubJ_NoHWW_NQuark10_2dFlat/test/"  # can also be a list of paths
   # path_to_save: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark10/"
   # model_name: "LundNet_R22_FourClass_NQuark10_FlatPt_Ver2"
-  path_to_save: "/data/jjhong96/LundNet_Model/LundNetMultiClass4SubJReg_3vs4_PtRegOnly_NProng_NoHWW_2dFlat_Ver2/"
-  model_name: "LundNet_R22_FourClass4SubJReg_3vs4_PtRegOnly_NProng_NoHWW_2dFlat_Ver2"
+  path_to_save: "/data/jjhong96/LundNet_Model/LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight2_NQuark10_NoHWW_2dFlat_Ver2/"
+  model_name: "LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight2_NQuark10_NoHWW_2dFlat_Ver2"
   # path_to_save: "/data/jjhong96/LundNet_Model/LundNet_GN2X_MultiClass4_FlatPt_Ver2/NQuark10/"
   # model_name: "LundNet_GN2X_R22_FourClass_NQuark10_FlatPt_Ver2"
 
@@ -18,11 +18,11 @@ architecture:
   # batch_size: 4500 #2600
   batch_size: 4096 # 1024 or 2048 or 4096 or 8192, depending on VRAM, 4096 for 1080Ti(10G VRAM)
   test_size: 0.1
-  learning_rate: 5.0e-6 # 5.0e-6 or 7.0e-6 or 1.0e-5 or 2.0e-5
+  learning_rate: 1.0e-5 # 5.0e-6 or 7.0e-6 or 1.0e-5 or 2.0e-5
   save_every_epoch: True
 
   # classifier
-  n_epochs: 200
+  n_epochs: 150
   choose_model: LundNet4ClassSubJReg # LundNet, LundNet_plus_GN2X, GATNet, GINNet, EdgeGinNet, PNANet
   # if you want to use LundNet_plus_GN2X, make sure that the graphs have GN2X scores!
   # FourProngV2: LundNet_plus_GN2X_4Class or LundNet4Class or LundNet4ClassSubJReg

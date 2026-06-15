@@ -72,7 +72,7 @@ if __name__ == "__main__":
     kT_selection = config['data']['kT_cut']
     
     files = glob.glob(path_to_test_file)
-    intreename = "AnalysisTree"
+    intreename = "reco"
 
     nentries_total = 0
     nentries_done = 0
@@ -110,29 +110,34 @@ if __name__ == "__main__":
             nentries_file = tree.num_entries
 
             count_files += 1
-            dsids_test = tree["dsid"].array(library="np")
+            dsids_test = tree["mcChannelNumber"].array(library="np")
             if dsids_test[0] in signal["skip_dsids"]: 
                continue
 
-            jet_pts_truth = ak.to_numpy(ak.flatten(tree["LRJ_pt"].array(library="ak")) )
-            ptweights = np.ones_like( ak.to_numpy(ak.flatten(tree["LRJ_pt"].array(library="ak")) ))
-            labels = ak.to_numpy(ak.flatten(tree["LRJ_truthLabel"].array(library="ak")) )
-            dsids = dsids_test[0]*np.ones_like(ak.to_numpy(ak.flatten(tree["LRJ_pt"].array(library="ak")) ))
-            LRJ_pt_ref = tree["LRJ_pt"].array(library="np") 
-            mcweights = tree["mcEventWeight"].array(library="np")  
+            jet_pts_truth = ak.to_numpy(ak.flatten(tree["largeRjet_pt_NOSYS"].array(library="ak")) )
+            ptweights = np.ones_like( ak.to_numpy(ak.flatten(tree["largeRjet_pt_NOSYS"].array(library="ak")) ))
+            labels = ak.to_numpy(ak.flatten(tree["largeRjet_truth_label"].array(library="ak")) )
+            dsids = dsids_test[0]*np.ones_like(ak.to_numpy(ak.flatten(tree["largeRjet_pt_NOSYS"].array(library="ak")) ))
+            LRJ_pt_ref = tree["largeRjet_pt_NOSYS"].array(library="np") 
+            mcweights = tree["weight_mc_NOSYS"].array(library="np")  
             mcweights = flatten_small_branch(LRJ_pt_ref, mcweights)
 
-            NBHadrons = ak.to_numpy(ak.flatten(tree["LRJ_pt"].array(library="ak")) )
-            parent1 =  ak.flatten(tree["jetLundIDParent1"].array(library="ak")) 
-            parent2 = ak.flatten(tree["jetLundIDParent2"].array(library="ak")) 
-            jet_pts = ak.to_numpy(ak.flatten(tree["LRJ_pt"].array(library="ak")) )
-            jet_etas = ak.to_numpy(ak.flatten(tree["LRJ_eta"].array(library="ak")) )
-            jet_phis = ak.to_numpy(ak.flatten(tree["LRJ_phi"].array(library="ak")) )
-            jet_ms =  ak.to_numpy(ak.flatten(tree["LRJ_mass"].array(library="ak")))
-            all_lund_zs = ak.flatten(tree["jetLundZ"].array(library="ak")) 
-            all_lund_kts = ak.flatten(tree["jetLundKt"].array(library="ak")) 
-            all_lund_drs = ak.flatten(tree["jetLundDeltaR"].array(library="ak"))
-            N_tracks = ak.to_numpy(ak.flatten(tree["LRJ_Nconst_Charged"].array(library="ak")) )
+            NBHadrons = ak.to_numpy(ak.flatten(tree["largeRjet_pt_NOSYS"].array(library="ak")) )
+            parent1 =  ak.flatten(tree["largeRjet_LundAllIDP1_NOSYS"].array(library="ak")) 
+            parent2 = ak.flatten(tree["largeRjet_LundAllIDP2_NOSYS"].array(library="ak")) 
+            jet_pts = ak.to_numpy(ak.flatten(tree["largeRjet_pt_NOSYS"].array(library="ak")) )
+            jet_etas = ak.to_numpy(ak.flatten(tree["largeRjet_eta"].array(library="ak")) )
+            jet_phis = ak.to_numpy(ak.flatten(tree["largeRjet_phi"].array(library="ak")) )
+            jet_ms =  ak.to_numpy(ak.flatten(tree["largeRjet_m_NOSYS"].array(library="ak")))
+            all_lund_zs = ak.flatten(tree["largeRjet_LundAllZ_NOSYS"].array(library="ak")) 
+            all_lund_kts = ak.flatten(tree["largeRjet_LundAllKt_NOSYS"].array(library="ak")) 
+            all_lund_drs = ak.flatten(tree["largeRjet_LundAllDR_NOSYS"].array(library="ak"))
+            N_tracks = ak.to_numpy(ak.flatten(tree["largeRjet_Ntrk_NOSYS"].array(library="ak")) )
+
+            AthTool_P1 = ak.to_numpy(ak.flatten(tree["largeRjet_LundNetScoreP1_NOSYS"].array(library="ak")) )
+            AthTool_P2 = ak.to_numpy(ak.flatten(tree["largeRjet_LundNetScoreP2_NOSYS"].array(library="ak")) )
+            AthTool_P3 = ak.to_numpy(ak.flatten(tree["largeRjet_LundNetScoreP3_NOSYS"].array(library="ak")) )
+            AthTool_P4 = ak.to_numpy(ak.flatten(tree["largeRjet_LundNetScoreP4_NOSYS"].array(library="ak")) )
  
             # flat_weights = GetPtWeight_all_MC( labels, dsids_test,  jet_pts, 5, Pythia_or_All=True)
             flat_weights = GetPtWeight(
@@ -165,7 +170,7 @@ if __name__ == "__main__":
                                graph_size = torch.tensor(2, dtype=torch.float).detach(),
                                mass= float(80) ,
                                y= float(0) )
-
+                
             dataset = create_train_dataset_fulld_new_Ntrk_pt_weight_file_test_export(
                 dataset, graph_small_example, all_lund_zs, all_lund_kts, all_lund_drs,
                 parent1, parent2, flat_weights, labels,
@@ -200,20 +205,24 @@ if __name__ == "__main__":
         
         print ("dataset size:", len(dataset))
         print ("dataset_onnx size", len (dataset_onnx))
+        print ("Good_jets_len: ",len(Good_jets) )
+        print ("Good_jets_count: ", np.sum(Good_jets))
+        print("Good_jets: ", Good_jets)
+        print("Good_jets2: ", Good_jets2)
+
+        Good_jet_mask = (ak.Array(Good_jets) == 1)
+        Good_jet_mask = ak.to_numpy(Good_jet_mask)
+        print("Good_jet_mask: ", Good_jet_mask)
 
         # === Load model ===
-        if choose_model == "LundNet4Class":
-            model = LundNet4Class()
-        elif choose_model == "LundNet4ClassSubJReg":
-            model = LundNet4ClassSubJReg()
-        print("Model: ", choose_model)
+        model = LundNet4Class()
         model.load_state_dict(torch.load(path_to_combined_ckpt, map_location=torch.device('cpu')))
         device = torch.device('cpu')
         model.to(device)
         model.eval()
 
         if first == True:
-            model_for_export = model
+            model_for_export = LundNet4Class()
             model_for_export.load_state_dict(torch.load(path_to_combined_ckpt, map_location="cpu"))
             model_for_export.eval()
             
@@ -295,20 +304,23 @@ if __name__ == "__main__":
         first=False
 
         if do_validation:
+            print("Start validation...")
+
             # ============================================================
             # === Evaluate PyTorch (multiclass)
             # ============================================================
             y_pred = get_scores_multi(test_loader, model, device)
-            # Apply softmax
-            y_pred = y_pred / y_pred.sum(axis=1, keepdims=True)
-            
+            # # Apply exponential(The pytorch version exports log_softmax by default)
+            y_pred = np.exp(y_pred)
+            # y_pred = y_pred / y_pred.sum(axis=1, keepdims=True) # softmax
+            print("y_pred done...")
             # ============================================================
             # === Evaluate ONNX (multiclass)
             # ============================================================
             onnx_model = ort.InferenceSession(path_to_onnx)
             y_pred_onnx = evaluate_onnx_multi(test_loader_onnx, onnx_model)
             # shape: (N_jets, n_classes)
-            
+            print("y_pred_onnx done...")
             # ============================================================
             # === Sanity checks
             # ============================================================
@@ -316,12 +328,13 @@ if __name__ == "__main__":
             print("ONNX scores shape:", y_pred_onnx.shape)
             print("dsids:", len(dsids))
             print("mcweights_out:", len(mcweights_out))
+            # print("good_jets: ", np.sum(Good_jets != 0))
             
     
             n_jets = y_pred.shape[0]
             y_pred_onnx = y_pred_onnx[:n_jets]
             assert y_pred.shape == y_pred_onnx.shape
-            assert y_pred.shape[0] == len(dsids)
+            # assert y_pred.shape[0] == len(dsids) # Will filter below
             
             # ============================================================
             # === Output file
@@ -342,15 +355,20 @@ if __name__ == "__main__":
             # === Build branches
             # ============================================================
             branches = {
-                "EventInfo_mcChannelNumber": np.array(dsids, dtype="int32"),
+                "EventInfo_mcChannelNumber": np.array(dsids[Good_jet_mask], dtype="int32"),
+                # "EventInfo_mcEventWeight":   np.array(mcweights_out[Good_jet_mask], dtype="float32"),
                 "EventInfo_mcEventWeight":   np.array(mcweights_out, dtype="float32"),
-                "fjet_pt":                   np.array(jet_pts, dtype="float32"),
-                "fjet_eta":                  np.array(jet_etas, dtype="float32"),
-                "fjet_phi":                  np.array(jet_phis, dtype="float32"),
-                "fjet_m":                    np.array(jet_ms, dtype="float32"),
-                "fjet_weight_pt":            np.array(ptweights, dtype="float32"),
-                "labels":                    np.array(labels, dtype="float32"),
-                "Good_jets":                 np.array(Good_jets, dtype="float32"),
+                "fjet_pt":                   np.array(jet_pts[Good_jet_mask], dtype="float32"),
+                "fjet_eta":                  np.array(jet_etas[Good_jet_mask], dtype="float32"),
+                "fjet_phi":                  np.array(jet_phis[Good_jet_mask], dtype="float32"),
+                "fjet_m":                    np.array(jet_ms[Good_jet_mask], dtype="float32"),
+                "fjet_weight_pt":            np.array(ptweights[Good_jet_mask], dtype="float32"),
+                "labels":                    np.array(labels[Good_jet_mask], dtype="float32"),
+                # "Good_jets":                 np.array(Good_jets[Good_jets], dtype="float32"),
+                "fjet_FourProngLundNetP1": np.array(AthTool_P1[Good_jet_mask], dtype="float32"),
+                "fjet_FourProngLundNetP2": np.array(AthTool_P2[Good_jet_mask], dtype="float32"),
+                "fjet_FourProngLundNetP3": np.array(AthTool_P3[Good_jet_mask], dtype="float32"),
+                "fjet_FourProngLundNetP4": np.array(AthTool_P4[Good_jet_mask], dtype="float32"),
             }
             
             # === one branch per class (PyTorch + ONNX)

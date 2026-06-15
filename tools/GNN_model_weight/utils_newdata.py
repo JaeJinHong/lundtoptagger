@@ -383,19 +383,38 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
         jet_ms_np = jet_ms_np.astype(float)
         '''
 
+        # print("jet_pts: ", jet_pts[i])
+        # print("jet_ms: ", jet_ms[i])
+        # print("jet_etas: ", jet_etas[i])
+        # print("len(z[i]): ", len(z[i]))
+        # print("len(k[i]): ", len(k[i]))
+        # print("min(edge1[i]): ", np.amin(edge1[i]))
+        # print("max(edge1[i]): ", np.amax(edge1[i]))
+        # print("min(edge2[i]): ", np.amin(edge2[i]))
+        # print("max(edge2[i]): ", np.amax(edge2[i]))
+        # print("dsids: ", dsids[i])
+        # print("label: ", label[i])
+
+        # Comment out for validation purpose
         # skip jets with mass, pT or eta outside the specified ranges
         # or with less than the specified number of splittings
-        if (not (pt_range[0] < jet_pts[i] < pt_range[1])
+        if (
+            not (pt_range[0] < jet_pts[i] < pt_range[1])
             or not (mass_range[0] < jet_ms[i] < mass_range[1])
-            or not (abs(jet_etas[i]) < eta_max)
+            or 
+            not (abs(jet_etas[i]) < eta_max)
             or len(z[i]) < min_splits
+            # Skip if the edges were created incorrectly
+            # or (np.amax(edge1[i]) >= len(z[i]) or np.amax(edge2[i]) >= len(z[i]))
             # skip jets which are not signal (1 for top and 2 for W) or background (10)
             or dsids[i] in signal_dsids and label[i] not in signal_jet_truth_labels) or (dsids[i] not in signal_dsids and label[i]!=10
-        ):
+            ):
             passed_selection.append(False)
+            # print("FAILED!!!")
             continue
         else:
             passed_selection.append(True)  # changed to False later for some conditions
+            # print("PASSED!!!")
 
         if binary_label:
         # label signal as 1 and background as 0
@@ -545,7 +564,7 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file(
                     nodes_selected.append(False)
                     continue
                 nodes_selected.append(True)
-                nodes_primary_count +=1;
+                nodes_primary_count +=1
                 #j_ID1_next = parentID1[j]
                 j_ID1_next = parentID2[j]
                 index_count.append(j)
@@ -1174,8 +1193,13 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file_test_export(graphs, graph
     extra_node = 0
     print("extra_node condition-", extra_node)
 
+
     # loop over jets
     for i in range(len(z)):  
+        # For TCTK ntuples
+        # if (np.amax(edge1[i]) >= len(z[i]) or np.amax(edge2[i]) >= len(z[i])):
+        #     Good_jets.append(0)
+        #     continue
         #print("len(z)", len(z))
         label_out = label[i]
         mc_weight_event = mcweights[i]
@@ -1512,7 +1536,11 @@ def create_train_dataset_fulld_new_Ntrk_pt_weight_file_test_onnx(graphs, graph_s
     print("extra_node condition-", extra_node)
 
     # loop over jets
-    for i in range(len(z)):  
+    for i in range(len(z)):
+        # For TCTK ntuples
+        # if (np.amax(edge1[i]) >= len(z[i]) or np.amax(edge2[i]) >= len(z[i])):
+        #     Good_jets.append(0)
+        #     continue
         #print("len(z)", len(z))
         label_out = label[i]
         mc_weight_event = mcweights[i]
@@ -1864,7 +1892,7 @@ def onnx_data_loader(dataset, batch_size, shuffle_batches=False):
         # Sanity checks rápidos
         assert x_concat.shape[0] == int(counts.sum()), "x concatenado != suma de counts"
         assert batch_vector.shape[0] == x_concat.shape[0], "batch vector length mismatch"
-        print(f"Batch {i//batch_size}: len(xs)={len(xs)}, total_nodes={sum([x.shape[0] for x in xs])}")
+        # print(f"Batch {i//batch_size}: len(xs)={len(xs)}, total_nodes={sum([x.shape[0] for x in xs])}")
         # Devolver el batch con todos los datos convertidos al tipo correcto
         yield {
             "x":          x_concat,          # float32 [total_nodes, feat_dim]

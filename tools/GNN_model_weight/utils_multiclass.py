@@ -133,10 +133,15 @@ def get_accuracy_multi(loader, model, device):
     correct = 0
     for data in loader:
         cl_data = data.to(device)
-        new_y = torch.reshape(cl_data.y, (int(list(cl_data.y.shape)[0]),1))
+        target = torch.as_tensor(cl_data.y, dtype=torch.long, device=device) - 1 # The target labels should be [1, 2, 3, 4], not [0, 1, 2, 3]
         output = model(cl_data)
-        pred = F.Softmax(output).max(dim=1)
-        correct += pred.eq(new_y[0,:]).sum().item()
+        prob = F.softmax(output, dim=1)
+        pred = prob.argmax(dim=1)
+        # print("target: ", target)
+        # print("predict: ", pred)
+        correct += (pred == target).sum().float()
+    
+    torch.cuda.empty_cache()
     return correct / len(loader.dataset)
 
 @torch.no_grad()
@@ -200,7 +205,7 @@ def train_multi_SubJReg(loader, model, device, optimizer, epoch):
         data = data.to(device)
         output = model(data)  # shape [batch_size, 16]
         # Make sure labels are tensor and integer type
-        targets = torch.as_tensor(data.y, dtype=torch.long, device=device) - 1
+        targets = torch.as_tensor(data.y, dtype=torch.long, device=device) - 1 # [1,2,3,4] -> [0,1,2,3]
         
         # Fix 1: Reshape targets from [batch * 4] -> [batch, 4]
         target_subjet_pt_ratio = torch.as_tensor(data.subjet_pt_ratio, dtype=torch.float32, device=device).view(-1, 4)
@@ -222,14 +227,17 @@ def train_multi_SubJReg(loader, model, device, optimizer, epoch):
 
         # --- DYNAMIC TARGET CLEANING FOR pT ---
         # Create a strict 1/0 binary mask from your fractional mask
-        binary_mask = (target_mask > 0).float()
+        # binary_mask = (target_mask > 0).float()
 
         # Safely overwrite -99.9 with 0.0 ONLY for pT, based on the binary mask
         target_pt_clean = torch.where(
-            binary_mask == 1, 
-            target_subjet_pt_ratio, 
-            torch.zeros_like(target_subjet_pt_ratio)
+            # binary_mask == 1, 
+            target_mask > 0, # Condition
+            target_subjet_pt_ratio,  # Pass
+            torch.zeros_like(target_subjet_pt_ratio) # Fail
         )
+
+        # print("target_pt_clean: ", target_pt_clean)
 
 
         classification_loss_per_sample = F.nll_loss(output_class, targets, reduction='none') # softmax_loss = log_softmax + nll_loss
@@ -244,9 +252,10 @@ def train_multi_SubJReg(loader, model, device, optimizer, epoch):
         regression_loss_per_sample = (pt_loss).sum(dim=1)
 
         # --- THE CONDITIONAL MASK ---
-        # 1.0 for Class 3 and Class 4. 0.0 for Class 1 and Class 2.
+        ## Comment this if you want not to apply class specific masks
+        # 1.0 for Class 3. 0.0 for Class 0, Class 1, and Class 2
         # Shape: [Batch]
-        conditional_mask = (targets >= 2).float()
+        conditional_mask = (targets >= 3).float() # Class 3 only vs Class 2,3 only vs Class 1,2,3 only?
         regression_loss_per_sample = regression_loss_per_sample * conditional_mask
 
         # Make sure weights are tensor float type
@@ -261,8 +270,11 @@ def train_multi_SubJReg(loader, model, device, optimizer, epoch):
 
         # final_loss_per_sample = loss_class_mean + 0.1*loss_reg_mean # Original: 0.1
         # final_loss_per_sample = classification_loss_per_sample + 0.34*regression_loss_per_sample # New: Try 0.34
-        # final_loss_per_sample = loss_class_mean + 10.0*loss_reg_mean # New: Try 10.0 to balance two losses
-        final_loss_per_sample = loss_class_mean + 100.0*loss_reg_mean # New: Try 100.0 to balance two losses
+        # final_loss_per_sample = loss_class_mean + 1.0*loss_reg_mean # New: Try 1.0 to balance two losses(Class 3 Only test)
+        final_loss_per_sample = loss_class_mean + 2.0*loss_reg_mean # New: Try 2.0 to balance two losses(Class 3 Only test)
+        # final_loss_per_sample = loss_class_mean + 10.0*loss_reg_mean # New: Try 10.0 to balance two losses(Class 2,3 Only)
+        # final_loss_per_sample = loss_class_mean + 20.0*loss_reg_mean # New: Try 20.0 to balance two losses(Class 3 Only)
+        # final_loss_per_sample = loss_class_mean + 50.0*loss_reg_mean # New: Try 50.0 to balance two losses(Class 3 Only test)
 
         # # Extract the learnable parameters
         # s1, s2 = model.log_vars[0], model.log_vars[1]
@@ -320,11 +332,12 @@ def test_multi_SubJReg(loader, model, device):
 
         # --- DYNAMIC TARGET CLEANING FOR pT ---
         # Create a strict 1/0 binary mask from your fractional mask
-        binary_mask = (target_mask > 0).float()
+        # binary_mask = (target_mask > 0).float()
 
         # Safely overwrite -99.9 with 0.0 ONLY for pT, based on the binary mask
         target_pt_clean = torch.where(
-            binary_mask == 1, 
+            # binary_mask == 1, 
+            target_mask > 0,
             target_subjet_pt_ratio, 
             torch.zeros_like(target_subjet_pt_ratio)
         )
@@ -342,9 +355,10 @@ def test_multi_SubJReg(loader, model, device):
         regression_loss_per_sample = (pt_loss).sum(dim=1)
 
         # --- THE CONDITIONAL MASK ---
-        # 1.0 for Class 3 and Class 4. 0.0 for Class 1 and Class 2.
+        ## Comment this if you want not to apply class specific masks
+        # 1.0 for Class 3. 0.0 for Class 0, Class 1, and Class 2
         # Shape: [Batch]
-        conditional_mask = (targets >= 2).float()
+        conditional_mask = (targets >= 3).float() # Class 3 only vs Class 2,3 only vs Class 1,2,3 only?
         regression_loss_per_sample = regression_loss_per_sample * conditional_mask
 
         # Make sure weights are tensor float type
@@ -359,8 +373,11 @@ def test_multi_SubJReg(loader, model, device):
 
         # final_loss_per_sample = loss_class_mean + 0.1*loss_reg_mean # Original: 0.1
         # final_loss_per_sample = classification_loss_per_sample + 0.34*regression_loss_per_sample # New: Try 0.34
-        # final_loss_per_sample = loss_class_mean + 10.0*loss_reg_mean # New: Try 10.0 to balance two losses
-        final_loss_per_sample = loss_class_mean + 100.0*loss_reg_mean # New: Try 100.0 to balance two losses
+        # final_loss_per_sample = loss_class_mean + 1.0*loss_reg_mean # New: Try 1.0 to balance two losses(Class 3 Only test)
+        final_loss_per_sample = loss_class_mean + 2.0*loss_reg_mean # New: Try 2.0 to balance two losses(Class 3 Only test)
+        # final_loss_per_sample = loss_class_mean + 10.0*loss_reg_mean # New: Try 10.0 to balance two losses(Class 2,3 Only)
+        # final_loss_per_sample = loss_class_mean + 20.0*loss_reg_mean # New: Try 20.0 to balance two losses(Class 3 Only)
+        # final_loss_per_sample = loss_class_mean + 50.0*loss_reg_mean # New: Try 50.0 to balance two losses(Class 3 Only test)
 
         # # Extract the learnable parameters
         # s1, s2 = model.log_vars[0], model.log_vars[1]
@@ -377,3 +394,23 @@ def test_multi_SubJReg(loader, model, device):
     print(f"Test epoch loss_class: {loss_class / len(loader.dataset):.5f}, loss_reg: {loss_reg / len(loader.dataset):.5f}")
     torch.cuda.empty_cache()
     return loss_all/len(loader.dataset)
+
+
+@torch.no_grad()
+def get_accuracy_multi_SubJReg(loader, model, device):
+    #remember to change this when evaluating combined model
+    model.eval()
+    correct = 0
+    for data in loader:
+        cl_data = data.to(device)
+        target = torch.as_tensor(cl_data.y, dtype=torch.long, device=device) - 1 # The target labels should be [1, 2, 3, 4], not [0, 1, 2, 3]
+        output = model(cl_data)
+        output_class, output_pt = torch.tensor_split(output, [4], dim=1)
+        prob = F.softmax(output_class, dim=1)
+        pred = prob.argmax(dim=1)
+        # print("target: ", target)
+        # print("predict: ", pred)
+        correct += (pred == target).sum().float()
+    
+    torch.cuda.empty_cache()
+    return correct / len(loader.dataset)

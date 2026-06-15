@@ -37,57 +37,63 @@ test:
     # MultiClass_FlatMass_Ver1: 
     #   path_to_file: "/data/jjhong96/LundNet_Model/MultiClass_FlatMass_Ver1/LundNet_R22_FourClass_2dFlat_Ver1_e055_14.48529.pt"
     #   choose_model: "LundNet4Class"
-    MultiClass_NoHWW_Ver1: 
-      path_to_file: "/data/jjhong96/LundNet_Model/MultiClass_NoHWW_Ver1/LundNet_R22_FourClass_NoHWW_FlatPt_Ver1_e060_0.84827.pt"
-      choose_model: "LundNet4Class"
-    MultiClass_NoHWW_FlatMass_Ver1: 
+    # MultiClass_NoHWW_Ver1: 
+    #   path_to_file: "/data/jjhong96/LundNet_Model/MultiClass_NoHWW_Ver1/LundNet_R22_FourClass_NoHWW_FlatPt_Ver1_e060_0.84827.pt"
+    #   choose_model: "LundNet4Class"
+    MultiClass_NoHWW_FlatMass_Ver1:
       path_to_file: "/data/jjhong96/LundNet_Model/MultiClass_NoHWW_FlatMass_Ver1/LundNet_R22_FourClass_NoHWW_2dFlat_Ver1_e053_14.46694.pt"
       choose_model: "LundNet4Class"
-    MultiClass_NProng_Ver2: 
-      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NProng/LundNet_R22_FourClass_NProng_FlatPt_Ver2_e051_0.90880.pt"
-      choose_model: "LundNet4Class"
-    MultiClass_NQuark10_Ver2: 
-      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark10/LundNet_R22_FourClass_NQuark10_FlatPt_Ver2_e059_0.91974.pt"
-      choose_model: "LundNet4Class"
-    MultiClass_NQuark8_Ver2: 
-      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark8/LundNet_R22_FourClass_NQuark8_FlatPt_Ver2_e054_0.86671.pt"
-      choose_model: "LundNet4Class"
-    MultiClass_NQuark8_Loose_Iso_Ver2: 
-      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark8_Loose_Iso/LundNet_R22_FourClass_NQuark8_Loose_Iso_FlatPt_Ver2_e046_0.85655.pt"
-      choose_model: "LundNet4Class"
-    MultiClass_NQuark8_Medium_Iso_Ver2: 
-      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark8_Medium_Iso/LundNet_R22_FourClass_NQuark8_Medium_Iso_FlatPt_Ver2_e054_0.82370.pt"
-      choose_model: "LundNet4Class"
-    MultiClass_NQuark8_Tight_Iso_Ver2: 
-      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark8_Tight_Iso/LundNet_R22_FourClass_NQuark8_Tight_Iso_FlatPt_Ver2_e052_0.83598.pt"
-      choose_model: "LundNet4Class"
-    MultiClass_NProng_FlatMass_Ver2: 
-      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NProng/LundNet_R22_FourClass_NProng_2dFlat_Ver2_e041_8.58039.pt"
-      choose_model: "LundNet4Class"
-    MultiClass_NQuark10_FlatMass_Ver2: 
-      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NQuark10/LundNet_R22_FourClass_NQuark10_2dFlat_Ver2_e040_9.29158.pt"
-      choose_model: "LundNet4Class"
-    MultiClass_NQuark8_FlatMass_Ver2: 
-      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NQuark8/LundNet_R22_FourClass_NQuark8_2dFlat_Ver2_e039_9.23147.pt"
-      choose_model: "LundNet4Class"
-    MultiClass_NQuark8_Loose_Iso_FlatMass_Ver2: 
-      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NQuark8_Loose_Iso/LundNet_R22_FourClass_NQuark8_Loose_Iso_2dFlat_Ver2_e043_9.41091.pt"
-      choose_model: "LundNet4Class"
-    MultiClass_NQuark8_Medium_Iso_FlatMass_Ver2: 
-      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NQuark8_Medium_Iso/LundNet_R22_FourClass_NQuark8_Medium_Iso_2dFlat_Ver2_e038_8.68816.pt"
-      choose_model: "LundNet4Class"
-    MultiClass_NQuark8_Tight_Iso_FlatMass_Ver2: 
-      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NQuark8_Tight_Iso/LundNet_R22_FourClass_NQuark8_Tight_Iso_2dFlat_Ver2_e037_6.42784.pt"
-      choose_model: "LundNet4Class"
+    # MultiClass_NProng_Ver2: 
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NProng/LundNet_R22_FourClass_NProng_FlatPt_Ver2_e051_0.90880.pt"
+    #   choose_model: "LundNet4Class"
+    # MultiClass_NQuark10_Ver2: 
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark10/LundNet_R22_FourClass_NQuark10_FlatPt_Ver2_e059_0.91974.pt"
+    #   choose_model: "LundNet4Class"
+    # MultiClass_NQuark8_Ver2: 
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark8/LundNet_R22_FourClass_NQuark8_FlatPt_Ver2_e054_0.86671.pt"
+    #   choose_model: "LundNet4Class"
+    # MultiClass_NQuark8_Loose_Iso_Ver2: 
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark8_Loose_Iso/LundNet_R22_FourClass_NQuark8_Loose_Iso_FlatPt_Ver2_e046_0.85655.pt"
+    #   choose_model: "LundNet4Class"
+    # MultiClass_NQuark8_Medium_Iso_Ver2: 
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark8_Medium_Iso/LundNet_R22_FourClass_NQuark8_Medium_Iso_FlatPt_Ver2_e054_0.82370.pt"
+    #   choose_model: "LundNet4Class"
+    # MultiClass_NQuark8_Tight_Iso_Ver2: 
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NQuark8_Tight_Iso/LundNet_R22_FourClass_NQuark8_Tight_Iso_FlatPt_Ver2_e052_0.83598.pt"
+    #   choose_model: "LundNet4Class"
+    # MultiClass_NProng_FlatMass_Ver2: 
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NProng/LundNet_R22_FourClass_NProng_2dFlat_Ver2_e041_8.58039.pt"
+    #   choose_model: "LundNet4Class"
+    # MultiClass_NQuark10_FlatMass_Ver2: 
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NQuark10/LundNet_R22_FourClass_NQuark10_2dFlat_Ver2_e040_9.29158.pt"
+    #   choose_model: "LundNet4Class"
+    # MultiClass_NQuark8_FlatMass_Ver2: 
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NQuark8/LundNet_R22_FourClass_NQuark8_2dFlat_Ver2_e039_9.23147.pt"
+    #   choose_model: "LundNet4Class"
+    # MultiClass_NQuark8_Loose_Iso_FlatMass_Ver2: 
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NQuark8_Loose_Iso/LundNet_R22_FourClass_NQuark8_Loose_Iso_2dFlat_Ver2_e043_9.41091.pt"
+    #   choose_model: "LundNet4Class"
+    # MultiClass_NQuark8_Medium_Iso_FlatMass_Ver2: 
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NQuark8_Medium_Iso/LundNet_R22_FourClass_NQuark8_Medium_Iso_2dFlat_Ver2_e038_8.68816.pt"
+    #   choose_model: "LundNet4Class"
+    # MultiClass_NQuark8_Tight_Iso_FlatMass_Ver2: 
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NQuark8_Tight_Iso/LundNet_R22_FourClass_NQuark8_Tight_Iso_2dFlat_Ver2_e037_6.42784.pt"
+    #   choose_model: "LundNet4Class"
     # MultiClass_SM_Bkg_Ver2: 
     #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_SM_Bkg_Ver2/LundNet_R22_FourClass_SMBkg_MCWeight_Ver2_e016_0.12283.pt"
     #   choose_model: "LundNet4Class"
+    MultiClass_NProng_NoHWW_FlatMass_Ver2_WeightFix: 
+      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NProng_NoHWW_ReweightFix/LundNet_R22_FourClass_NProng_NoHWW_ReweightFix_2dFlat_Ver2_e042_Loss0.72684_Acc0.65332.pt"
+      choose_model: "LundNet4Class"
+    MultiClass_NProng_S300_Ver2_WeightFix: 
+      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NProng_S300_ReweightFix/LundNet_R22_FourClass_NProng_S300_ReweightFix_FlatPt_Ver2_e046_Loss0.53781_Acc0.81524.pt"
+      choose_model: "LundNet4Class"
     MultiClass_NProng_S300_Ver2: 
       path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_FlatPt_Ver2/NProng_S300/LundNet_R22_FourClass_NProng_S300_FlatPt_Ver2_e081_1.74151.pt"
       choose_model: "LundNet4Class"
-    MultiClass_NProng_S300_FlatMass_Ver2: 
-      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NProng_S300/LundNet_R22_FourClass_NProng_S300_2dFlat_Ver2_e045_22.75139.pt"
-      choose_model: "LundNet4Class"
+    # MultiClass_NProng_S300_FlatMass_Ver2: 
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NProng_S300/LundNet_R22_FourClass_NProng_S300_2dFlat_Ver2_e045_22.75139.pt"
+    #   choose_model: "LundNet4Class"
     # MultiClass_NProng_S300_SM_FlatPt_Ver2: 
     #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_NProng_S300_SM_FlatPt_Ver2/LundNet_R22_FourClass_NProng_S300_SM_FlatPt_Ver2_e034_3.35325.pt" # SM_FlatPt: Used V+Jets, ttbar_allhad sample, but flat-pt applied on all four classes
     #   choose_model: "LundNet4Class"
@@ -115,11 +121,37 @@ test:
     # MultiClassSubJReg_ZerpSubJPtMask_NProng_NoHWW_FlatMass_Ver2:
     #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4SubJReg_ZeroSubJPtMask_NProng_NoHWW_2dFlat_Ver2/LundNet_R22_FourClass4SubJReg_ZeroSubJPtMask_NProng_NoHWW_2dFlat_Ver2_e100_4.40618.pt"
     #   choose_model: "LundNet4ClassSubJRegLogVars"
-    MultiClassSubJReg_3vs4_PtRegOnly_NProng_NoHWW_FlatMass_Ver2:
-      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4SubJReg_3vs4_PtRegOnly_NProng_NoHWW_2dFlat_Ver2/LundNet_R22_FourClass4SubJReg_3vs4_PtRegOnly_NProng_NoHWW_2dFlat_Ver2_e181_14.33914.pt"
+    # MultiClassSubJReg_3vs4_PtRegOnly_NProng_NoHWW_FlatMass_Ver2:
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4SubJReg_3vs4_PtRegOnly_NProng_NoHWW_2dFlat_Ver2/LundNet_R22_FourClass4SubJReg_3vs4_PtRegOnly_NProng_NoHWW_2dFlat_Ver2_e181_14.33914.pt"
+    #   choose_model: "LundNet4ClassSubJReg"
+    LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight2_NProng_NoHWW_2dFlat_Ver2:
+      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight2_NProng_NoHWW_2dFlat_Ver2/LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight2_NProng_NoHWW_2dFlat_Ver2_e067_Loss0.69237_Acc0.65944.pt"
+      choose_model: "LundNet4ClassSubJReg"
+    # LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight10_NProng_NoHWW_2dFlat_Ver2:
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight10_NProng_NoHWW_2dFlat_Ver2/LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight10_NProng_NoHWW_2dFlat_Ver2_e090_Loss0.71742_Acc0.66598.pt"
+    #   choose_model: "LundNet4ClassSubJReg"
+    # LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight20_NProng_NoHWW_2dFlat_Ver2:
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight20_NProng_NoHWW_2dFlat_Ver2_Valid/LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight20_NProng_NoHWW_2dFlat_Ver2_Valid_e088_Loss0.75455_Acc0.65050.pt"
+    #   choose_model: "LundNet4ClassSubJReg"
+    # LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight50_NProng_NoHWW_2dFlat_Ver2:
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight50_NProng_NoHWW_2dFlat_Ver2/LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight50_NProng_NoHWW_2dFlat_Ver2_e084_Loss1.00852_Acc0.58100.pt"
+    #   choose_model: "LundNet4ClassSubJReg"
+    LundNetMultiClass4SubJReg_34Prong_PtRegOnly_Weight1_NProng_NoHWW_2dFlat_Ver2:
+      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4SubJReg_34Prong_PtRegOnly_Weight1_NProng_NoHWW_2dFlat_Ver2/LundNetMultiClass4SubJReg_34Prong_PtRegOnly_Weight1_NProng_NoHWW_2dFlat_Ver2_e082_Loss0.69874_Acc0.67072.pt"
+      choose_model: "LundNet4ClassSubJReg"
+    # LundNetMultiClass4SubJReg_234Prong_PtRegOnly_Weight1_NProng_NoHWW_2dFlat_Ver2:
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4SubJReg_234Prong_PtRegOnly_Weight1_NProng_NoHWW_2dFlat_Ver2/LundNetMultiClass4SubJReg_234Prong_PtRegOnly_Weight1_NProng_NoHWW_2dFlat_Ver2_e077_Loss0.70080_Acc0.65962.pt"
+    #   choose_model: "LundNet4ClassSubJReg"
+    # LundNetMultiClass4SubJReg_1234Prong_PtRegOnly_Weight1_NProng_NoHWW_2dFlat_Ver2:
+    #   path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4SubJReg_1234Prong_PtRegOnly_Weight1_NProng_NoHWW_2dFlat_Ver2/LundNetMultiClass4SubJReg_1234Prong_PtRegOnly_Weight1_NProng_NoHWW_2dFlat_Ver2_e093_Loss0.71636_Acc0.66949.pt"
+    #   choose_model: "LundNet4ClassSubJReg"
+    MultiClass_NQuark10_NoHWW_FlatMass_Ver2_WeightFix:
+      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NQuark10_NoHWW_ReweightFix/LundNet_R22_FourClass_NQuark10_NoHWW_ReweightFix_2dFlat_Ver2_e039_Loss0.68772_Acc0.65553.pt"
+      choose_model: "LundNet4Class"
+    LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight2_NQuark10_NoHWW_2dFlat_Ver2:
+      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight2_NQuark10_NoHWW_2dFlat_Ver2/LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight2_NQuark10_NoHWW_2dFlat_Ver2_e073_Loss0.64490_Acc0.68743.pt"
       choose_model: "LundNet4ClassSubJReg"
     
-
   choose_model: LundNet4Class                   # choices: LundNet, LundNet_plus_GN2X, GATNet, GINNet, EdgeGinNet, PNANet
   scores_branch_name: fjet_{model}_LNet4ClassScore  # {model} will be replaced by the value of path_to_combined_ckpt dictionary key
   batch_size: 4096 # 2048

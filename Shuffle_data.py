@@ -599,9 +599,9 @@ def main():
     save_split_histograms(sel_df, "all", config, weighted=True)
     save_split_histograms(train_df, "train", config, weighted=True)
     save_split_histograms(test_df, "test", config, weighted=True)
-    # save_split(train_df, "train")
-    # # save_split_histograms(train_df, "train", config, weighted=False)
-    # save_split(test_df, "test")
+    save_split(train_df, "train")
+    # save_split_histograms(train_df, "train", config, weighted=False)
+    save_split(test_df, "test")
 
     print("Preprocessing done.")
 
