@@ -525,8 +525,13 @@ def main():
                 weights = group["weights"].to_numpy()
                 labels = group[config["branch_label"]].to_numpy()
 
+                # I want to include jet_pt and jet_mass
+                J_pt = group[config["branch_pt"]].to_numpy()
+                J_pt_norm = (J_pt - config["pt_range"][0]) / (config["pt_range"][1] - config["pt_range"][0]) # Scale between [0,1]
+                J_mass = group[config["branch_mass"]].to_numpy()
+                J_mass_norm = (J_mass - config["mass_range"][0]) / (config["mass_range"][1] - config["mass_range"][0]) # Scale between [0,1]
+
                 if do_subJ_regression:
-                    J_pt = group[config["branch_pt"]].to_numpy()
                     J_eta = group["fjet_eta"].to_numpy()
                     J_phi = group["fjet_phi"].to_numpy()
 
@@ -547,6 +552,8 @@ def main():
                     g = graphs[int(loc)]
                     g.weight = torch.tensor([float(w)], dtype=torch.float32)
                     g.y = torch.tensor([label], dtype=torch.long)
+                    g.jet_pt = J_pt_norm
+                    g.jet_mass = J_mass_norm
 
                     if do_subJ_regression:
                         subjet_pt_ratio = subJ_pt[int(tmp)] / J_pt[int(tmp)]

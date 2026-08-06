@@ -93,6 +93,9 @@ def main():
         # num_classes = 16
         num_classes = 8
         # 4 class + 4*3 auxiliary nodes = 16 nodes
+    if choose_model == "LundNet4ClassPtMassPNN":
+        model = LundNet4ClassPtMassPNN()
+        num_classes = 4
     if choose_model == "LundNet":
         model = LundNet()
         # model = LundNet_old()
@@ -156,6 +159,9 @@ def main():
             if choose_model == "LundNet4ClassSubJReg":
                 model = LundNet4ClassSubJReg()
                 num_classes = 8
+            if choose_model == "LundNet4ClassPtMassPNN":
+                model = LundNet4ClassPtMassPNN()
+                num_classes = 4
             model.load_state_dict(torch.load(path_to_file, map_location=device))
             model.to(device)
             print(f'Using model: {choose_model}')

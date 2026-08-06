@@ -151,6 +151,12 @@ test:
     LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight2_NQuark10_NoHWW_2dFlat_Ver2:
       path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight2_NQuark10_NoHWW_2dFlat_Ver2/LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight2_NQuark10_NoHWW_2dFlat_Ver2_e073_Loss0.64490_Acc0.68743.pt"
       choose_model: "LundNet4ClassSubJReg"
+    LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight2_NQuark10_NoHWW_2dFlat_Ver2:
+      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight2_NQuark10_NoHWW_2dFlat_Ver2/LundNetMultiClass4SubJReg_4Prong_PtRegOnly_Weight2_NQuark10_NoHWW_2dFlat_Ver2_e073_Loss0.64490_Acc0.68743.pt"
+      choose_model: "LundNet4ClassSubJReg"
+    MultiClass_NProng_PtMassPNN_ReweightFix_NoHWW_FlatMass_Ver2_WeightFix:
+      path_to_file: "/data/jjhong96/LundNet_Model/LundNetMultiClass4_2dFlat_Ver2/NProng_PtMassPNN_ReweightFix/LundNetMultiClassPtMassPNN_NProng_NoHWW_2dFlat_Ver2_e064_Loss0.68575_Acc0.63946.pt"
+      choose_model: "LundNet4ClassPtMassPNN"
     
   choose_model: LundNet4Class                   # choices: LundNet, LundNet_plus_GN2X, GATNet, GINNet, EdgeGinNet, PNANet
   scores_branch_name: fjet_{model}_LNet4ClassScore  # {model} will be replaced by the value of path_to_combined_ckpt dictionary key

@@ -62,7 +62,7 @@ mass_binN: 50
 
 # Output
 # output_dir: "/data/jjhong96/LundNet_Graph/FourProngV2_MultiClassTrain/Shuffled_Graphs_NProng_2dFlat/" # NProng, NQuark10, NQuark8, NQuark8_Loose_Iso, NQuark8_Medium_Iso, NQuark8_Tight_Iso 
-output_dir: "/data/jjhong96/LundNet_Graph/FourProngV2_MultiClassTrain_ReweightFix/Shuffled_Graphs_ExKtSubJ_NoHWW_NQuark10_2dFlat/"
+output_dir: "/data/jjhong96/LundNet_Graph/FourProngV2_MultiClassTrain_ReweightFix/Shuffled_Graphs_ExKtSubJ_NoHWW_NProng_2dFlat_NormalizedPtMass/"
 histogram_filename: "reweight_histograms.npz"
 
 # Class balancing
